@@ -1,0 +1,38 @@
+# 비밀값 — 절대 커밋 금지
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.har
+
+# 로컬 데이터
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+data/
+lucene-index/
+
+# Gradle / Java
+.gradle/
+build/
+out/
+*.class
+hs_err_pid*
+
+# Node / Electron
+node_modules/
+dist/
+release/
+*.tsbuildinfo
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Claude Code 로컬 설정
+.claude/settings.local.json
