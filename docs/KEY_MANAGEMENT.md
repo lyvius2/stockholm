@@ -80,7 +80,7 @@
 
 ## 5. 저장
 
-- 키 값은 DB에 넣지 않고 **macOS Keychain**에 둔다. 항목은 `wavestock/shared/{keyName}`, `wavestock/user/{userId}/{keyName}`으로 나눈다. DB에는 메타데이터(종류, 상태, 끝 4자리, 검증 시각)만 둔다.
+- 키 값은 DB에 넣지 않고 **macOS Keychain**에 둔다. 항목은 `stockholm/shared/{keyName}`, `stockholm/user/{userId}/{keyName}`으로 나눈다. DB에는 메타데이터(종류, 상태, 끝 4자리, 검증 시각)만 둔다.
 - 데몬은 포트 `SecretStorePort`로만 Keychain에 접근한다. `engine.secret` 밖에서 키 값을 문자열로 들고 다니지 않도록, 어댑터가 필요할 때 포트에서 직접 받아 쓴다. 로그·예외 메시지·`toString()`에 값이 나오지 않게 전용 타입(`SecretValue`)으로 감싼다.
 
 ### 같은 디바이스를 함께 쓸 때의 격리 수준 — 정직한 설명

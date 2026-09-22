@@ -1,4 +1,4 @@
-# CLAUDE.md — wave-stock
+# CLAUDE.md — Stockholm
 
 이 파일은 이 저장소에서 작업하는 Claude를 위한 지침이다. 프로젝트의 목적, 아키텍처 결정, 기능 명세, 자동화 규칙은 아래 문서에 있으며 **작업 전에 반드시 숙지한다.**
 
@@ -26,7 +26,7 @@
 
 ## 기술 기준
 
-- **OpenJDK 21 (LTS).** 루트 패키지는 `banghak.wavestock`. record, sealed 타입, 패턴 매칭, 가상 스레드를 적극적으로 쓴다. preview 기능은 쓰지 않는다.
+- **OpenJDK 21 (LTS).** 루트 패키지는 `banghak.stockholm`. record, sealed 타입, 패턴 매칭, 가상 스레드를 적극적으로 쓴다. preview 기능은 쓰지 않는다.
 - Gradle toolchain으로 JDK 21을 고정한다.
 
 ## 코딩 규칙 — Clean Code 기반
@@ -161,7 +161,7 @@ Robert C. Martin의 『Clean Code』를 기준으로 하고, 구조 개선은 Ma
 
 ```bash
 cd backend && ./gradlew build                        # 빌드 + 전체 테스트(경계 검증 포함)
-cd backend && ./gradlew test --tests 'banghak.wavestock.core.*'   # core 단위 테스트만
+cd backend && ./gradlew test --tests 'banghak.stockholm.core.*'   # core 단위 테스트만
 cd backend && ./gradlew bootRun --args='--spring.profiles.active=engine'   # 클라이언트 데몬 실행
 cd backend && ./gradlew spotlessApply                # Java 포맷
 npm --prefix desktop run dev                         # Electron 개발 실행
@@ -171,6 +171,7 @@ npm --prefix desktop run lint                        # TS 린트
 
 ## 문서
 
+- `docs/DEBATE_DESIGN.md` — 토론 세 테마, 개요·전망, DebateSession 저장·재개, RAG(파인튜닝 없음). 토론 엔진 작업 전에 읽는다.
 - `docs/KEY_MANAGEMENT.md` — 키 분류(공유/개인), 최초 구동 마법사, 변경 규칙, 다른 디바이스로의 키 전달. 인증·설정·비밀값 관련 작업 전에 읽는다.
 - `docs/LLM_ROUTING.md` — 목적별 다중 LLM 라우팅(목적 분류, 폴백·실패 정책, 개인정보 등급, 예산). LLM 호출 코드 작업 전에 읽는다. **제공자·모델 이름을 `engine.llm` 밖의 코드에 쓰지 않는다.**
 - `docs/RAG_DESIGN.md` — RAG 설계(Lucene 하이브리드, 기준 시점 원칙, 코퍼스 구분). 지식 검색·수집 작업 전에 읽는다.
