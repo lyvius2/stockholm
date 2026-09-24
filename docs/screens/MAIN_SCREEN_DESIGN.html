@@ -16,6 +16,15 @@
   --accent:#3ec1c3;--accent-soft:#12383a;--up:#ff5a66;--down:#5c9cff;--warn:#e9a23b;--warn-soft:#3a2a10;}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+/* 스크롤바: 얇고 조용하게. 트랙은 투명, 썸은 잉크색을 옅게 섞은 토큰이라 라이트·다크 모두에서 배경과 어울린다. 올리면 진해진다. */
+:root{--sb:color-mix(in srgb,var(--ink3) 45%,transparent);--sb-hover:color-mix(in srgb,var(--ink2) 75%,transparent)}
+*{scrollbar-width:thin;scrollbar-color:var(--sb) transparent}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--sb);border-radius:6px;border:1px solid transparent;background-clip:padding-box}
+*::-webkit-scrollbar-thumb:hover{background:var(--sb-hover);background-clip:padding-box}
+*::-webkit-scrollbar-corner{background:transparent}
+*:hover{scrollbar-color:var(--sb-hover) transparent}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padding-block:28px 60px;padding-inline:20px;line-height:1.55}
 .wrap{max-width:1180px;margin:0 auto}
 h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
@@ -424,7 +433,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 </style>
 
 <div class="wrap">
-<p class="eyebrow">Stockholm · 화면 설계 초안 v29 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
+<p class="eyebrow">Stockholm · 화면 설계 초안 v30 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
 <h1>메인 화면 레이아웃</h1>
 <p class="lede">스케치의 네 영역 — 차트 · 가격 · 매수/매도 정보 · 토론 창(미러피시) — 을 그대로 배치한 초안입니다. 기본 비율은 좌우 6:4, 왼쪽 열의 차트:주문 7:3, 오른쪽 열의 가격:토론 4:6이며, 세 구분선을 드래그해 바꿀 수 있습니다(더블클릭으로 복원). 아래 목업의 각 영역을 클릭하면 해당 영역의 설명이 강조됩니다. 목업 안의 숫자와 종목은 모두 예시 값입니다.</p>
 
@@ -1067,7 +1076,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div><b>사용자 메뉴 · 자산 조회 (F16)</b><span>상단 바 2행의 사용자 이름을 누르면 드롭다운(자산 조회 · 회원정보 변경 · 알림 설정 · 로그아웃, admin은 회원 관리·공유 키 추가). "자산 조회"는 금융결제원 동의(처음 한 번, 기본 브라우저)를 거쳐 본인의 모든 자산을 자산 모달에 보입니다. 계좌번호는 끝 4자리만, 저장·동기화 없음. 위 목업의 "admin ▾"을 눌러 보세요.</span></div>
   <div><b>주문 관리 (F14)</b><span>3번 영역 오른쪽 표가 보유 · 미체결 · 오늘 체결 세 탭입니다. 미체결 행의 정정 버튼은 주문 모달과 같은 틀의 정정 모달(원주문 카드 · 실시간 현재가 · 새 가격/수량 · 가드레일)을 열고, 확인 창을 거쳐 정정합니다. 국내는 가격·수량, 미국은 가격만(토스 규격). 취소는 확인 창 한 번. 자동 주문 미체결도 사람이 정정할 수 있습니다. 사람의 정정은 수동 주문으로 취급하되 lot 출처는 자동으로 남겨 노출액에 계속 계산하고, 정정 결과가 자동 매수 한도를 넘으면 확인 창을 한 번 더 띄웁니다(자동매매 한도의 유일한 예외). 상태는 토스 실시간 주문 채널로 바로 바뀌고 체결되면 토스트와 알림 센터에 남습니다. 정정·취소는 새 주문번호를 발급하므로 화면은 원주문→새 주문을 한 줄로 이어 보여 줍니다.</span></div>
   <div><b>실시간</b><span>차트·가격·토론은 WebSocket으로 밀려오는 데이터에 따라 스스로 움직입니다. 새로고침 버튼이 없습니다.</span></div>
-  <div><b>테마</b><span>기본은 운영체제 테마 자동(이 설계서도 그렇습니다). 설정에서 시스템 / 라이트 / 다크를 고를 수 있고 사용자 설정으로 저장·동기화됩니다. 모든 색은 토큰이며 상승 빨강·하락 파랑은 다크에서 밝기를 올린 값을 씁니다. 차트 색도 토큰에서 받습니다.</span></div>
+  <div><b>테마</b><span>기본은 운영체제 테마 자동(이 설계서도 그렇습니다). 설정에서 시스템 / 라이트 / 다크를 고를 수 있고 사용자 설정으로 저장·동기화됩니다. 모든 색은 토큰이며 상승 빨강·하락 파랑은 다크에서 밝기를 올린 값을 씁니다. 차트 색도 토큰에서 받습니다. <b>스크롤바</b>는 6px, 트랙 투명, 썸은 잉크색을 옅게 섞은 토큰(라이트·다크 자동), 올리면 진해집니다. 서랍·표·모달 어디서나 같습니다.</span></div>
   <div><b>키는 보이지 않음</b><span>설정 화면에도 키 값은 없습니다. 등록 여부, 끝 4자리, 검증 시각만.</span></div>
   <div><b>원격 모드 동일</b><span>웹으로 접속해도 같은 화면. 주문·설정 변경 버튼만 step-up 인증이 추가로 붙습니다.</span></div>
 </div>
