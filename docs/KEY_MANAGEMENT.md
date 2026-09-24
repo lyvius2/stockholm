@@ -20,7 +20,7 @@
 |---|---|---|---|---|
 | LLM: OpenAI, Claude, DeepSeek 키 / Ollama 주소 | 공유 | admin | 최초 구동 | **1개 이상** |
 | DART 인증키 | 공유 | admin | 최초 구동 | **필수** |
-| 네이버 검색, KRX, 공공데이터포털, ECOS, FRED, Finnhub 등 | 공유 | admin | 최초 구동 또는 이후 | 선택 |
+| 네이버 검색, KRX Open API, 공공데이터포털, Massive(구 Polygon), ECOS, FRED 등 | 공유 | admin | 최초 구동 또는 이후 | 선택 |
 | 한국투자증권 KIS(정보 수집용, admin 계좌 기반) | 공유 | admin | 이후 | 선택 |
 | Slack 봇 토큰 | 공유 | admin | 이후 | 선택 |
 | 금융결제원 앱 자격(client id/secret) | 공유 | admin | 이후 | 선택 |

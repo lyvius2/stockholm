@@ -143,12 +143,23 @@ API 규격은 바뀐다. 어댑터를 구현할 때는 이 문서가 아니라 *
 
 프로젝트 개요에 있던 항목. 신한 그룹 포털(https://openapi.shinhan.com)이 있으나, 개인이 증권 시세 API를 쓸 수 있는지, REST인지(과거 "신한 i Indi"는 Windows COM 기반)를 확인해야 한다. macOS에서 쓸 수 없는 방식이면 제외하고 2.1로 대체한다.
 
-### 2.3 KRX 정보데이터시스템 Open API [확인 필요: 승인 절차·한도]
+### 2.3 KRX Open API [확인함 2026-09-25: 서비스 목록·이용 구조 + 8개 API 엔드포인트·필드(개발 명세서) / 확인 필요: 갱신 시각·한도·전송 방식]
 
-포트: `MarketDataPort`. https://openapi.krx.co.kr — 회원가입 후 서비스별 이용 신청.
+포트: `MarketDataPort`(보조), `FundamentalsPort`의 산업군 보조. https://openapi.krx.co.kr — **인증키 확보됨(2026-09-25)**. 인증키는 요청 헤더 `AUTH_KEY`로 전달. **API마다 따로 이용 신청**(기간 1·3·6·12개월, 목적 선택)해야 하며, 상세 명세("개발 명세서" 다운로드, 출력값 표, 샘플 URL)는 로그인 + 인증키 발급 계정에서만 보인다. 데이터는 **2010-01-04부터, 일별(전일 확정치)**. 장중·실시간 없음.
 
-- 일별 매매정보(전 종목 시세), 종목 기본정보, 지수 일별 시세
-- 용도: **전 종목 일별 데이터의 공식 소스**. F5 1단 스크리닝과 F10 백테스트용 장기 데이터(토스 캔들의 과거 한계를 보완)
+**서비스 목록 31개 (2026-09-25 확인).** 지수 5: KRX 시리즈 · KOSPI 시리즈 · KOSDAQ 시리즈 일별시세정보, 채권지수 · 파생상품지수 시세정보. 주식 8: 유가증권 · 코스닥 · 코넥스 일별매매정보, 유가증권 · 코스닥 · 코넥스 종목기본정보, 신주인수권증권 · 신주인수권증서 일별매매정보. 증권상품 3: ETF · ETN · ELW 일별매매정보. 채권 3: 국채전문유통 · 일반채권 · 소액채권시장 일별매매정보. 파생 6: 선물·옵션 일별매매정보(주식선물·옵션은 유가/코스닥 구분). 일반상품 3: 석유 · 금 · 배출권 시장. ESG 3: ESG 증권상품 · 사회책임투자채권 · ESG 지수.
+
+| 우리 용도 | 신청할 API | 쓰는 곳 |
+|---|---|---|
+| 전 종목 일별 OHLCV·시총·상장주식수 | 유가증권 일별매매정보, 코스닥 일별매매정보 | F5 1단 정량 스크리닝(전 종목), F10 백테스트 장기 데이터(토스 캔들은 2022-11-23 이후만) |
+| 종목 마스터 보완(업종·상장주식수·액면가·상장일) | 유가증권 종목기본정보, 코스닥 종목기본정보 | F4 마스터 검증, **F15 산업군 탭의 KRX 업종**(토스 종목 정보에 업종이 없을 때 1차 출처) |
+| ETF 일별(종가·NAV·순자산·추적지수명·괴리율) | ETF 일별매매정보 | **F15 ETF 탭 헤더**(추적지수·순자산), 괴리율 표시 [제안] |
+| 업종·시장 지수 일별 | KRX · KOSPI · KOSDAQ 시리즈 일별시세정보 | F15 산업군 "업종 지수 대비 수익률", F9 시장 리포트 |
+| 거시·참고 | 채권지수, 파생상품지수 | F9 (우선순위 낮음) |
+
+- **ETF 구성종목(PDF)은 이 API에 없다.** ETF 일별매매정보는 시세·NAV·순자산까지다. F15 구성종목 탭의 국내 출처는 별도로 정한다(운용사 CSV, KRX 정보데이터시스템 화면은 로그인·약관 제약) [결정 필요].
+- **규격 확인함(2026-09-25, 개발 명세서 8종)**: `https://data-dbg.krx.co.kr/svc/apis/{그룹}/{서비스}` — `sto/stk_bydd_trd`·`sto/ksq_bydd_trd`(일별매매), `sto/stk_isu_base_info`·`sto/ksq_isu_base_info`(종목기본정보: ISIN·단축코드·영문명·상장일·증권구분·주식종류·액면가·상장주식수, **업종 없음**), `etp/etf_bydd_trd`(ETF: NAV·순자산총액·기초지수명·기초지수 종가/대비/등락률), `idx/kospi_dd_trd`·`idx/kosdaq_dd_trd`·`idx/krx_dd_trd`(지수: 계열구분·지수명·OHLC·거래량·거래대금·상장시총). 요청은 `{"basDd":"YYYYMMDD"}` 하나, 값은 전부 문자열이고 결측은 `"-"`. 필드 전체·배치·매핑·오류 처리는 `docs/KRX_DESIGN.md`. 갱신 시각·한도·전송 방식(JSON POST/GET) [확인 필요]. 명세서 원본은 `docs/external/krx/`(저장소 밖)
+- 어댑터: 하루 1회 장 마감 후 배치(전 종목 2회 + 지수 3회 + ETF 1회 + 기본정보 주 1회). 호출이 적어 한도 위험은 낮다. 응답의 숫자는 문자열(쉼표 포함 가능)이므로 `BigDecimal` 파싱을 학습 테스트로 고정
 
 ### 2.4 공공데이터포털 — 금융위원회 주식시세·상장종목 정보 [확인 필요: 갱신 지연]
 
@@ -161,6 +172,15 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 ### 2.6 SEC EDGAR — 미국 공시
 
 포트: `DisclosurePort`(US 구현체). https://www.sec.gov/search-filings/edgar-application-programming-interfaces — 무료, 키 없음. `User-Agent`에 연락처 명시 필수, 초당 요청 제한 준수. 제출 서류 목록, XBRL 재무 데이터(company facts). 해외 자동화의 DART 대응.
+
+미국 종목의 공시는 **전부 여기서** 온다(2026-09-24 정리, F15·공시 감시). **어댑터 규격(요청 규칙·JSON 형식·재무 추출 규칙·서식 분류·저장)은 `docs/EDGAR_DESIGN.md`** — submissions·companyfacts·frames는 실측했고, `www.sec.gov` 계열은 연락처 없는 UA가 403이라 재확인 대상.
+- 종목 → CIK: `https://www.sec.gov/files/company_tickers.json`(티커·CIK·회사명, 일 1회 갱신). ADR을 포함한 미국 상장사는 CIK가 있다
+- 종목별 공시 목록: `https://data.sec.gov/submissions/CIK{10자리}.json` — 서식(`form`), 제출일, 보고 기간, 접수번호, 주 문서. 최근 1,000건 + 이전 파일 링크. 관심·보유 종목의 CIK를 1~2분 간격으로 돌려 새 접수번호를 감지한다(DART 감시와 같은 방식, 초당 10회 한도 안에서 30종목이면 넉넉). 전체 시장의 최신 제출은 EDGAR 최신 제출 Atom 피드(`browse-edgar?action=getcurrent&type=8-K&output=atom`)로 보조 [확인 필요: 갱신 지연]
+- 원문: `https://www.sec.gov/Archives/edgar/data/{CIK}/{접수번호}/` 아래 HTML·XBRL. 10-K/10-Q는 Item 단위(Business, Risk Factors, MD&A)로 RAG 색인(`docs/RAG_DESIGN.md` 4.3)
+- 재무: company facts `https://data.sec.gov/api/xbrl/companyfacts/CIK{10자리}.json`(us-gaap 태그별 분기·연간 값) → F15 재무제표 탭
+- 서식과 우리 용도: **8-K**(주요 사건: 실적 발표 Item 2.02, 임원 변경, 인수합병, 유상증자, 상장폐지 통지 → 가드레일 이벤트·토론 자료), **10-K/10-Q**(연간·분기 보고서 → 재무·RAG), **20-F/6-K**(외국 기업·ADR의 연간·수시 보고), **Form 4**(내부자 매매 → 지분 신호), **13D/13G**(5% 이상 보유), **S-1/424B**(신규 상장·증권 발행), **DEF 14A**(주주총회·보수). 배당 선언은 8-K 또는 보도자료라 EDGAR만으로 기준일·지급일이 항상 잡히지는 않는다 [확인 필요]
+- 시각: EDGAR는 접수 시각(`acceptanceDateTime`, 미국 동부)을 주므로 DART와 달리 장중·장후 구분이 된다. 그래도 `firstSeenAt`을 함께 저장한다(기준 시점 원칙)
+- 한계: SEC에 등록된 발행사만. 거래소 공지(상장폐지 심사·거래정지)는 EDGAR가 아니라 거래소·토스 종목 경고 API에서 온다. 애널리스트 자료·컨센서스는 공시가 아니므로 별도 소스
 
 ### 2.7 뉴스
 
@@ -192,18 +212,42 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 - 용도: F13 모달, 토론 개요 "국민연금 보유" 행, 토론 수치 스냅샷(제안). **자동 주문 트리거 아님.** 한 번 확인에 호출 5회 안팎(카탈로그 1 + 최신 데이터셋 페이지 3~4), 하루 1회 + 기동 시 + 수동
 - 뺀 것: 기금운용본부 월간 운용현황(자산군 합계만, 종목별 없음, API 없음). 상세 `docs/NPS_HOLDINGS_DESIGN.md`
 
+### 2.9 Massive (구 Polygon.io) — 미국 종목 참조·배당 캘린더·뉴스·공매도 [확인함 2026-09-25: 무료 등급 범위·엔드포인트·필드 / 확인 필요: 약관의 저장·표시 조건]
+
+포트: `FundamentalsPort`(미국 배당·산업), `NewsPort`(미국 뉴스), `MarketDataPort`(보조). https://massive.com/docs (전체 색인 https://massive.com/docs/llms.txt). 기본 URL `https://api.massive.com`, 인증은 `?apiKey=` 또는 `Authorization: Bearer`. **키 확보됨(2026-09-25, 공유 키·admin)**.
+
+- **무료 등급 "Stocks Basic"**: 미국 전 종목, **분당 5회**, **종가 기준(EOD, 실시간·지연 시세 없음)**, **과거 2년**. 유료(Starter $29 ~ Advanced $199, 개인용)는 무제한 호출·5~20년·15분 지연·실시간. 재무제표·비율은 별도 확장($29)이라 무료에 없다.
+- 무료 등급에서 쓸 수 있는 것(엔드포인트 문서의 요금제 표시 기준):
+
+| 엔드포인트 | 우리 용도 |
+|---|---|
+| `GET /v3/reference/dividends?ticker=` — `cash_amount, currency, declaration_date, ex_dividend_date, record_date, pay_date, frequency(0·1·2·4·12), distribution_type` | **F15 배당 탭(미국)의 유일한 결손이던 배당락일·기준일·지급일·주기** → 해결. EDGAR company facts는 선언액 검증용 |
+| `GET /v3/reference/tickers/{ticker}` — `name, cik, composite_figi, sic_code, sic_description, market_cap, share_class_shares_outstanding, weighted_shares_outstanding, list_date, primary_exchange, description, homepage_url, branding` | 미국 종목 마스터 보완, **SIC 업종 → F15 산업군(미국)**, CIK 매핑(EDGAR 티커 파일이 막힐 때 대안), 상장일(신규 상장 필터), 발행주식수(13F 지분율 계산) |
+| 관련 종목(`related companies`, 개요 페이지에 존재, 경로 [확인 필요]) | F15 관련 종목 탭(미국)·F6 동종 종목 후보 |
+| `GET /v2/reference/news?ticker=&published_utc.gte=` — `title, description, article_url, publisher, published_utc, tickers, keywords, insights(종목별 sentiment·reasoning)` | **미국 `NewsPort` 구현체**(RSS 보완). `publishedAt` 확보, RAG `NEWS` 문서. 본문 전문은 없고 요약·링크뿐 |
+| `GET /v2/aggs/ticker/{t}/range/1/day/{from}/{to}` (`adjusted`) | 미국 일봉 보조. 무료는 2년이라 토스(2021-11-30~)가 우선. 수정주가 `adjusted=true` 검증용 |
+| splits, IPOs | 수정주가 조정, 신규 상장 필터(미국) |
+| short interest(FINRA, 격주), short volume(일별), free float | **미국 수급 심리 카드**(F12 국내 수급 카드의 미국판, 토론 `[S]` 자료) |
+| market holidays / status | `MarketCalendarPort` 미국 보조(1차는 토스 시장 달력) |
+| SEC 13F holdings, 8-K 항목 파싱, 10-K 절 추출, Form 3/4 | EDGAR 직접 파싱의 편의 대체 후보 [보류]. 원천은 EDGAR |
+| 기술 지표(SMA·EMA·MACD·RSI) | 안 씀(지표는 데몬이 계산) |
+
+- **분당 5회**가 설계 제약이다: 관심·보유 30종목 기준 배당·개요 갱신은 하루 1회 배치(약 60회 = 12분), 뉴스는 시간당 종목별 1회(30회/시간). 어댑터에 분당 5회 토큰 버킷 + 429 백오프.
+- 약관: 개인 요금제는 "Individual use only"(우리 조건과 맞음). 뉴스 항목의 저장·표시 조건(요약·링크만 저장할지)과 데이터 재배포 금지 범위 [확인 필요].
+
 ---
 
 ## 3. 있으면 좋음
 
 | API | 용도 | 비고 |
 |---|---|---|
-| Finnhub / Polygon / Alpha Vantage | 미국 종목 뉴스, 실적 일정, 애널리스트 추정치, 기업 기본정보 | 무료 등급에 분당 제한. 해외 자동화를 본격화할 때 도입 |
+| Finnhub / Alpha Vantage | 실적 일정, 애널리스트 추정치 | 미국 참조·배당·뉴스는 **Massive(2.9)로 확정**. 실적 캘린더·컨센서스만 남은 후보 |
 | 실적·경제 캘린더 (Finnhub, FMP 등) | "판단을 뒤집을 이벤트" 자동 채우기, 실적 발표일 전후 자동 매수 제한 | 가드레일 입력으로도 유용 |
 | KIND(한국거래소 공시) | 거래정지·관리종목 지정, 시장조치의 1차 출처 | 공식 API 없음 → 토스 `warnings` API로 충분한지 먼저 확인 |
 | 네이버 데이터랩 / Google Trends | 종목·테마 검색량 → 개인 투자자 관심도 | 모멘텀 페르소나의 보조 신호. 데이터랩(Search Trend)도 API HUB로 이관 중 — 이관 시점·유료화 [확인 필요] |
-| Reddit Data API | (피드 소스에서 제외) F12는 Reddit 검색 **링크아웃만** | [확정 2026-09-23] Responsible Builder Policy: 개인·비상업도 **사전 승인 필수**(예외 없음, 폼 신청), 승인 후 무료 한도 OAuth 클라이언트당 100회/분, 삭제된 글 동기 삭제 의무·48시간 내 저장 데이터 정리 권고·AI/ML 이용 금지. 원문 보관·RAG 투입이 불가하므로 승인받더라도 **표시 전용(원문 미저장, 캐시 48시간 이내)** 어댑터로만 [보류]. **Devvit 검토(2026-09-24, developers.reddit.com/docs)**: Devvit 앱은 Reddit 서버 안에서 서브레딧 설치 단위로 돌고 키 없이 Reddit API를 읽으며 스케줄러(cron)·Redis(5GB)가 있다. 그러나 (a) 데이터를 우리 데몬으로 보내려면 HTTP Fetch가 필요하고 이는 도메인 허용 목록 심사 + 앱 승인 + 자체 약관·개인정보처리방침이 요건인 "프리미엄 기능"이다(LLM 사용도 같음), (b) Devvit 규칙은 Data API 약관을 그대로 포함하고 삭제 의무가 더 엄격하다(PostDelete·CommentDelete 트리거로 외부 서비스에 보낸 데이터까지 삭제, 30일 안 자동 삭제 권고, 익명화해도 보관 위반), (c) 링크아웃·오프플랫폼 유도 금지. 결론: Devvit는 "Reddit 안에서 도는 앱"의 길이지 Reddit 데이터를 밖으로 가져오는 길이 아니며 제약이 줄지 않는다. Reddit 원문을 쓰려면 정식 경로는 Data API 이용 신청(비상업 무료)뿐이고, 승인 후에도 표시 전용이다. Reddit RSS(`/r/{sub}/.rss`)는 피드 리더용이라 프로그램 수집·저장은 Public Content Policy의 스크래핑 금지와 충돌하므로 쓰지 않는다 |
-| StockTwits (공개 비인증 엔드포인트) | F12 미국 종목 심리 피드: 종목별 Bullish/Bearish 심리, 트렌딩 종목, 종목 메시지 스트림 | 포트 `CommunityPort`의 두 번째 구현체 [확정 2026-09-23]. 공식 문서 https://api-docs.stocktwits.com. **IP당 시간당 200회** → 커뮤니티 서랍을 연 종목만 조회, 응답 캐시 TTL 10분, 백그라운드 폴링 없음. 엔드포인트 규격은 공식 MCP 서버 소스(https://github.com/stocktwits/stocktwits-mcp, MIT, Node 18+, stdio)에서 확인한다. **제품에 MCP 서버를 넣지 않는다** — 어댑터가 같은 공개 엔드포인트를 직접 HTTP로 호출한다(Node 런타임·자식 프로세스 관리 회피, 기준 시점 `asOf` 원칙 유지). MCP 서버는 개발 중 데이터 품질 검증(사전 실험)에만 쓴다. 개인 비상업 용도이며 엔터프라이즈 API는 쓰지 않는다 |
+| Reddit Data API | (피드 소스에서 제외) F12는 Reddit 검색 **링크아웃만** | [확정 2026-09-23] Responsible Builder Policy: 개인·비상업도 **사전 승인 필수**(예외 없음, 폼 신청), 승인 후 무료 한도 OAuth 클라이언트당 100회/분, 삭제된 글 동기 삭제 의무·48시간 내 저장 데이터 정리 권고·AI/ML 이용 금지. 원문 보관·RAG 투입이 불가하므로 승인받더라도 **표시 전용(원문 미저장, 캐시 48시간 이내)** 어댑터로만 [보류]. **Devvit 검토(2026-09-24, developers.reddit.com/docs)**: Devvit 앱은 Reddit 서버 안에서 서브레딧 설치 단위로 돌고 키 없이 Reddit API를 읽으며 스케줄러(cron)·Redis(5GB)가 있다. 그러나 (a) 데이터를 우리 데몬으로 보내려면 HTTP Fetch가 필요하고 이는 도메인 허용 목록 심사 + 앱 승인 + 자체 약관·개인정보처리방침이 요건인 "프리미엄 기능"이다(LLM 사용도 같음), (b) Devvit 규칙은 Data API 약관을 그대로 포함하고 삭제 의무가 더 엄격하다(PostDelete·CommentDelete 트리거로 외부 서비스에 보낸 데이터까지 삭제, 30일 안 자동 삭제 권고, 익명화해도 보관 위반), (c) 링크아웃·오프플랫폼 유도 금지. 결론: Devvit는 "Reddit 안에서 도는 앱"의 길이지 Reddit 데이터를 밖으로 가져오는 길이 아니며 제약이 줄지 않는다. **[확정 2026-09-25] StockTwits도 링크아웃만**(공개 API가 Cloudflare 챌린지로 Java에서 불가). 엔터프라이즈 개인 자격은 병행 문의 — 문안: "Hello, I am building a personal, non-commercial desktop application for my family (max 4 users) that shows StockTwits sentiment (bullish/bearish ratio) and recent messages for a handful of U.S. tickers. The public v2 endpoints are now behind a bot challenge, and your documented API requires Basic Auth credentials issued by enterprise-support. Is there an individual / non-commercial tier, and if so what are its rate limits, allowed uses (display only vs. caching), and pricing? Contact: (admin 이메일)". 자격이 생기면 `CommunityPort`에 Basic Auth 어댑터를 추가한다. Reddit 원문을 쓰려면 정식 경로는 Data API 이용 신청(비상업 무료)뿐이고, 승인 후에도 표시 전용이다. Reddit RSS(`/r/{sub}/.rss`)는 피드 리더용이라 프로그램 수집·저장은 Public Content Policy의 스크래핑 금지와 충돌하므로 쓰지 않는다 |
+| StockTwits (공개 비인증 엔드포인트) | F12 미국 종목 심리 피드: 종목별 Bullish/Bearish 심리, 트렌딩 종목, 종목 메시지 스트림 | 포트 `CommunityPort`의 두 번째 구현체 [확정 2026-09-23]. 공식 문서 https://api-docs.stocktwits.com. **IP당 시간당 200회** → 커뮤니티 서랍을 연 종목만 조회, 응답 캐시 TTL 10분, 백그라운드 폴링 없음. 엔드포인트 규격은 공식 MCP 서버 소스(https://github.com/stocktwits/stocktwits-mcp, MIT, Node 18+, stdio)에서 확인한다. **제품에 MCP 서버를 넣지 않는다** — 어댑터가 같은 공개 엔드포인트를 직접 HTTP로 호출한다(Node 런타임·자식 프로세스 관리 회피, 기준 시점 `asOf` 원칙 유지). MCP 서버는 개발 중 데이터 품질 검증(사전 실험)에만 쓴다. 개인 비상업 용도이며 엔터프라이즈 API는 쓰지 않는다. **[확인 2026-09-24, 실측]** (1) `api-docs.stocktwits.com`이 지금 설명하는 것은 **엔터프라이즈 API**(`api-gw-prd.stocktwits.com/api-middleware/external/…`, Basic Auth, 자격은 enterprise-support@stocktwits.com 문의, 셀프 가입·가격·약관 없음)이고 엔드포인트는 뉴스 피드(JSON/RSS)·심리 상세·트렌딩·인기 메시지·스레드·최신 메시지 스트림. (2) 공개 v2 API(`api.stocktwits.com/api/2`)는 문서에서 사라졌지만 살아 있다: `streams/symbol/{SYM}.json`(limit≤30, 커서 `since`/`max`), `streams/trending.json`, `trending/symbols.json`, `streams/user/{user}.json`. `symbols/search.json`은 404. 메시지 필드 `id, body, created_at(UTC), user{…}, source, symbols[], entities{sentiment{basic: Bullish|Bearish}|null, media…}, likes{total}`. 한도 헤더 없음(README상 IP당 200회/시). 숫자 심볼은 내부 id로 해석돼 국내 종목은 못 씀. (3) **Cloudflare 봇 관리가 붙어 있다**: 같은 UA로도 curl·Node https·**Java 21 HttpClient는 `cf-mitigated: challenge` 403**, Node `fetch`(undici)만 통과. TLS 지문으로 거르는 것이라 **우리 Java 데몬은 그대로는 호출 불가**이고, 지문을 흉내 내는 우회는 하지 않는다(약관·안전 규칙). → F12 미국 피드 결정 재검토 필요(`PROJECT.md` 13장) |
+| ETF 구성종목 — KRX 납부자산구성내역(PDF) · 운용사 CSV · SEC N-PORT | F15 구성종목 탭(원형 그래프·표·요약). 국내는 KRX 정보데이터시스템/Open API의 일별 PDF [확인 필요: Open API 제공 여부·갱신 시각], 대체로 운용사 사이트 CSV. 미국은 운용사 일일 공시 CSV(iShares·Vanguard 등)와 SEC N-PORT(월간, 분기 지연) | 포트 `EtfCompositionPort` [제안]. 자산종류 정규화(주식·채권·현금·파생·기타)는 어댑터 규칙 표. 상세 `docs/STOCK_INFO_DESIGN.md` 3.6 |
 | DeepL / Google Cloud Translation / Papago | F12 번역이 LLM으로 부족할 때의 전용 번역기 | `TranslationPort` [제안]. 무료 등급 월 50만 자 안팎. 기본은 LLM 번역 |
 | 미러피시 | 심층 토론 | 선택적. `docs/MIROFISH_EXPERIMENT_GUIDE.md`, 내부 API이므로 실험으로 규격 확인 |
 | Ollama (로컬 LLM) | 비용 0의 요약·분류·임베딩, 급등 재료 확인 같은 저지연 작업 | Mac mini 32GB에서 8B~14B급 현실적 |
@@ -233,8 +277,8 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 | `RealtimeFeedPort` | Toss WebSocket |
 | `IdentityPort`, `AssetPort` | 금융결제원 |
 | `DisclosurePort` | DART(KR), SEC EDGAR(US) |
-| `FundamentalsPort` | DART 재무정보(KR), SEC EDGAR company facts(US), (KIS 재무비율 보조) |
-| `NewsPort` | 네이버 검색(뉴스·블로그·카페), 언론사·Google News RSS, (빅카인즈), (Finnhub) |
+| `FundamentalsPort` | DART 재무정보·배당(KR), SEC EDGAR company facts(US 재무), **Massive(US 배당 캘린더·SIC 산업·관련 종목)**, KRX 지수(업종 지수), (KIS 재무비율 보조) |
+| `NewsPort` | 네이버 검색(뉴스·블로그·카페), 언론사·Google News RSS, **Massive(미국)**, (빅카인즈) |
 | `PensionHoldingsPort` | SEC EDGAR 13F-HR(분기), 공공데이터포털 국민연금 해외주식 투자정보(연간) [제안] |
 | `MacroIndicatorPort` | ECOS, FRED, Toss market-indicators |
 | `LlmPort`, `EmbeddingPort` | Spring AI 기반 다중 제공자, Ollama |

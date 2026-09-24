@@ -121,12 +121,15 @@ public record Quantity(BigDecimal value) {
 
 ```java
 public enum OrderSide { BUY, SELL }
-public enum OrderKind { LIMIT }   // 시장가는 만들지 않는다. "즉시 주문"도 현재가 지정가(F1).
+public enum OrderKind { LIMIT, MARKET }   // MARKET은 두 경우뿐 [확정 2026-09-25]: 미국 소수점 보유분 매도, 미국 금액(orderAmount) 매수. 자동 주문은 LIMIT만
+public enum TimeInForce { DAY, CLS /* 미국 종가지정가, LIMIT만 */, OPG /* 국내 시가단일가 */ }
 
 /** 주문 의도 — 아직 증권사에 보내지 않은 것. LLM/화면/자동화 어디서 왔든 이 타입으로 수렴한 뒤 가드레일을 통과해야 한다. */
-public record OrderIntent(UserId userId, Symbol symbol, OrderSide side, Money limitPrice, Quantity quantity,
+public record OrderIntent(UserId userId, Symbol symbol, OrderSide side, OrderKind kind, TimeInForce timeInForce,
+                          Optional<Money> limitPrice, Optional<Quantity> quantity, Optional<Money> orderAmount,
                           BuyOrigin origin, OrderTrigger trigger, Instant intendedAt) {
-  public Money notional() { return limitPrice.times(quantity); }
+  // 불변식: LIMIT → limitPrice·quantity 필수, orderAmount 없음. MARKET → (US·SELL·소수점 quantity) 또는 (US·BUY·orderAmount) 중 하나만. CLS는 US·LIMIT, OPG는 KR. 위반은 InvalidValue
+  public Money notional() { /* LIMIT: limitPrice × quantity, MARKET 매수: orderAmount, MARKET 매도: 기준가(quote) × quantity — 호출자가 quote를 줌 */ }
 }
 
 /** 어디서 온 주문인가. 감사 로그·F10 학습·이중 주문 방어의 키. */
@@ -282,6 +285,8 @@ public final class GuardrailChain {
 | `DuplicateIntent` | 자동 주문 | 같은 `ClientOrderId` 또는 같은 종목·방향의 미체결 존재 → 거부 |
 | `AutoSellQuota` | 자동 매도 | 허용 없음, 또는 누적 + 이번 수량 > 기준의 90% → 거부. **정확히 90%는 통과** |
 | `StopLossPermitted` | 자동 매도 | 손실 매도인데 "수익 실현만" → 거부 |
+| `MarketOrderScope` | 모든 주문 | `kind == MARKET`이면 (US·SELL·소수점 수량) 또는 (US·BUY·금액 주문)이고 **정규장 시작~종료 1시간 전**일 때만 통과, 그 밖은 거부. 자동 주문의 MARKET은 무조건 거부 [확정 2026-09-25] |
+| `OrdersPerMinute` 기본값 | 자동 주문 | 5회/분, 설정으로 낮출 수만 있음 [확정 2026-09-25] |
 | `StepUpRequired` | 수동(원격·고액) | 가드레일이 아니라 `localapi`의 인증 관심사. 여기서는 노트만 남긴다 |
 | `AutoExposureOverCapNotice` | 사람의 정정(`ManualAmendTrigger`)으로 lot 출처가 `AUTO_BUY`인 주문 | 정정 후 노출액 > 한도 → **거부가 아니라 `Passed`에 확인 필요 노트**. 화면은 확인 창을 띄우고 승인이 있어야 제출. 자동매매 한도의 유일한 예외(PROJECT 10.1) |
 
@@ -370,6 +375,11 @@ public interface RealtimeFeedPort {                          // 구독은 engine
   Subscription subscribeMyOrders(UserId u, Consumer<BrokerOrder> onChange);
 }
 public interface DisclosurePort { List<Disclosure> recent(Symbol s, Instant since); }
+public interface FundamentalsPort {                          // [제안] F15. DART(KR) / EDGAR(US). 상세 docs/STOCK_INFO_DESIGN.md 5장
+  FinancialStatements statements(Symbol s, ReportPeriod period, ConsolidationBasis basis);
+  DividendHistory dividends(Symbol s);
+  IndustryProfile industry(Symbol s);
+}
 public interface NewsPort { List<Article> recent(Symbol s, Instant since); }           // publishedAt 필수
 public interface LlmPort { LlmResponse complete(LlmPurpose purpose, LlmRequest req); }  // 모델명은 여기 없음(docs/LLM_ROUTING.md)
 public interface SimulationPort { SimulationRun start(DebateSession s); Optional<Utterance> poll(SimulationRun r); }
@@ -448,6 +458,8 @@ public final class SecretMissing extends DomainException {}
 **GuardrailChain** — 위반 두 개 이상이면 전부 모인다. 규칙 순서는 이름순으로 결정적.
 
 **ClientOrderId.deterministic** — 같은 입력 → 같은 값, 회차만 달라도 다른 값.
+
+**OrderIntent 불변식 / MarketOrderScope** (F1 예외) — MARKET+KR → `InvalidValue`; MARKET+US+SELL+정수 수량 → 거부; MARKET+US+SELL+소수점 → 통과(정규장 종료 59분 전 통과, 60분 전 경계 포함 여부는 토스 규격대로 "1시간 전까지" = 60분 전 통과, 59분 전 거부 [확인 필요]); MARKET+US+BUY+orderAmount → 통과; AUTO_BUY + MARKET → 거부.
 
 **OrderAmendment / BrokerOrder.canAmend·canCancel** (F14) — 둘 다 비면 `InvalidValue`, US + 수량 → `InvalidValue`. 상태 10종 × 출처 3종 표 전체: `PENDING_CANCEL`은 둘 다 false, `AUTO_BUY`+`PENDING`은 cancel만 true.
 

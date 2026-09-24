@@ -38,3 +38,4 @@ release/
 .claude/settings.local.json
 
 figma-plugin/
+docs/external/
