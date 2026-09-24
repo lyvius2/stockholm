@@ -130,8 +130,9 @@ public record OrderIntent(UserId userId, Symbol symbol, OrderSide side, Money li
 }
 
 /** 어디서 온 주문인가. 감사 로그·F10 학습·이중 주문 방어의 키. */
-public sealed interface OrderTrigger permits ManualTrigger, RecommendationTrigger, AutoBuyTrigger, AutoSellTrigger {}
+public sealed interface OrderTrigger permits ManualTrigger, ManualAmendTrigger, RecommendationTrigger, AutoBuyTrigger, AutoSellTrigger {}
 public record ManualTrigger(DeviceId device) implements OrderTrigger {}
+public record ManualAmendTrigger(DeviceId device, String amendedBrokerOrderId) implements OrderTrigger {}   // 사람의 정정(F14). 한도 규칙 대상 아님, 초과 시 확인 창
 public record RecommendationTrigger(RecommendationId id) implements OrderTrigger {}
 public record AutoBuyTrigger(StrategyId strategy, LocalDate tradingDay, int sequence) implements OrderTrigger {}
 public record AutoSellTrigger(DebateSessionId basis, LocalDate tradingDay, int sequence) implements OrderTrigger {}
@@ -144,11 +145,21 @@ public record ClientOrderId(String value) {
   public static ClientOrderId random();
 }
 
-public enum OrderStatus { ACCEPTED, PARTIALLY_FILLED, FILLED, CANCELLED, REJECTED, UNKNOWN }
-/** UNKNOWN은 "결과를 모름(타임아웃)". 이 상태에서는 재시도 전에 반드시 조회한다(CLAUDE.md fail-safe). */
+public enum OrderStatus { PENDING, PARTIALLY_FILLED, PENDING_CANCEL, PENDING_AMEND, FILLED, CANCELLED, REJECTED,
+                          CANCEL_REJECTED, AMEND_REJECTED, REPLACED, UNKNOWN }   // 토스 10개 상태 + UNKNOWN [제안 2026-09-24, F14]
+/** UNKNOWN은 "결과를 모름(타임아웃)" 또는 토스의 미지 코드. 이 상태에서는 재시도 전에 반드시 조회한다(CLAUDE.md fail-safe). */
 
-public record BrokerOrder(ClientOrderId clientOrderId, String brokerOrderId, OrderIntent intent,
-                          OrderStatus status, Quantity filledQuantity, Instant updatedAt) {}
+/** 정정 요청. 지정가만(시장가 전환 없음). 미국은 수량을 바꿀 수 없다(토스 규격). 둘 다 비면 InvalidValue. */
+public record OrderAmendment(Optional<Money> newLimitPrice, Optional<Quantity> newQuantity) {}
+
+public record BrokerOrder(ClientOrderId clientOrderId, String brokerOrderId, Optional<String> replacesBrokerOrderId,
+                          OrderIntent intent, OrderStatus status, Quantity filledQuantity,
+                          Optional<Money> averageFilledPrice, Instant updatedAt) {
+  public Quantity remaining();  public boolean isOpen();
+  public boolean canAmend();    // open이고 처리 중이 아님. 출처와 무관 — 자동 주문도 사람이 정정 가능(F14). 정정 가능 수량은 remaining()까지
+  public boolean canCancel();   // open이고 처리 중이 아님
+}
+// 정정·취소는 토스가 새 brokerOrderId를 발급한다. replacesBrokerOrderId로 원주문→새 주문 체인을 잇는다.
 public record Fill(String brokerOrderId, Symbol symbol, OrderSide side, Money price, Quantity quantity,
                    Money fee, Money tax, Instant executedAt) {}
 
@@ -272,6 +283,7 @@ public final class GuardrailChain {
 | `AutoSellQuota` | 자동 매도 | 허용 없음, 또는 누적 + 이번 수량 > 기준의 90% → 거부. **정확히 90%는 통과** |
 | `StopLossPermitted` | 자동 매도 | 손실 매도인데 "수익 실현만" → 거부 |
 | `StepUpRequired` | 수동(원격·고액) | 가드레일이 아니라 `localapi`의 인증 관심사. 여기서는 노트만 남긴다 |
+| `AutoExposureOverCapNotice` | 사람의 정정(`ManualAmendTrigger`)으로 lot 출처가 `AUTO_BUY`인 주문 | 정정 후 노출액 > 한도 → **거부가 아니라 `Passed`에 확인 필요 노트**. 화면은 확인 창을 띄우고 승인이 있어야 제출. 자동매매 한도의 유일한 예외(PROJECT 10.1) |
 
 수동 주문(F1)에는 `SnapshotFreshness`·`DuplicateIntent`(경고)·거래시간만 걸리고 한도 규칙은 걸리지 않는다. 화면의 "가드레일 판정"은 같은 `GuardrailChain`을 다른 규칙 집합으로 돌린 결과다.
 
@@ -308,7 +320,7 @@ public sealed interface DomainEvent permits
   // portfolio
   LotOpened, LotReduced, LotClosed, LotAgedOutOfAutoBuy,
   // trading
-  OrderIntended, OrderSubmitted, OrderStatusChanged, OrderFilled, OrderResultUnknown,
+  OrderIntended, OrderSubmitted, OrderAmendRequested, OrderCancelRequested, OrderStatusChanged, OrderFilled, OrderResultUnknown,
   // guardrail / automation
   GuardrailEvaluated, AutomationSettingChanged, LimitsLowered, LimitRaiseIgnored, KillSwitchChanged, AutoSellPermissionChanged, SimulatedOrderRecorded,
   // debate
@@ -338,10 +350,12 @@ public interface EventStore {                 // core.eventlog
 ```java
 public interface TradingPort {                                // 토스 전용. 다른 구현 금지(D8)
   BrokerOrder submit(OrderIntent intent, ClientOrderId id);   // 타임아웃 → OrderResultUnknown 예외 (재시도 전 lookup 필수)
-  BrokerOrder lookup(UserId u, ClientOrderId id);
+  BrokerOrder amend(UserId u, String brokerOrderId, OrderAmendment amendment);   // 새 brokerOrderId. 타임아웃 → OrderResultUnknown [제안, F14]
+  BrokerOrder cancel(UserId u, String brokerOrderId);                            // 취소 요청 레코드(새 id) 반환
+  BrokerOrder lookup(UserId u, String brokerOrderId);
   List<BrokerOrder> openOrders(UserId u, Market m);
+  List<BrokerOrder> closedOrders(UserId u, Market m, LocalDate from, LocalDate to, Optional<String> cursor);
   List<Fill> fills(UserId u, Market m, LocalDate day);
-  void cancel(UserId u, ClientOrderId id);
   PortfolioSnapshot snapshot(UserId u, Market m);
 }
 public interface MarketDataPort {
@@ -434,6 +448,8 @@ public final class SecretMissing extends DomainException {}
 **GuardrailChain** — 위반 두 개 이상이면 전부 모인다. 규칙 순서는 이름순으로 결정적.
 
 **ClientOrderId.deterministic** — 같은 입력 → 같은 값, 회차만 달라도 다른 값.
+
+**OrderAmendment / BrokerOrder.canAmend·canCancel** (F14) — 둘 다 비면 `InvalidValue`, US + 수량 → `InvalidValue`. 상태 10종 × 출처 3종 표 전체: `PENDING_CANCEL`은 둘 다 false, `AUTO_BUY`+`PENDING`은 cancel만 true.
 
 **TradingWindow** — 미국: `America/New_York` 서머타임 전환 주간에 KST 22:30~07:00 창과의 교집합이 맞는지(3월·11월 고정 시계로).
 

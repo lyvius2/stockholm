@@ -278,6 +278,25 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 .flow th{color:var(--ink3);font-weight:500;font-size:12px}
 @media (max-width:600px){.nsum{grid-template-columns:1fr 1fr}}
 
+/* ===== 주문 관리 (F14): 3번 영역 탭 · 정정 모달 ===== */
+.otabs{margin-bottom:6px}
+.otab{display:none}.otab.on{display:block}
+.ord{width:100%;border-collapse:collapse;font-size:12px}
+.ord th{text-align:left;color:var(--ink3);font-weight:500;border-bottom:1px solid var(--line);padding:2px 4px;white-space:nowrap}
+.ord td{padding:3px 4px;border-bottom:1px dashed var(--line);white-space:nowrap}
+.ord td.r,.ord th.r{text-align:right}
+.st{font-size:10px;padding:0 5px;border-radius:2px;background:var(--panel2);color:var(--ink2);white-space:nowrap}
+.st.wait{background:var(--accent-soft);color:var(--accent)} .st.part{background:var(--warn-soft);color:var(--warn)} .st.busy{background:var(--panel2);color:var(--ink3)} .st.done{background:var(--accent);color:#fff} .st.no{background:var(--warn-soft);color:var(--warn)}
+.act{font-size:10px;padding:0 6px;border-radius:3px;border:1px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;margin-left:3px}
+.act:hover{border-color:var(--accent);color:var(--accent)} .act.dis{opacity:.4;cursor:not-allowed} .act.dis:hover{border-color:var(--line);color:var(--ink2)}
+.ocard{background:var(--panel2);border-radius:6px;padding:6px 10px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:11px;margin:0}
+.ocard dt{color:var(--ink3)} .ocard dd{margin:0;text-align:right}
+.mform .inp.lock{opacity:.45}
+.hint{font-size:10px;color:var(--ink3);margin:0}
+.mbtn.cancel{background:transparent;color:var(--ink2);border:1px solid var(--line);grid-column:1/-1;padding:6px}
+.mbtn.cancel small{display:inline;margin-left:6px}
+.openlink{color:var(--accent);cursor:pointer;text-decoration:underline dotted}
+
 /* ===== 주석 ===== */
 .notes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .note{border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--panel);font-size:13px;transition:border-color .15s}
@@ -318,7 +337,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 </style>
 
 <div class="wrap">
-<p class="eyebrow">Stockholm · 화면 설계 초안 v16 · 2026-09-24 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
+<p class="eyebrow">Stockholm · 화면 설계 초안 v21 · 2026-09-24 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
 <h1>메인 화면 레이아웃</h1>
 <p class="lede">스케치의 네 영역 — 차트 · 가격 · 매수/매도 정보 · 토론 창(미러피시) — 을 그대로 배치한 초안입니다. 기본 비율은 좌우 6:4, 왼쪽 열의 차트:주문 7:3, 오른쪽 열의 가격:토론 4:6이며, 세 구분선을 드래그해 바꿀 수 있습니다(더블클릭으로 복원). 아래 목업의 각 영역을 클릭하면 해당 영역의 설명이 강조됩니다. 목업 안의 숫자와 종목은 모두 예시 값입니다.</p>
 
@@ -329,8 +348,8 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
     <span class="small" id="symbtn" style="cursor:pointer" title="종목 검색 (⌘K)"><b class="symname">삼성전자</b> <span class="num">005930</span> · KOSPI ▾</span>
     <button class="wlbtn" id="cmbtn" type="button" title="종목 커뮤니티 열기 (⌘U)">💬 커뮤니티</button>
     <button class="wlbtn" id="wlbtn" type="button" title="관심종목 열기 (⌘L)">☰ 관심종목</button>
+    <button class="wlbtn" id="npsbtn" type="button" title="연기금종목 · 국민연금 해외투자 현황 (⌘N)">🏛️ 연기금종목<i class="bdg" aria-hidden="true"></i></button>
     <button class="wlbtn" id="rkbtn" type="button" title="실시간 급등락 열기 (⌘J)">⚡ 실시간 급등락</button>
-    <button class="wlbtn" id="npsbtn" type="button" title="국민연금 해외투자 현황 (⌘N)">🏛️ 국민연금<i class="bdg" aria-hidden="true"></i></button>
     <span class="sp"></span>
     <span class="mk"><i class="dot"></i>KR 정규장</span>
     <span class="mk"><i class="dot off"></i>US 개장 전 22:30</span>
@@ -435,13 +454,34 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
           <p class="small" style="margin:6px 0 0">버튼을 누르면 주문 모달이 열립니다. (목업에서 클릭해 보세요)</p>
         </div>
         <div>
+          <div class="tabs otabs" id="otabs"><span class="on" data-t="hold">보유 3</span><span data-t="open">미체결 3</span><span data-t="fill">오늘 체결 3</span></div>
+          <div class="otab on" data-t="hold">
           <table class="hold">
             <tr><th>보유</th><th class="r">수량</th><th class="r">평단</th><th class="r">손익</th><th></th></tr>
             <tr><td>삼성전자</td><td class="num r">120</td><td class="num r">71,900</td><td class="num r up">+3.3%</td><td><span class="orig">수동</span></td></tr>
             <tr><td>SK하이닉스</td><td class="num r">15</td><td class="num r">188,200</td><td class="num r down">−1.1%</td><td><span class="orig">AI 추천</span></td></tr>
             <tr><td>NAVER</td><td class="num r">8</td><td class="num r">204,500</td><td class="num r up">+0.4%</td><td><span class="orig">자동</span></td></tr>
           </table>
-          <p class="small" style="margin:8px 0 0">미체결 1건 · 오늘 실현손익 <span class="num up">+41,200</span> · 자동 매수 노출 <span class="num">1,636,000 / 10,000,000</span></p>
+          </div>
+          <div class="otab" data-t="open">
+          <table class="ord">
+            <tr><th>종목</th><th>구분</th><th class="r">가격</th><th class="r">체결/잔량</th><th>상태</th><th>시각</th><th></th></tr>
+            <tr data-name="삼성전자" data-code="005930" data-side="buy" data-mkt="KR" data-desc="매수 74,200 × 10주"><td>삼성전자 <span class="orig">수동</span></td><td class="up">매수</td><td class="num r">74,200</td><td class="num r">0 / 10</td><td><span class="st wait">체결 대기</span></td><td class="num">11:03</td><td><span class="act amend">정정</span><span class="act cancel">취소</span></td></tr>
+            <tr data-name="NVIDIA" data-code="NVDA" data-side="sell" data-mkt="US" data-desc="매도 $185.00 × 3주"><td>NVIDIA <span class="orig">AI 추천</span></td><td class="down">매도</td><td class="num r">$185.00</td><td class="num r">1 / 2</td><td><span class="st part">부분 체결</span></td><td class="num">22:41</td><td><span class="act amend">정정</span><span class="act cancel">취소</span></td></tr>
+            <tr data-name="한미반도체" data-code="042700" data-side="buy" data-mkt="KR" data-auto="1" data-desc="매수 117,500 × 40주"><td>한미반도체 <span class="orig">자동</span></td><td class="up">매수</td><td class="num r">117,500</td><td class="num r">0 / 40</td><td><span class="st wait">체결 대기</span></td><td class="num">13:52</td><td><span class="act amend">정정</span><span class="act cancel">취소</span></td></tr>
+          </table>
+          <p class="small" style="margin:6px 0 0">실시간(personal:order)으로 갱신 · 정정은 주문 모달과 같은 틀의 정정 모달 · 자동 주문도 사람이 정정할 수 있고, 한도를 넘으면 확인 창 한 번</p>
+          </div>
+          <div class="otab" data-t="fill">
+          <table class="ord">
+            <tr><th>종목</th><th>구분</th><th class="r">체결가</th><th class="r">수량</th><th class="r">금액</th><th>시각</th><th></th></tr>
+            <tr><td>삼성전자 <span class="orig">수동</span></td><td class="up">매수</td><td class="num r">73,900</td><td class="num r">20</td><td class="num r">1,478,000</td><td class="num">10:12</td><td><span class="st done">체결</span></td></tr>
+            <tr><td>NAVER <span class="orig">자동</span></td><td class="down">매도</td><td class="num r">205,300</td><td class="num r">3</td><td class="num r">615,900</td><td class="num">13:40</td><td><span class="st done">체결</span></td></tr>
+            <tr><td>SK하이닉스 <span class="orig">수동</span></td><td class="up">매수</td><td class="num r">186,000</td><td class="num r">2 / 5</td><td class="num r">372,000</td><td class="num">09:31</td><td><span class="st no" title="2주 체결 후 잔량 3주 취소">취소 · 부분 체결</span></td></tr>
+          </table>
+          <p class="small" style="margin:6px 0 0">체결은 주문 1건 1행(토스: 건별 체결 미제공, 평균가) · 전체 기간은 "주문 내역" 화면</p>
+          </div>
+          <p class="small" style="margin:8px 0 0"><span class="openlink" id="openlink">미체결 3건</span> · 오늘 실현손익 <span class="num up">+41,200</span> · 자동 매수 노출 <span class="num">1,636,000 / 10,000,000</span></p>
         </div>
       </div>
     </div>
@@ -570,6 +610,28 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
       </div>
       <p class="small" style="margin:0">즉시 주문은 시장가가 아니라 <b>이 순간의 현재가 지정가</b>로 나갑니다. 체결되지 않으면 미체결로 남습니다.</p>
     </div>
+  </div>
+  <div class="modal buy amend" id="amodal" hidden role="dialog" aria-label="주문 정정">
+    <div class="mh" id="amh"><b id="amtitle">정정 · 삼성전자</b><span class="small num" id="amcode">005930</span><span class="x" id="amx">✕</span></div>
+    <div class="mb">
+      <dl class="ocard"><dt>원주문</dt><dd id="amorig">매수 지정가 <span class="num">74,200</span> × <span class="num">10</span>주</dd><dt>체결 / 잔량</dt><dd class="num">0 / 10</dd><dt>상태</dt><dd><span class="st wait">체결 대기</span> <span class="num">11:03</span> · 주문번호 <span class="num">···8F2A</span></dd></dl>
+      <div class="mlive flash"><span class="num up" id="apx">74,300</span><span class="live" style="margin-left:auto"><i></i>실시간</span></div>
+      <div class="mform">
+        <label>새 지정가</label><div class="inp num"><span>원 · 호가 단위 100</span><span id="amprice">74,300</span></div>
+        <label>새 수량</label><div class="inp num" id="amq"><span>주 · 잔량 10</span><span>10</span></div>
+      </div>
+      <p class="hint" id="amqhint">국내 주식은 가격·수량 모두 정정. 수량은 잔량 기준</p>
+      <div class="mguard" id="amguard">가드레일 통과 · 정정 후 예상 금액 <span class="num">743,000</span> · 스냅샷 2초 전</div>
+      <div class="mbtns">
+        <div class="mbtn" id="amok">정정 주문<small>입력한 가격·수량 · 확인 창</small></div>
+        <div class="mbtn now" id="amnow">현재가로 정정<small>이 순간 현재가 지정가 · 확인 창</small></div>
+        <div class="mbtn cancel" id="amcancel">주문 취소<small>잔량 취소</small></div>
+      </div>
+      <p class="small" style="margin:0">정정은 지정가만, 시장가로 바꿀 수 없습니다. "현재가로 정정"은 즉시 주문과 같은 원칙(현재가 지정가)이며 수량은 그대로입니다. 원격 모드·고액이면 확인 창에 TOTP가 붙습니다.</p>
+    </div>
+  </div>
+  <div class="confirm" id="aconfirm" hidden>
+    <div class="cbox"><b id="actitle">정정 주문 확인</b><span id="acbody">…</span><div class="cb"><span id="acno">돌아가기</span><span class="ok" id="acok">실행</span></div></div>
   </div>
   <div class="confirm" id="oconfirm" hidden>
     <div class="cbox"><b id="ctitle">매수 주문 확인</b><span id="cbody">삼성전자 10주 × 74,200원 = 742,000원 (지정가)</span><div class="cb"><span id="cno">취소</span><span class="ok" id="cok">주문</span></div></div>
@@ -735,7 +797,8 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
     <tr><td>(없음)</td><td>실시간 급등락 서랍 (F11)</td><td>오른쪽 슬라이드(폭 25%, 15~50%), 국내·미국 × 급등·급락 5개씩, 10초 갱신, 순위 변동 화살표, ⌘J</td></tr>
     <tr><td>(없음)</td><td>종목 커뮤니티 서랍 (F12)</td><td>왼쪽 슬라이드(폭 28%, 15~50%), 링크아웃 + 미국 Reddit 피드·번역 + 가족 메모, 관심종목과 겹쳐 열림, ⌘U</td></tr>
     <tr><td>(없음)</td><td>종목 검색 팝오버 · 관심종목 서랍</td><td>상단 바 종목명 클릭 / 왼쪽 슬라이드(폭 30%, 조절 가능, 네 영역을 밀어냄), 평소엔 닫힘</td></tr>
-    <tr><td>(없음)</td><td>국민연금 해외투자 현황 모달 (F13)</td><td>상단 바 🏛️ 버튼·⌘N, 13F(분기)·연간 파일 갱신 감지 → 배지·토스트·알림 센터·Slack, 분기 13F 탭·연간 전체·전년 대비 변화·내 종목 탭, 토론 개요의 "국민연금 보유" 행</td></tr>
+    <tr><td>(없음)</td><td>주문 관리 (F14)</td><td>3번 영역의 보유 · 미체결 · 오늘 체결 탭, 정정 모달(국내 가격·수량 / 미국 가격만), 취소 확인, 실시간 상태·체결 토스트, "주문 내역" 화면</td></tr>
+    <tr><td>(없음)</td><td>국민연금 해외투자 현황 모달 (F13)</td><td>상단 바 🏛️ 연기금종목 버튼(관심종목과 급등락 사이)·⌘N, 13F(분기)·연간 파일 갱신 감지 → 배지·토스트·알림 센터·Slack, 분기 13F 탭·연간 전체·전년 대비 변화·내 종목 탭, 토론 개요의 "국민연금 보유" 행</td></tr>
   </table>
 </div>
 
@@ -747,12 +810,14 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div><b>전체 정지</b><span>상단 바 오른쪽 끝, 어느 화면에서든 한 번에. 누르면 확인 없이 즉시 정지하고 Slack 알림.</span></div>
   <div><b>돈은 오른쪽 정렬 고정폭</b><span>모든 금액·수량은 tabular 숫자로 오른쪽 정렬. 상승 빨강, 하락 파랑(국내 관례).</span></div>
   <div><b>상태는 색 + 형태</b><span>정상/경고/위험을 색만으로 구분하지 않고 칩·아이콘을 함께 씁니다.</span></div>
-  <div><b>서랍 세 개 — 왼쪽 둘, 오른쪽 하나</b><span>관심종목과 커뮤니티는 왼쪽에서, 실시간 급등락은 오른쪽에서 슬라이드로 나오며 모두 네 영역을 덮지 않고 <b>밀어냅니다</b>. 상단 바 버튼(순서: Stockholm · 종목명 · 커뮤니티 · 관심종목 · 실시간 급등락) 또는 ⌘U / ⌘L / ⌘J로 열고 ✕·같은 버튼·Esc로 닫습니다. 기본 폭은 관심종목 30%, 커뮤니티 28%, 급등락 25%이고 구분선으로 15~50% 조절(더블클릭 복원, 설정 저장). <b>왼쪽 두 서랍은 겹쳐 열립니다</b>: 관심종목을 펼친 채 어느 종목의 💬를 누르면 |커뮤니티|관심종목|Main| 순으로 펼쳐집니다. 오른쪽 급등락은 왼쪽 서랍과 동시에 열리지 않습니다(급등락에서 💬를 누르면 급등락이 닫히고 커뮤니티가 왼쪽에 열림). 관심종목에서 종목을 고르면 서랍이 닫히지만, 급등락에서 고르면 서랍은 열린 채 네 영역만 바뀝니다.</span></div>
+  <div><b>서랍 세 개 — 왼쪽 둘, 오른쪽 하나</b><span>관심종목과 커뮤니티는 왼쪽에서, 실시간 급등락은 오른쪽에서 슬라이드로 나오며 모두 네 영역을 덮지 않고 <b>밀어냅니다</b>. 상단 바 버튼(순서: Stockholm · 종목명 · 커뮤니티 · 관심종목 · 연기금종목 · 실시간 급등락) 또는 ⌘U / ⌘L / ⌘J로 열고 ✕·같은 버튼·Esc로 닫습니다. 기본 폭은 관심종목 30%, 커뮤니티 28%, 급등락 25%이고 구분선으로 15~50% 조절(더블클릭 복원, 설정 저장). <b>왼쪽 두 서랍은 겹쳐 열립니다</b>: 관심종목을 펼친 채 어느 종목의 💬를 누르면 |커뮤니티|관심종목|Main| 순으로 펼쳐집니다. 오른쪽 급등락은 왼쪽 서랍과 동시에 열리지 않습니다(급등락에서 💬를 누르면 급등락이 닫히고 커뮤니티가 왼쪽에 열림). 관심종목에서 종목을 고르면 서랍이 닫히지만, 급등락에서 고르면 서랍은 열린 채 네 영역만 바뀝니다.</span></div>
 <div><b>구분선</b><span>보이는 선은 1px이지만 마우스가 잡히는 영역은 좌우(상하) 4px씩 넓습니다. 올리면 강조색으로 바뀌고, 끄는 동안 비율 배지가 뜹니다.</span></div>
 <div><b>실시간 급등락 (F11)</b><span>옛날 포털 실시간 검색어처럼 국내·미국 각각 급등 5 · 급락 5를 순위로 보여줍니다. 기준 탭: 등락률(기본) · 거래량 급증 · 체결 강도. 10초마다 갱신되고 순위 옆에 직전 갱신 대비 변동(↑3 · ↓1 · NEW)이 붙습니다. 각 행에 거래량 배수와 뉴스·공시 건수, 보유·토론 중·투자경고·저유동성 칩을 함께 보여 F7의 제외 필터 판단 근거가 그대로 보이게 합니다. 미국은 장 밖 시간에는 프리·애프터마켓 또는 전일 기준으로 표시하고 그 사실을 칩으로 밝힙니다. 데이터는 토스 랭킹 API와 F7(b)의 규칙 기반 급등 탐지기를 공유합니다.</span></div>
-  <div><b>국민연금 해외투자 현황 (F13)</b><span>상단 바 🏛️ 국민연금 버튼 또는 ⌘N으로 여는 정보 모달. 주문 모달과 같은 틀(바깥을 흐리지 않음, 테두리 발광은 강조색, 제목 바로 이동, ✕·같은 버튼·Esc로 닫음)이고 서랍 위에 뜹니다. 데이터는 둘입니다: SEC EDGAR 13F(분기, 미국 상장분, 주식 수·평가액)와 공공데이터포털 연간 자료(연말 기준, 전 지역, 평가액·비중·지분율). 데몬이 앱 기동 시와 매일 한 번 두 출처의 새 보고서를 확인해 변화가 있으면 버튼의 빨간 점, 오른쪽 아래 토스트, 알림 센터 항목, (켜 둔 사용자에게) Slack DM으로 알립니다. 정보 표시와 토론 근거일 뿐 어떤 자동 주문의 트리거도 아닙니다.</span></div>
+  <div><b>연기금종목 · 국민연금 해외투자 현황 (F13)</b><span>상단 바 🏛️ 연기금종목 버튼(☰ 관심종목과 ⚡ 실시간 급등락 사이) 또는 ⌘N으로 여는 정보 모달. 화면은 항상 데몬의 SQLite 스냅샷(캐시)만 읽고, 데몬은 TTL 24시간이 지났을 때만 출처를 다시 부릅니다(cache-aside). 주문 모달과 같은 틀(바깥을 흐리지 않음, 테두리 발광은 강조색, 제목 바로 이동, ✕·같은 버튼·Esc로 닫음)이고 서랍 위에 뜹니다. 데이터는 둘입니다: SEC EDGAR 13F(분기, 미국 상장분, 주식 수·평가액)와 공공데이터포털 연간 자료(연말 기준, 전 지역, 평가액·비중·지분율). 데몬이 앱 기동 시와 매일 한 번 두 출처의 새 보고서를 확인해 변화가 있으면 버튼의 빨간 점, 오른쪽 아래 토스트, 알림 센터 항목, (켜 둔 사용자에게) Slack DM으로 알립니다. 정보 표시와 토론 근거일 뿐 어떤 자동 주문의 트리거도 아닙니다.</span></div>
   <div><b>주문은 모달에서</b><span>매수·매도 버튼 → 이동 가능한 모달. 지정가 주문은 확인 창, 현재가 즉시 주문은 확인 없음. 둘 다 가드레일은 통과해야 합니다.</span></div>
+  <div><b>주문 관리 (F14)</b><span>3번 영역 오른쪽 표가 보유 · 미체결 · 오늘 체결 세 탭입니다. 미체결 행의 정정 버튼은 주문 모달과 같은 틀의 정정 모달(원주문 카드 · 실시간 현재가 · 새 가격/수량 · 가드레일)을 열고, 확인 창을 거쳐 정정합니다. 국내는 가격·수량, 미국은 가격만(토스 규격). 취소는 확인 창 한 번. 자동 주문 미체결도 사람이 정정할 수 있습니다. 사람의 정정은 수동 주문으로 취급하되 lot 출처는 자동으로 남겨 노출액에 계속 계산하고, 정정 결과가 자동 매수 한도를 넘으면 확인 창을 한 번 더 띄웁니다(자동매매 한도의 유일한 예외). 상태는 토스 실시간 주문 채널로 바로 바뀌고 체결되면 토스트와 알림 센터에 남습니다. 정정·취소는 새 주문번호를 발급하므로 화면은 원주문→새 주문을 한 줄로 이어 보여 줍니다.</span></div>
   <div><b>실시간</b><span>차트·가격·토론은 WebSocket으로 밀려오는 데이터에 따라 스스로 움직입니다. 새로고침 버튼이 없습니다.</span></div>
+  <div><b>테마</b><span>기본은 운영체제 테마 자동(이 설계서도 그렇습니다). 설정에서 시스템 / 라이트 / 다크를 고를 수 있고 사용자 설정으로 저장·동기화됩니다. 모든 색은 토큰이며 상승 빨강·하락 파랑은 다크에서 밝기를 올린 값을 씁니다. 차트 색도 토큰에서 받습니다.</span></div>
   <div><b>키는 보이지 않음</b><span>설정 화면에도 키 값은 없습니다. 등록 여부, 끝 4자리, 검증 시각만.</span></div>
   <div><b>원격 모드 동일</b><span>웹으로 접속해도 같은 화면. 주문·설정 변경 버튼만 step-up 인증이 추가로 붙습니다.</span></div>
 </div>
@@ -764,6 +829,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div class="scr"><b>최초 구동 마법사</b><span>admin 생성 → 공유 키 입력·검증 → 본인 토스 키 → LLM 프리셋 → 구성원 코드 발급. 끝내기 전엔 다른 화면 없음.</span></div>
   <div class="scr"><b>로그인 · 구성원 등록</b><span>비밀번호 + TOTP. 구성원은 등록 코드로 첫 로그인 후 본인 토스 키 입력.</span></div>
   <div class="scr"><b>손익</b><span>기간별 실현·평가 손익, 종목별·출처별 분해. "AI 추천을 따랐을 때" 성과 비교.</span></div>
+  <div class="scr"><b>주문 내역</b><span>기간·종목·상태로 거른 전체 주문(체결·취소·거부·정정됨). 정정 체인은 한 묶음으로. 토스 종료 주문 조회(커서, 100건/페이지)를 로컬 캐시에 쌓아 보여 줌. F2 손익의 원천.</span></div>
   <div class="scr"><b>추천</b><span>오늘의 유력 종목 목록. 사유·반대 논거·확신도·유효기간. 누르면 메인 화면이 그 종목으로 바뀜.</span></div>
   <div class="scr"><b>자동화</b><span>시장별 단계(모의/승인/자동), 한도, 예수금 하한, 제외 종목, 자동 매도 허용 종목. 모의 실행 성적표. 승인 대기 목록.</span></div>
   <div class="scr"><b>시장 리포트</b><span>일간·주간 리포트 열람. 전망의 적중 여부 표시.</span></div>
@@ -772,15 +838,74 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div class="scr"><b>알림 · 승인 센터</b><span>가드레일 발동, 승인 요청(만료 시간 표시), 토론 완료, 데이터 갱신(국민연금 해외투자 현황). 승인은 여기서 step-up 인증 후.</span></div>
 </div>
 
+<!-- ===================== 주문 관리 (F14) ===================== -->
+<h2>주문 관리 · 체결 현황과 미체결 정정 <span class="tag">F14</span> <span class="tag ok">확정 2026-09-24</span></h2>
+<p class="lede">주문을 낸 뒤의 일입니다. 어디까지 체결됐는지 보고, 안 된 주문의 가격·수량을 고치거나 거둬들입니다. 위 목업 3번 영역의 "미체결 3" 탭을 열고 행의 정정·취소 버튼을 눌러 보세요. 한미반도체(자동) 행의 정정은 한도 초과 경고와 확인 창을 보여 줍니다. 숫자는 모두 예시 값입니다.</p>
+<div class="notes">
+  <div class="note">
+    <h3>어디에 두나</h3>
+    <p>새 화면을 만들지 않고 3번 영역(매수·매도) 오른쪽 표를 세 탭으로 나눕니다. 주문을 낸 자리에서 결과를 보는 것이 자연스럽고 "한 화면" 원칙도 지킵니다.</p>
+    <ul>
+      <li><b>보유 n</b> (기본) · <b>미체결 n</b> · <b>오늘 체결 n</b>. 탭 이름의 숫자는 실시간 건수. 아래 요약 줄의 "미체결 n건"을 눌러도 탭이 열립니다.</li>
+      <li>미체결 탭 행: 종목(출처 칩) · 구분 · 가격 · 체결/잔량 · 상태 칩 · 시각 · 정정/취소 버튼. 부분 체결은 잔량 기준으로 표시하고, 정정할 수 있는 수량도 잔량까지입니다(100주 중 24주 체결이면 최대 76주).</li>
+      <li>오늘 체결 탭 행: 종목 · 구분 · 체결가(평균) · 수량 · 금액 · 시각 · 상태(체결 / 취소·부분 체결 / 거부). 토스는 건별 체결을 주지 않으므로 주문 1건이 1행입니다.</li>
+      <li>전체 기간은 "그 밖의 화면"의 <b>주문 내역</b>에서. 3번 영역은 오늘과 미체결만 담습니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>정정 모달</h3>
+    <p>주문 모달과 같은 틀(바깥 흐림 없음, 원주문 방향 색의 발광 테두리, 제목 바 드래그). 제목은 "정정 · 종목명".</p>
+    <ul>
+      <li><b>원주문 카드</b>: 방향·지정가·수량, 체결/잔량, 상태, 시각, 주문번호 끝 4자리. 그 아래 실시간 현재가.</li>
+      <li><b>입력</b>: 새 지정가(호가 단위 표시, 어긋나면 토스가 돌려주는 가까운 가격 두 개를 칩으로 제안) · 새 수량. <b>국내는 가격·수량, 미국은 가격만</b>이라 미국 주문은 수량 칸이 잠기고 사유가 보입니다. 수량을 바꾸려면 취소 후 새로 주문합니다.</li>
+      <li><b>지정가만</b>. 시장가로 바꾸는 정정은 두지 않습니다(F1 원칙, 토스 규격은 시장가 정정도 허용하지만 우리 원칙으로 막음). 빨리 체결시키고 싶을 때는 <b>"현재가로 정정"</b> 버튼이 그 순간의 현재가 지정가로 가격만 바꿉니다(수량 그대로). 즉시 주문과 같은 원칙이며, 체결 안 되면 미체결로 남습니다. 정정은 원주문을 취소하고 새 주문번호를 받는 무거운 일이라 두 버튼 모두 확인 창을 거칩니다.</li>
+      <li><b>가드레일</b>은 수동 주문 규칙(스냅샷 신선도 · 거래 시간 · 같은 종목 반대 방향 미체결 경고)을 실시간으로 다시 봅니다. 1억원 이상이면 확인 창에 금액 확인 체크, 원격 모드면 TOTP.</li>
+      <li>모달 안의 <b>주문 취소</b> 버튼과 행의 취소 버튼은 같은 확인 창으로 갑니다. "이미 체결된 수량은 그대로 남는다"를 확인 창에 씁니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>실시간과 상태</h3>
+    <p>토스 실시간 주문 채널(personal:order, 계좌 단위, 세션 안 무손실)을 구독해 행이 스스로 바뀝니다. 새로고침 버튼은 없습니다.</p>
+    <ul>
+      <li>토스의 10가지 상태를 화면 칩 6가지로 접습니다: 체결 대기 · 부분 체결 · 처리 중(취소·정정 요청 후 응답 대기) · 체결 · 취소(부분 체결 포함) · 거부(주문·취소·정정 거부, 사유 표시). 정정이 받아들여지면 원주문은 "정정됨"으로 닫히고 새 주문이 미체결에 뜹니다. 화면은 둘을 한 줄로 이어 보여 줍니다.</li>
+      <li>체결되면 오른쪽 아래 토스트("체결 · 삼성전자 10주 @74,200")와 알림 센터 항목. Slack은 사용자 설정.</li>
+      <li>연결이 끊기면 "지연" 표시로 내려가고, 재연결 시 미체결 목록을 다시 받아 맞춥니다(끊긴 구간의 이벤트는 다시 오지 않으므로).</li>
+      <li>처리 중인 행은 버튼이 잠깁니다. 정정·취소 요청의 결과를 모르면(타임아웃) "확인 중"으로 잠근 채 조회로 확인한 뒤에만 다시 시도합니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>규칙과 예외</h3>
+    <p>사람이 손댈 수 있는 범위와 실패했을 때의 동작입니다.</p>
+    <ul>
+      <li><b>자동 주문(출처 자동)도 사람이 정정할 수 있습니다.</b> 사람이 정정하는 순간 그 주문은 수동 주문으로 취급되어 자동 주문 한도 규칙의 대상이 아니지만, lot의 출처는 자동으로 남아 노출액에 계속 계산됩니다. 정정 결과가 자동 매수 한도(예: 총 노출 1,000만원)를 넘으면 정정 모달의 가드레일 줄이 경고로 바뀌고 <b>확인 창을 한 번 더</b> 거칩니다. 넘는 동안 새 자동 매수는 막힙니다. 이것이 자동매매 한도의 유일한 예외이며, 우회 플래그가 아니라 사람의 명시적 승인입니다. 취소는 킬 스위치와 같은 뜻이라 언제나 열려 있습니다.</li>
+      <li><b>정정 주문의 주문번호</b>: 토스가 새 주문번호를 주고, 우리 쪽 clientOrderId도 새로 만듭니다(사람이 만든 주문이므로 ULID). 원주문과는 체인으로 잇고, 정정 처리 중 둘이 함께 열려 있는 동안 "같은 종목·방향 미체결" 검사는 체인을 한 건으로 봅니다.</li>
+      <li>정정 도중 체결이 끝나면 토스가 "정정 불가 상태"로 거절합니다. 화면은 "이미 체결됨"을 알리고 목록을 다시 받습니다.</li>
+      <li>같은 종목 반대 방향 미체결이 있으면 새 주문은 거절됩니다(토스). 주문 모달의 가드레일 줄에 미리 경고합니다.</li>
+      <li>부분 체결 주문의 취소는 잔량만 취소됩니다. 체결분은 보유에 반영됩니다.</li>
+      <li>정정·취소도 감사 로그의 주문 연쇄(요청 → 가드레일 → 제출 → 상태 변화)로 남습니다. 별도 로그 문장은 없습니다.</li>
+    </ul>
+  </div>
+</div>
+<table class="flow">
+  <tr><th>토스 상태</th><th>화면 칩</th><th>정정 · 취소 버튼</th></tr>
+  <tr><td>PENDING</td><td>체결 대기</td><td>둘 다 가능(자동 주문 정정은 한도 초과 시 확인 창 추가)</td></tr>
+  <tr><td>PARTIAL_FILLED</td><td>부분 체결 (체결/잔량)</td><td>잔량에 대해 가능</td></tr>
+  <tr><td>PENDING_CANCEL · PENDING_REPLACE</td><td>처리 중</td><td>잠김</td></tr>
+  <tr><td>FILLED</td><td>체결</td><td>없음 (오늘 체결 탭)</td></tr>
+  <tr><td>CANCELED</td><td>취소 (부분 체결이면 함께 표시)</td><td>없음</td></tr>
+  <tr><td>REJECTED · CANCEL_REJECTED · REPLACE_REJECTED</td><td>거부 (사유)</td><td>원주문으로 복귀한 상태를 다시 보여 줌</td></tr>
+  <tr><td>REPLACED</td><td>정정됨 → 새 주문 연결</td><td>새 주문 행에서</td></tr>
+</table>
+
 <!-- ===================== 국민연금 해외투자 현황 (F13) ===================== -->
-<h2>국민연금 해외투자 현황 모달 <span class="tag">F13</span> <span class="tag warn">제안</span></h2>
-<p class="lede">국민연금의 해외주식 종목별 보유를 두 출처로 보여주는 정보 모달과, 새 보고서가 올라오면 알려 주는 푸시입니다. 분기마다 SEC에 내는 13F(미국 상장분, 주식 수·평가액, 분기 말 후 45일 안)와 공공데이터포털의 연간 자료(전 지역, 연말 기준 평가액·비중·지분율)를 한 모달에 탭으로 나눕니다. 종목 단위 실시간·일간·주간 공개는 어디에도 없어 분기가 가장 촘촘한 주기입니다. 위 목업에서 상단 바의 🏛️ 국민연금 버튼을 누르거나, 잠시 뒤 오른쪽 아래에 뜨는 토스트의 "보기"를 눌러 보세요. 숫자는 모두 예시 값입니다.</p>
+<h2>연기금종목 · 국민연금 해외투자 현황 모달 <span class="tag">F13</span> <span class="tag ok">확정 2026-09-24</span></h2>
+<p class="lede">국민연금의 해외주식 종목별 보유를 두 출처로 보여주는 정보 모달과, 새 보고서가 올라오면 알려 주는 푸시입니다. 분기마다 SEC에 내는 13F(미국 상장분, 주식 수·평가액, 분기 말 후 45일 안)와 공공데이터포털의 연간 자료(전 지역, 연말 기준 평가액·비중·지분율)를 한 모달에 탭으로 나눕니다. 종목 단위 실시간·일간·주간 공개는 어디에도 없어 분기가 가장 촘촘한 주기입니다. 위 목업에서 상단 바의 🏛️ 연기금종목 버튼을 누르거나, 잠시 뒤 오른쪽 아래에 뜨는 토스트의 "보기"를 눌러 보세요. 숫자는 모두 예시 값입니다.</p>
 <div class="notes">
   <div class="note">
     <h3>여는 곳과 닫는 법</h3>
-    <p>상단 바에서 ⚡ 실시간 급등락 다음 자리. 서랍 버튼과 같은 모양이라 배지가 붙습니다.</p>
+    <p>상단 바에서 ☰ 관심종목과 ⚡ 실시간 급등락 사이. 버튼 이름은 "연기금종목"입니다(지금 자료는 국민연금 단독이지만, 국내 연기금 수급처럼 넓힐 여지를 둔 이름). 서랍 버튼과 같은 모양이라 배지가 붙습니다.</p>
     <ul>
-      <li>🏛️ 국민연금 버튼 또는 ⌘N. 열려 있는 동안 버튼은 강조색, ✕·같은 버튼·Esc로 닫습니다.</li>
+      <li>🏛️ 연기금종목 버튼 또는 ⌘N. 열려 있는 동안 버튼은 강조색, ✕·같은 버튼·Esc로 닫습니다. 모달 제목은 자료의 실제 범위대로 "국민연금 해외주식 투자 현황"입니다.</li>
       <li>새 데이터가 있으면 버튼 오른쪽 위에 빨간 점. 모달을 한 번 열면 점이 사라집니다(사용자별 확인 처리).</li>
       <li>토론 개요 탭의 "국민연금 보유" 행(해외 종목만)에서 "현황"을 눌러도 열립니다. 토스트의 "보기"도 같습니다.</li>
       <li>공공데이터포털 키가 없으면 버튼은 흐리게 남고, 누르면 모달 대신 "admin이 설정에서 공공데이터포털 키를 등록해야 합니다" 안내가 뜹니다.</li>
@@ -814,6 +939,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
       <li><b>첫 실행</b>: 연도별 데이터를 모두 내려받아 기준선을 만들고 알림은 내지 않습니다.</li>
       <li><b>확인 실패</b>: 제목 바에 "마지막 확인 실패 09/24 06:30 · 캐시 표시". 3일 연속 실패 시 admin에게 한 번 알림.</li>
       <li><b>변화 없음</b>: 배지·토스트 없음. 제목 바의 "마지막 확인" 시각만 갱신.</li>
+      <li><b>캐시(cache-aside, TTL 24시간)</b>: 모달은 출처를 직접 부르지 않고 데몬의 SQLite 스냅샷만 읽습니다. 데몬은 마지막 성공 확인이 24시간을 넘겼을 때만 출처를 다시 부르고, "지금 확인"만 TTL을 무시합니다(1분 간격 제한). 연간 API는 perPage 상한이 문서에 없어 500씩 끝까지 페이지를 넘기며 받습니다.</li>
       <li><b>컬럼 이름 변형</b>: 연도마다 컬럼명이 조금씩 다릅니다(평가액(억원)/평가액(억 원), 비중(%)/비중(퍼센트)). 어댑터가 정규화하고, 새 변형이면 저장하지 않고 admin에게 알립니다.</li>
       <li><b>EDGAR 차단</b>: 연락처 없는 User-Agent나 초당 10회 초과는 SEC가 차단합니다. 설정에 "SEC 연락처 이메일"(admin, 공유 설정)을 두고 그 값으로 User-Agent를 만듭니다. 비어 있으면 13F 확인을 건너뛰고 사유를 표시합니다.</li>
     </ul>
@@ -841,11 +967,9 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 <div class="q">
   <b>확인이 필요한 것</b>
   <ol>
-    <li>상단 바 순서 [확정]에 🏛️ 국민연금 버튼을 ⚡ 실시간 급등락 다음에 추가하는 개정(대안: 상단 바 왼쪽 메뉴 안, 하단 상태줄)과 단축키 ⌘N.</li>
-    <li>공공데이터포털 파일데이터 API의 일일 트래픽 한도와 perPage 상한(문서에 없음). 한 번 확인에 5회 안팎이라 여유는 있으나 수치 확인 필요.</li>
-    <li>종목명(영문 회사명)→티커 매핑: 토스 종목 마스터 영문명 정확 일치 + 별칭 표(사용자 편집) 제안. 미매칭 종목은 칩 없이 표시.</li>
-    <li>알림 기본값(제안: 앱 내 켬, Slack 끔)과 토론의 심리·수급 스냅샷 표에 "국민연금 보유" 줄을 넣을지.</li>
-    <li>13F: 정보표 XML 파일명(접수별 index.json으로 확인), CUSIP→티커 매핑(토스 종목 마스터가 ISIN을 주면 ISIN 3~11자리가 CUSIP), SEC 연락처 이메일을 admin 공유 설정에 두는 안.</li>
+    <li>F13 결정됨(2026-09-24): 버튼 이름 "연기금종목", 위치 ☰ 관심종목과 ⚡ 실시간 급등락 사이, ⌘N · 캐시 cache-aside TTL 24시간 · 회사명→티커 매핑(종목 마스터 정확 일치 + 별칭 표, 미매칭은 칩 없음) · 알림 기본값 앱 안 켬·Slack 끔 · 토론 수치 표에 "국민연금 보유" 줄 · 13F 매핑(ISIN→CUSIP)과 SEC 연락처 이메일 admin 공유 설정. PROJECT.md에 반영.</li>
+    <li>남은 외부 확인: 13F 정보표 XML 파일명(접수별 index.json), 토스 미국 종목 마스터의 ISIN·영문 회사명 제공 여부, 공공데이터포털 일일 트래픽 한도 수치(캐시로 대응하되 확인).</li>
+    <li>F14 결정됨(2026-09-24): 3번 영역 탭·정정 모달 승인 · 자동 주문도 사람이 정정 가능(수동 취급, 한도 초과 시 확인 창 한 번, 자동매매 한도의 유일한 예외) · 정정 주문의 clientOrderId는 새로 발급 · 정정 가능 수량은 잔량까지. 남은 것: 정정 API의 quantity가 "새 잔량"인지 "새 총 주문 수량"인지(화면은 잔량 입력, 어댑터가 변환), 체결 알림 기본값(제안: 앱 안 켬·Slack 끔).</li>
   </ol>
 </div>
 </div>
@@ -953,7 +1077,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   function paintPrice(dir){
     pxEl.textContent=fmt(px); pxEl.className='num '+(px>=prev?'up':'down');
     var diff=px-prev; chEl.textContent=(diff>=0?'▲ ':'▼ ')+fmt(Math.abs(diff))+' ('+(diff>=0?'+':'')+(diff/prev*100).toFixed(2)+'%)'; chEl.className='num '+(diff>=0?'up':'down');
-    mpx.textContent=pxEl.textContent; mpx.className=pxEl.className; mchg.textContent=chEl.textContent; mchg.className=chEl.className+' small'; px2.textContent=pxEl.textContent; px2.className=pxEl.className;
+    mpx.textContent=pxEl.textContent; mpx.className=pxEl.className; var apx=document.getElementById('apx'); if(apx){apx.textContent=pxEl.textContent;apx.className=pxEl.className;} mchg.textContent=chEl.textContent; mchg.className=chEl.className+' small'; px2.textContent=pxEl.textContent; px2.className=pxEl.className;
     if(dir){[box,mbox].forEach(function(b){b.classList.remove('up','down'); void b.offsetWidth; b.classList.add(dir); setTimeout(function(){b.classList.remove(dir)},350);});}
   }
   // 종목 전환: 관심종목·랭킹·검색 어디서 골라도 네 영역이 이 종목으로 바뀐다 (목업: 가격 스케일만 바꿔 다시 그림)
@@ -1034,6 +1158,31 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   pop.addEventListener('click',function(e){e.stopPropagation();var li=e.target.closest('li');if(li){var sp=li.querySelectorAll(':scope > span');var name=sp[0].childNodes[0].textContent.trim(), code=sp[1].textContent.trim();var known={'005930':[74300,1.5],'009150':[151200,-0.33],'006400':[312000,2.12],'207940':[1012000,0.8]};var k=known[code]||[50000,0];selectSymbol({name:name,code:code,price:k[0],chg:k[1]});}pop.hidden=true;});
   app.addEventListener('click',function(){pop.hidden=true;});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){setDrawer(false);setRDrawer(false);setCDrawer(false);pop.hidden=true;conf.hidden=true;} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='u'){e.preventDefault();setCDrawer(true);} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='j'){e.preventDefault();setRDrawer(true);} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='l'){e.preventDefault();setDrawer(true);} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();pop.hidden=false;}});
+  // ===== 주문 관리 (F14): 3번 영역 탭(보유·미체결·오늘 체결), 정정 모달, 취소 확인 =====
+  var ot=document.querySelectorAll('#otabs span'), op=document.querySelectorAll('.otab');
+  ot.forEach(function(t){t.addEventListener('click',function(e){e.stopPropagation();ot.forEach(function(x){x.classList.toggle('on',x===t)});op.forEach(function(x){x.classList.toggle('on',x.dataset.t===t.dataset.t)});});});
+  document.getElementById('openlink').addEventListener('click',function(e){e.stopPropagation();ot[1].click();});
+  var am=document.getElementById('amodal'), amh=document.getElementById('amh'), ampos=null, aconf=document.getElementById('aconfirm'), actitle=document.getElementById('actitle'), acbody=document.getElementById('acbody');
+  function placeAm(){ if(ampos){am.style.left=ampos.x+'px';am.style.top=ampos.y+'px';return;} am.style.left=Math.max(12,(app.clientWidth-am.offsetWidth)/2)+'px'; am.style.top=Math.max(12,(app.clientHeight-am.offsetHeight)/2)+'px'; }
+  var amAuto=false;
+  function openAmend(tr){ var us=tr.dataset.mkt==='US'; amAuto=tr.dataset.auto==='1'; am.classList.remove('buy','sell'); am.classList.add(tr.dataset.side); document.getElementById('amtitle').textContent='정정 · '+tr.dataset.name; document.getElementById('amcode').textContent=tr.dataset.code; document.getElementById('amorig').textContent=tr.dataset.desc+' (지정가'+(amAuto?' · 자동 매수':'')+')';
+    var g=document.getElementById('amguard'); g.classList.toggle('no',amAuto); g.innerHTML=amAuto?'경고 · 정정 후 자동 매수 노출 <span class="num">11,340,000 / 10,000,000</span> — 한도 초과. 확인 창에서 승인해야 합니다':'가드레일 통과 · 정정 후 예상 금액 <span class="num">743,000</span> · 스냅샷 2초 전';
+    document.getElementById('amq').classList.toggle('lock',us); document.getElementById('amqhint').textContent=us?'미국 주식은 가격만 정정할 수 있습니다(토스 규격). 수량을 바꾸려면 취소 후 새로 주문':'국내 주식은 가격·수량 모두 정정. 수량은 잔량 기준';
+    am.hidden=false; placeAm(); }
+  document.querySelectorAll('.ord .act.amend').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation(); if(b.classList.contains('dis'))return; openAmend(b.closest('tr'));});});
+  document.querySelectorAll('.ord .act.cancel').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation(); if(b.classList.contains('dis'))return; var tr=b.closest('tr'); actitle.textContent='주문 취소 확인'; acbody.textContent=tr.dataset.name+' '+tr.dataset.desc+'의 미체결 잔량을 취소합니다. 이미 체결된 수량은 그대로 남습니다.'; aconf.hidden=false;});});
+  document.getElementById('amx').addEventListener('click',function(){am.hidden=true;}); am.addEventListener('click',function(e){e.stopPropagation();});
+  var adrag=null;
+  amh.addEventListener('pointerdown',function(e){if(e.target.id==='amx')return;adrag={dx:e.clientX-am.offsetLeft,dy:e.clientY-am.offsetTop};amh.setPointerCapture(e.pointerId);});
+  amh.addEventListener('pointermove',function(e){if(!adrag)return;ampos={x:Math.max(0,Math.min(app.clientWidth-am.offsetWidth,e.clientX-adrag.dx)),y:Math.max(0,Math.min(app.clientHeight-am.offsetHeight,e.clientY-adrag.dy))};placeAm();});
+  amh.addEventListener('pointerup',function(){adrag=null;}); amh.addEventListener('pointercancel',function(){adrag=null;});
+  document.getElementById('amok').addEventListener('click',function(){var nm=document.getElementById('amtitle').textContent.replace('정정 · ',''); actitle.textContent=amAuto?'자동 매수 한도 초과 — 정정 승인':'정정 주문 확인'; acbody.textContent=amAuto?(nm+' 자동 매수 주문을 사람이 정정합니다. 정정 후 자동 매수 노출이 11,340,000원으로 한도 10,000,000원을 넘습니다. 넘는 동안 새 자동 매수는 막힙니다. 승인하면 원주문은 취소되고 새 주문번호가 발급됩니다.'):(nm+' 잔량을 새 지정가 74,300원 × 10주로 정정합니다. 원주문은 취소되고 새 주문번호가 발급됩니다.'); aconf.hidden=false;});
+  document.getElementById('amnow').addEventListener('click',function(){var cur=document.getElementById('apx').textContent; document.getElementById('amprice').textContent=cur; var nm=document.getElementById('amtitle').textContent.replace('정정 · ',''); actitle.textContent=amAuto?'자동 매수 한도 초과 — 정정 승인':'현재가 정정 확인'; acbody.textContent=(amAuto?'자동 매수 주문을 사람이 정정합니다. 정정 후 자동 매수 노출이 한도를 넘으며, 넘는 동안 새 자동 매수는 막힙니다. ':'')+nm+' 잔량을 이 순간의 현재가 '+cur+'(지정가)로 정정합니다. 수량은 그대로입니다. 원주문은 취소되고 새 주문번호가 발급됩니다.'; aconf.hidden=false;});
+  document.getElementById('amcancel').addEventListener('click',function(){actitle.textContent='주문 취소 확인'; acbody.textContent='미체결 잔량 10주를 취소합니다. 이미 체결된 수량은 그대로 남습니다.'; aconf.hidden=false;});
+  aconf.addEventListener('click',function(e){e.stopPropagation();});
+  document.getElementById('acno').addEventListener('click',function(){aconf.hidden=true;});
+  document.getElementById('acok').addEventListener('click',function(){aconf.hidden=true;am.hidden=true;});
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'){am.hidden=true;aconf.hidden=true;} });
   // ===== 국민연금 해외투자 현황 모달 (F13): 상단 바 🏛️ 버튼·⌘N, 앱 기동 시 푸시(토스트 + 배지) =====
   var npsm=document.getElementById('npsmodal'), npsbtn=document.getElementById('npsbtn'), nph=document.getElementById('nph'), npst=document.getElementById('npstoast'), nppos=null;
   function placeNps(){ if(nppos){npsm.style.left=nppos.x+'px';npsm.style.top=nppos.y+'px';return;} npsm.style.left=Math.max(12,(app.clientWidth-npsm.offsetWidth)/2)+'px'; npsm.style.top=Math.max(12,(app.clientHeight-npsm.offsetHeight)/2)+'px'; }
