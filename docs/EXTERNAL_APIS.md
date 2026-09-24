@@ -170,6 +170,27 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 - 언론사·Google News RSS: 키 불필요. 발행 시각 확보가 쉽다
 - 본문 수집은 각 사이트의 robots.txt와 약관을 따른다. RAG에는 요약과 링크·발행 시각을 저장하고, 본문 전문 저장은 허용된 소스에 한한다
 
+### 2.8 국민연금 해외주식 보유 — SEC EDGAR 13F-HR + 공공데이터포털 [확인함 2026-09-24]
+
+포트: `PensionHoldingsPort`(F13). 두 구현체. 종목 단위 실시간·일간·주간 공개는 어느 나라에도 없다.
+
+**(a) SEC EDGAR 13F-HR — 분기, 미국 상장분** [확인함: CIK·제출 이력 / 확인 필요: 정보표 XML 파일명]
+
+- National Pension Service, **CIK 0001608046**. 13F-HR 48건 + 13F-HR/A 2건(2026-09-24 기준). 제출은 분기 말 후 35~45일(최근 2026-08-13, 05-12, 02-10, 2025-11-04). N-PX(의결권)도 낸다
+- 제출 목록: `https://data.sec.gov/submissions/CIK0001608046.json`(접수번호·제출일·보고기간·primary_doc). 정보표: 접수별 `Archives/edgar/data/1608046/{접수번호}/` 안의 XML(`infoTable`: nameOfIssuer, titleOfClass, **cusip**, value(2023년부터 달러 단위), sshPrnamt, sshPrnamtType, investmentDiscretion, votingAuthority). 파일명은 접수별 `index.json`으로 확인 [확인 필요]
+- **무료, 회원가입·키 없음.** 조건: `User-Agent`에 이름과 연락처 이메일(없으면 차단됨 — 설계 확인 중 실제로 차단됨), **초당 10회 이하**, 대량 내려받기는 미국 야간 권장. 연락처 이메일은 admin 공유 설정 항목으로 둔다
+- 한계: 미국 상장분(ADR 포함) 롱 포지션만, 지분율 없음(company facts의 발행주식수로 계산), 45일 지연, 정정(/A) 재수집 필요
+- CUSIP → `Symbol`: 토스 미국 종목 마스터가 ISIN을 주면 ISIN 3~11자리가 CUSIP [확인 필요]. 없으면 OpenFIGI(무료, 키 선택)를 후보로
+
+**(b) 공공데이터포털 — 국민연금공단 해외주식 투자정보 — 연간, 전 지역** [확인함: 엔드포인트·컬럼·갱신 주기 / 확인 필요: perPage 상한·일일 한도·헤더 접두]
+ Swagger `https://infuser.odcloud.kr/oas/docs?namespace=3070517/v1`, 데이터셋 `https://www.data.go.kr/data/3070517/fileData.do`. 무료, 이용허락 제한 없음, 키 확보됨(공유 키, admin).
+
+- 파일데이터 API라 **연도마다 엔드포인트(uddi)가 따로** 있다(2017년 말~2024년 말, 8개). `GET https://api.odcloud.kr/api/3070517/v1/uddi:…?page=&perPage=&returnType=JSON`. 인증은 `serviceKey` 쿼리 또는 `Authorization` 헤더. **Swagger 문서는 키 없이 읽히므로** 새 연도 데이터셋의 등장을 키 없이 감지할 수 있다
+- 컬럼: 번호 · 종목명(영문 회사명, **티커·ISIN 없음**) · 평가액(억원) · 자산군 내 비중(%) · 지분율(%). **컬럼명과 타입이 연도마다 조금씩 다르다**(`평가액(억원)`/`평가액(억 원)`, `비중`/`비중(%)`/`비중(퍼센트)`, string/integer) → 어댑터가 정규화하고 연도별 학습 테스트로 고정
+- 갱신 **연 1회**(연말 기준, 다음 해 가을~겨울 등록. 2024년 말 파일은 2025-12-10 등록, 차기 예정 2026-09-30). 10억원 미만 종목 제외, 2024년 말 3,259행
+- 용도: F13 모달, 토론 개요 "국민연금 보유" 행, 토론 수치 스냅샷(제안). **자동 주문 트리거 아님.** 한 번 확인에 호출 5회 안팎(카탈로그 1 + 최신 데이터셋 페이지 3~4), 하루 1회 + 기동 시 + 수동
+- 뺀 것: 기금운용본부 월간 운용현황(자산군 합계만, 종목별 없음, API 없음). 상세 `docs/NPS_HOLDINGS_DESIGN.md`
+
 ---
 
 ## 3. 있으면 좋음
@@ -213,6 +234,7 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 | `DisclosurePort` | DART(KR), SEC EDGAR(US) |
 | `FundamentalsPort` | DART 재무정보(KR), SEC EDGAR company facts(US), (KIS 재무비율 보조) |
 | `NewsPort` | 네이버 검색(뉴스·블로그·카페), 언론사·Google News RSS, (빅카인즈), (Finnhub) |
+| `PensionHoldingsPort` | SEC EDGAR 13F-HR(분기), 공공데이터포털 국민연금 해외주식 투자정보(연간) [제안] |
 | `MacroIndicatorPort` | ECOS, FRED, Toss market-indicators |
 | `LlmPort`, `EmbeddingPort` | Spring AI 기반 다중 제공자, Ollama |
 | `SimulationPort` | 미러피시 (선택) |

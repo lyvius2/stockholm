@@ -31,6 +31,7 @@ core/
 ├─ automation/   ExecutionStage, AutomationScope, AutomationSetting, KillSwitch, AutoSellPermission, AutoBuyExposure
 ├─ guardrail/    Guardrail, GuardrailContext, GuardrailVerdict, GuardrailLimits, 규칙 구현체들
 ├─ debate/       Persona, PersonaDefinition, DebateTheme, DebateSession, Round, Utterance, Intervention, Verdict
+├─ pension/      PensionSource, PensionDataset, PensionHolding, PensionHoldingsSnapshot, PensionHoldingsDiff, Cusip, Isin [제안, F13 — docs/NPS_HOLDINGS_DESIGN.md]
 ├─ eventlog/     DomainEvent(sealed), EventEnvelope, EventSequence, EventStore(포트지만 여기 둠)
 ├─ lease/        AutomationLease, LeaseHolder(포트), AlwaysHeldLease(단독 모드 구현)
 ├─ port/         외부 세계 인터페이스 전부 (Section 10)
@@ -363,6 +364,11 @@ public interface SecretStorePort { void put(SecretKey key, char[] value); boolea
   // get()이 없다 — 키 값은 쓰기 전용. 어댑터가 내부에서만 읽는다(CLAUDE.md 절대 규칙 2).
 public interface IdentityPort { IdentityProof verify(UserId u, IdentityRequest r); }
 public interface AssetPort { List<ExternalAsset> assets(UserId u); }
+public interface PensionHoldingsPort {                        // [제안] F13. 구현체 둘: SEC EDGAR 13F(분기) / 공공데이터포털(연간)
+  PensionSource source();
+  List<PensionDataset> catalog();                              // 13F: 제출 목록 JSON / 연간: Swagger. 실패 시 MarketDataUnavailable
+  PensionHoldingsSnapshot fetch(PensionDataset dataset);       // 정보표 XML 또는 전 페이지 수집·정규화. 연간은 키 없으면 SecretMissing
+}
 // 시계는 java.time.Clock 그대로 주입한다. 별도 포트를 만들지 않는다.
 ```
 

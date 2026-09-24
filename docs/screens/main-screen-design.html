@@ -1,0 +1,1072 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Stockholm 화면 설계</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f3f5f7;--panel:#ffffff;--panel2:#e9edf1;--line:#cfd6dd;--ink:#15202b;--ink2:#5b6b7a;--ink3:#8b98a5;
+  --accent:#0f8b8d;--accent-soft:#d7eeee;--up:#d9333f;--down:#2b6fd6;--warn:#c47a12;--warn-soft:#fbeedb;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1418;--panel:#161d23;--panel2:#1e272f;--line:#2b3641;--ink:#e6edf3;--ink2:#9fb0bf;--ink3:#6b7b8a;
+  --accent:#3ec1c3;--accent-soft:#12383a;--up:#ff5a66;--down:#5c9cff;--warn:#e9a23b;--warn-soft:#3a2a10;}}
+:root[data-theme="dark"]{
+  --bg:#0f1418;--panel:#161d23;--panel2:#1e272f;--line:#2b3641;--ink:#e6edf3;--ink2:#9fb0bf;--ink3:#6b7b8a;
+  --accent:#3ec1c3;--accent-soft:#12383a;--up:#ff5a66;--down:#5c9cff;--warn:#e9a23b;--warn-soft:#3a2a10;}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);margin:0;padding-block:28px 60px;padding-inline:20px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
+.lede{color:var(--ink2);max-width:66ch;margin:0 0 20px}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.up{color:var(--up)} .down{color:var(--down)}
+.small{font-size:12px;color:var(--ink2)}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:3px;background:var(--panel2);color:var(--ink2);margin-left:6px;vertical-align:middle}
+.tag.ok{background:var(--accent-soft);color:var(--accent)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+
+/* ===== 메인 화면 목업 ===== */
+.app{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg);box-shadow:0 12px 40px rgba(0,0,0,.08)}
+.topbar{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:-.02em;color:var(--accent)}
+.topbar .sp{flex:1}
+.mk{display:flex;gap:6px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.dot.off{background:var(--ink3)}
+.kill{border:1px solid var(--up);color:var(--up);background:transparent;border-radius:4px;padding:3px 10px;font-weight:600;font-size:12px;font-family:inherit}
+.grid{display:flex;background:var(--line);gap:0}
+.col{display:flex;flex-direction:column;min-width:0;gap:0;background:var(--line)}
+.col.l{flex:0 0 var(--left,60%)} .col.r{flex:1 1 auto}
+.pane{min-height:0;overflow:auto}
+#p-chart{flex:0 0 var(--lt,70%)} #p-order{flex:1 1 auto}
+#p-price{flex:0 0 var(--rt,40%)} #p-debate{flex:1 1 auto}
+/* 구분선: 보이는 선은 1px, 마우스 잡히는 영역은 ±4px(::before가 투명 히트 영역) */
+.split{background:var(--line);position:relative;touch-action:none;flex:0 0 1px;z-index:6;transition:background .12s}
+.split.v{cursor:col-resize} .split.h{cursor:row-resize}
+.split::before{content:"";position:absolute}
+.split.v::before{top:0;bottom:0;left:-4px;right:-4px}
+.split.h::before{left:0;right:0;top:-4px;bottom:-4px}
+.split:hover,.split.drag{background:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.ratio{position:absolute;font:600 11px var(--mono);color:var(--accent);background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:1px 6px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:2}
+.split.v .ratio{top:8px;left:50%;transform:translateX(-50%)}
+.split.h .ratio{left:12px;top:50%;transform:translateY(-50%)}
+.split.drag .ratio,.split:hover .ratio{opacity:1}
+.dtab{display:none} .dtab.on{display:block}
+.tabs span{cursor:pointer}
+.chat{display:flex;flex-direction:column;gap:6px;font-size:12px}
+.bub{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start}
+.bub .av{width:28px;height:28px;border-radius:50%;background:var(--panel2);color:var(--ink2);font-size:15px;display:grid;place-items:center;line-height:1}
+.bub .bd{background:var(--panel2);border-radius:10px;border-top-left-radius:3px;padding:6px 10px;max-width:92%}
+.bub .nm{font-weight:600;font-size:11px;margin-bottom:2px;display:flex;gap:6px;align-items:baseline}
+.bub .nm .t{color:var(--ink3);font-weight:400;font-family:var(--mono);font-size:10px}
+.bub.mod .av{background:var(--accent-soft);color:var(--accent)} .bub.mod .bd{border:1px solid var(--accent-soft)}
+.bub.me{grid-template-columns:1fr 28px} .bub.me .av{order:2;background:var(--accent-soft)}
+.bub.me .bd{order:1;justify-self:end;background:var(--accent);color:#fff;border-radius:10px;border-top-right-radius:3px}
+.bub.me .nm .t{color:rgba(255,255,255,.7)}
+.typing{display:inline-flex;gap:3px;align-items:center;padding:4px 0}
+.typing i{width:5px;height:5px;border-radius:50%;background:var(--ink3);animation:tp 1s infinite}
+.typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+@keyframes tp{0%,100%{opacity:.3}50%{opacity:1}}
+.quick{display:flex;gap:6px;margin:8px 0 6px;flex-wrap:wrap}
+.quick span{border:1px solid var(--line);border-radius:12px;padding:2px 10px;font-size:11px;color:var(--ink2);cursor:pointer}
+.quick span.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.compose{display:flex;gap:6px;border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:var(--bg);font-size:12px;align-items:center}
+.compose .ph2{flex:1;color:var(--ink3)}
+.compose .send{background:var(--accent);color:#fff;border-radius:4px;padding:3px 10px;font-weight:600;font-size:11px}
+.live{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--up)}
+.live i{width:6px;height:6px;border-radius:50%;background:var(--up);animation:tp 1.2s infinite}
+.flash{transition:background .4s;border-radius:4px;padding:0 4px;margin-left:-4px} .flash.up{background:color-mix(in srgb,var(--up) 18%,transparent)} .flash.down{background:color-mix(in srgb,var(--down) 18%,transparent)}
+.app{position:relative}
+.modal{position:absolute;width:340px;max-width:calc(100% - 24px);background:var(--panel);border-radius:8px;z-index:20;
+  box-shadow:0 0 0 2px var(--mcol),0 0 18px 2px color-mix(in srgb,var(--mcol) 45%,transparent),0 16px 40px rgba(0,0,0,.25);font-size:12px}
+.modal.buy{--mcol:var(--up)} .modal.sell{--mcol:var(--down)}
+.modal .mh{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:move;user-select:none;border-bottom:1px solid var(--line)}
+.modal .mh b{color:var(--mcol);font-size:14px}
+.modal .mh .x{margin-left:auto;color:var(--ink3);cursor:pointer;font-size:14px;padding:0 4px}
+.modal .mb{padding:10px 12px;display:grid;gap:8px}
+.mlive{display:flex;align-items:baseline;gap:8px;background:var(--panel2);border-radius:6px;padding:6px 10px}
+.mlive .num:first-child{font-size:22px;font-weight:600}
+.mform{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center}
+.mform label{color:var(--ink2)}
+.mform .inp{display:flex;justify-content:space-between}
+.mform .inp span:first-child{color:var(--ink3);font-size:11px}
+.mguard{background:var(--accent-soft);color:var(--accent);border-radius:4px;padding:5px 8px;font-size:11px}
+.mguard.no{background:var(--warn-soft);color:var(--warn)}
+.mbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mbtn{border-radius:5px;padding:9px 6px;text-align:center;font-weight:700;color:#fff;background:var(--mcol);cursor:pointer;line-height:1.2}
+.mbtn small{display:block;font-weight:400;font-size:10px;opacity:.85}
+.mbtn.now{background:transparent;color:var(--mcol);border:2px solid var(--mcol)}
+.confirm{position:absolute;inset:0;background:transparent;display:grid;place-items:center;z-index:30}
+.confirm .cbox{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;width:300px;box-shadow:0 16px 40px rgba(0,0,0,.3);font-size:12px}
+.confirm .cbox b{display:block;font-size:13px;margin-bottom:6px}
+.confirm .cb{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.confirm .cb span{padding:5px 12px;border-radius:4px;border:1px solid var(--line);cursor:pointer}
+.confirm .cb span.ok{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.obtns{display:flex;gap:8px;margin-top:6px}
+.obtns .btn{cursor:pointer}
+.stage{display:flex;overflow:hidden;position:relative;height:760px;background:var(--line);gap:0}
+.drawer{flex:0 0 0px;overflow:hidden;background:var(--panel);display:flex;flex-direction:column;min-width:0;transition:flex-basis .22s ease;white-space:nowrap}
+.stage.open .drawer{flex:0 0 var(--dw,30%)}
+.stage .split.dsp{display:none} .stage.open .split.dsp{display:block}
+.stage .grid{flex:0 0 100%;height:100%;transition:margin-left .22s ease}
+.rdrawer{flex:0 0 0px;overflow:hidden;background:var(--panel);display:flex;flex-direction:column;min-width:0;transition:flex-basis .22s ease;white-space:nowrap}
+.stage.ropen .rdrawer{flex:0 0 var(--rw,25%)}
+.stage.ropen .grid{margin-left:calc(-1 * var(--rw,25%))}
+.stage .split.rsp{display:none} .stage.ropen .split.rsp{display:block}
+.cdrawer{flex:0 0 0px;overflow:hidden;background:var(--panel);display:flex;flex-direction:column;min-width:0;transition:flex-basis .22s ease;white-space:nowrap}
+.stage.copen .cdrawer{flex:0 0 var(--cw,28%)}
+.stage .split.csp{display:none} .stage.copen .split.csp{display:block}
+.cbtn{font-size:11px;padding:0 5px;border-radius:3px;border:1px solid var(--line);color:var(--ink3);cursor:pointer;margin-left:6px;background:var(--panel)}
+.cbtn:hover{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.cdrawer .dh b{overflow:hidden;text-overflow:ellipsis}
+.cm{list-style:none;margin:0;padding:0 10px 10px;overflow:auto;flex:1;font-size:12px;white-space:normal}
+.cm h4{margin:12px 2px 6px;font-size:11px;color:var(--ink3);font-weight:600}
+.cm .lnk{display:flex;flex-wrap:wrap;gap:6px}
+.cm .lnk span{padding:4px 9px;border:1px solid var(--line);border-radius:6px;cursor:pointer;font-size:11px;background:var(--panel)}
+.cm .lnk span:hover{border-color:var(--accent);color:var(--accent)}
+.cm .sum{background:var(--bg);border-radius:6px;padding:8px 10px;line-height:1.5}
+.cm .post{padding:8px 0;border-bottom:1px solid var(--line)}
+.cm .post .t{font-weight:600}
+.cm .post .o{display:none;color:var(--ink2);font-style:italic}
+.cm .post.orig .o{display:block} .cm .post.orig .t{display:none}
+.cm .post .meta{font-size:10px;color:var(--ink3);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap}
+.cm .post .meta .tgl{cursor:pointer;color:var(--accent)}
+.cm .memo{background:var(--accent-soft);border-radius:8px;padding:7px 10px;margin-top:6px}
+.cm .memo b{font-size:11px;color:var(--accent);margin-right:6px}
+.cm .minput{margin-top:8px;border:1px solid var(--line);border-radius:6px;padding:7px 10px;color:var(--ink3);display:flex;gap:8px}
+.cm .minput span:last-child{margin-left:auto;color:var(--accent);font-weight:600}
+.rk{list-style:none;margin:0;padding:0 6px 6px;overflow:auto;flex:1;font-size:12px}
+.rk h4{margin:10px 8px 4px;font-size:11px;color:var(--ink3);font-weight:600;display:flex;gap:6px;align-items:center}
+.rk h4 .tg{margin-left:auto}
+.rk li{display:grid;grid-template-columns:18px 1fr auto;gap:0 8px;padding:6px 8px;border-radius:5px;cursor:pointer;align-items:center}
+.rk li:hover{background:var(--panel2)} .rk li.on{background:var(--accent-soft)}
+.rk li>span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rk .pr{text-align:right} .rk .pr .num{display:block}
+.rk .no{font-family:var(--mono);font-weight:700;color:var(--ink2);font-size:11px;text-align:center}
+.rk .mv{font-size:9px;font-family:var(--mono);margin-left:4px;padding:0 3px;border-radius:2px}
+.rk .mv.u{color:var(--up);background:var(--up-soft,#fbe3e5)} .rk .mv.d{color:var(--down);background:#dfe9fa} .rk .mv.n{color:var(--accent);background:var(--accent-soft)}
+.rk .rs{font-size:10px;color:var(--ink3)}
+.rk li.flash{animation:rkflash .6s}@keyframes rkflash{from{background:var(--accent-soft)}to{background:transparent}}
+.cdrawer .dh,.rdrawer .dh,.drawer .dh{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px}
+.cdrawer .dh b,.rdrawer .dh b,.drawer .dh b{flex:1}
+.cdrawer .dh .x,.rdrawer .dh .x,.drawer .dh .x{color:var(--ink3);cursor:pointer;font-size:14px}
+.cdrawer .grp,.rdrawer .grp,.drawer .grp{display:flex;gap:4px;padding:8px 12px;font-size:11px;flex-wrap:wrap}
+.cdrawer .grp span,.rdrawer .grp span,.drawer .grp span{padding:2px 8px;border-radius:10px;background:var(--panel2);color:var(--ink2);cursor:pointer}
+.cdrawer .grp span.on,.rdrawer .grp span.on,.drawer .grp span.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.wl{list-style:none;margin:0;padding:0 6px;overflow:auto;flex:1;font-size:12px}
+.wl li{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 8px;border-radius:5px;cursor:pointer}
+.wl li:hover{background:var(--panel2)} .wl li.on{background:var(--accent-soft)}
+.wl .nm{font-weight:600} .wl .cd{color:var(--ink3);font-size:10px;font-family:var(--mono)}
+.wl .pr{text-align:right} .wl .pr .num{display:block}
+.wl .tg{font-size:9px;padding:0 4px;border-radius:2px;background:var(--panel2);color:var(--ink2);margin-left:4px}
+.cdrawer .df,.rdrawer .df,.drawer .df{padding:8px 12px;border-top:1px solid var(--line);font-size:11px;color:var(--ink2);display:flex;gap:8px}
+.symname{font-size:14px;color:var(--ink);font-weight:700}
+.wlbtn{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:3px 9px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink)}
+.wlbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.pop{position:absolute;top:40px;left:120px;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.2);z-index:16;font-size:12px}
+.pop .pi{margin:8px;border:1px solid var(--accent);border-radius:4px;padding:6px 8px;color:var(--ink3)}
+.pop ul{list-style:none;margin:0;padding:0 8px 8px}
+.pop li{display:flex;justify-content:space-between;padding:5px 6px;border-radius:4px;cursor:pointer}
+.pop li:hover{background:var(--panel2)} .pop li span:last-child{color:var(--ink3);font-family:var(--mono);font-size:10px}
+.ovw{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:12px;margin-bottom:8px}
+.ovw dt{color:var(--ink2)} .ovw dd{margin:0}
+.outlook{background:var(--panel2);border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:10px}
+.outlook b{display:block;margin-bottom:2px}
+.themes{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.theme{border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:7px 6px;text-align:center;font-size:12px;font-weight:600;background:transparent}
+.theme small{display:block;font-weight:400;color:var(--ink2);font-size:10px;margin-top:2px}
+.past{border-top:1px dashed var(--line);padding-top:8px;font-size:12px}
+.past .row{display:flex;gap:8px;align-items:center;padding:4px 0}
+.past .row .sp{flex:1}
+.resume{border:1px solid var(--line);border-radius:3px;padding:1px 8px;font-size:11px;color:var(--ink2);background:var(--panel)}
+.pane{background:var(--panel);padding:12px 14px;position:relative;cursor:pointer;outline:2px solid transparent;outline-offset:-2px;transition:outline-color .15s}
+.pane:hover,.pane.on{outline-color:var(--accent)}
+.pane:focus-visible{outline-color:var(--accent)}
+.pane .mark{position:absolute;top:8px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font:600 12px var(--mono);display:grid;place-items:center}
+.ph{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.ph b{font-size:13px}
+.ph .small{margin-left:auto;margin-right:30px}
+#p-chart{display:flex;flex-direction:column} .chart{flex:1;min-height:0;position:relative} .chart svg{width:100%;height:100%;display:block}
+.chart #lineChart{display:none}.chart.simple #lineChart{display:block}.chart.simple #candleChart{display:none}
+.dtog{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--ink3);cursor:pointer;user-select:none}
+.dtog i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--ink3);display:grid;place-items:center;font-size:9px;font-style:normal;color:transparent}
+.dtog input{display:none}.dtog input:checked~i{background:var(--accent);border-color:var(--accent);color:#fff}.dtog input:checked~span{color:var(--accent)}
+.ma{font-family:var(--mono);font-size:10px;color:var(--ink3)}.ma b{margin-left:3px}
+#tabsS,#tabsD{display:none}.ph.simple #tabsS{display:flex}.ph:not(.simple) #tabsD{display:flex}.ph:not(.simple) .ma{display:inline}.ph.simple .ma{display:none}
+.tabs{display:flex;gap:2px;font-size:12px;margin-bottom:8px}
+.tabs span{padding:3px 9px;border-radius:3px;background:var(--panel2);color:var(--ink2)}
+.tabs span.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.pricebig{display:flex;align-items:baseline;gap:10px;margin:4px 0 8px}
+.pricebig .num{font-size:30px;font-weight:600}
+.book{width:100%;border-collapse:collapse;font-size:12px}
+.book td{padding:2px 4px;border-bottom:1px dashed var(--line)}
+.book td:first-child{color:var(--ink2)}
+.book td:nth-child(2){text-align:right;width:40%}
+.book td:nth-child(3){text-align:right;color:var(--ink2)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:12px;margin-top:8px}
+.kv dt{color:var(--ink2)} .kv dd{margin:0;text-align:right}
+.orderrow{display:grid;grid-template-columns:1.1fr 1fr;gap:16px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:12px}
+.form label{color:var(--ink2)}
+.inp{border:1px solid var(--line);border-radius:4px;padding:5px 8px;background:var(--bg);text-align:right}
+.btns{grid-column:1 / -1;display:flex;gap:8px;margin-top:4px}
+.btn{flex:1;border-radius:4px;padding:8px;text-align:center;font-weight:600;font-size:13px;color:#fff}
+.btn.buy{background:var(--up)} .btn.sell{background:var(--down)}
+.guard{grid-column:1/-1;background:var(--warn-soft);color:var(--warn);border-radius:4px;padding:6px 9px;font-size:12px}
+.hold{width:100%;border-collapse:collapse;font-size:12px}
+.hold th{text-align:left;color:var(--ink3);font-weight:500;border-bottom:1px solid var(--line);padding:2px 4px}
+.hold td{padding:3px 4px;border-bottom:1px dashed var(--line)}
+.hold td.r,.hold th.r{text-align:right}
+.orig{font-size:10px;padding:0 5px;border-radius:2px;background:var(--panel2);color:var(--ink2)}
+.verdict{display:flex;align-items:center;gap:10px;background:var(--panel2);border-radius:6px;padding:8px 10px;margin-bottom:8px}
+.verdict .v{font-weight:700;font-size:15px}
+.meter{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;width:62%;background:var(--accent)}
+.msg{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;font-size:12px;margin-bottom:6px}
+.who{font-weight:600;white-space:nowrap}
+.who.mod{color:var(--accent)}
+.msg p{margin:0;color:var(--ink)}
+.msg .m{color:var(--ink3);font-size:10px;font-family:var(--mono)}
+.deep{border-top:1px dashed var(--line);margin-top:8px;padding-top:8px;font-size:12px;color:var(--ink2);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.status{display:flex;gap:16px;padding:5px 14px;background:var(--panel);border-top:1px solid var(--line);font-size:11px;color:var(--ink2);flex-wrap:wrap}
+
+/* ===== 국민연금 해외투자 현황 모달 (F13) ===== */
+.wlbtn{position:relative}
+.wlbtn .bdg{position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--up);border:2px solid var(--panel);display:none}
+.wlbtn.new .bdg{display:block}
+.modal.nps{--mcol:var(--accent);width:760px;max-width:calc(100% - 24px);max-height:calc(100% - 24px);display:flex;flex-direction:column}
+.modal.nps[hidden]{display:none}
+.modal.nps .mh .sub{color:var(--ink2);font-size:11px}
+.modal.nps .mh .sp{flex:1}
+.modal.nps .mh .chk{border:1px solid var(--line);border-radius:3px;padding:1px 8px;font-size:11px;color:var(--ink2);cursor:pointer;background:var(--panel)}
+.modal.nps .mb{gap:8px;overflow:auto;min-height:0}
+.nsum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.nsum div{background:var(--panel2);border-radius:6px;padding:6px 10px}
+.nsum b{display:block;font-size:11px;color:var(--ink2);font-weight:500}
+.nsum .num{font-size:16px;font-weight:600}
+.nsum .sm{font-size:10px;color:var(--ink3)}
+.nbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nbar .tabs{margin:0}
+.nbar .sp{flex:1}
+.nbar .srch{border:1px solid var(--line);border-radius:4px;padding:3px 8px;color:var(--ink3);min-width:140px;background:var(--bg)}
+.nbar .sel{border:1px solid var(--line);border-radius:4px;padding:3px 8px;color:var(--ink2);background:var(--panel);cursor:pointer}
+.ntab{display:none}.ntab.on{display:block}
+.npst{width:100%;border-collapse:collapse;font-size:12px}
+.npst th{text-align:left;color:var(--ink3);font-weight:500;border-bottom:1px solid var(--line);padding:3px 4px;font-size:11px;background:var(--panel)}
+.npst td{padding:4px;border-bottom:1px dashed var(--line);white-space:nowrap}
+.npst td.r,.npst th.r{text-align:right}
+.npst tr.mine td{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.npst tr[data-code]:hover td{background:var(--panel2);cursor:pointer}
+.npst .tk{font-family:var(--mono);font-size:10px;color:var(--ink3);margin-left:5px}
+.npst .pp{font-size:10px;color:var(--ink3);margin-left:2px}
+.nchg h4{margin:8px 0 4px;font-size:11px;color:var(--ink3);font-weight:600}
+.nchg h4 .small{font-weight:400;margin-left:4px}
+.nfoot{font-size:11px;color:var(--ink3);display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:6px}
+.nfoot a{color:var(--accent);text-decoration:none}
+.toast{position:absolute;right:14px;bottom:40px;z-index:25;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.2);padding:9px 12px;font-size:12px;display:flex;gap:10px;align-items:center;max-width:440px}
+.toast[hidden]{display:none}
+.toast b{color:var(--accent)}
+.toast .sub{color:var(--ink2);font-size:11px;display:block}
+.toast .go{border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:2px 9px;font-size:11px;cursor:pointer;white-space:nowrap}
+.toast .x{color:var(--ink3);cursor:pointer}
+.flow{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+.flow th,.flow td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:top}
+.flow th{color:var(--ink3);font-weight:500;font-size:12px}
+@media (max-width:600px){.nsum{grid-template-columns:1fr 1fr}}
+
+/* ===== 주석 ===== */
+.notes{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.note{border:1px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--panel);font-size:13px;transition:border-color .15s}
+.note.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.note h3{margin:0 0 6px;font-size:14px;display:flex;align-items:center;gap:8px}
+.note h3 i{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font:600 11px var(--mono);display:grid;place-items:center;font-style:normal}
+.note p{margin:0 0 6px;color:var(--ink2)}
+.note ul{margin:4px 0 0;padding-left:18px;color:var(--ink)}
+.note li{margin:2px 0}
+.sketch{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.sketch table{width:100%;border-collapse:collapse;font-size:13px}
+.sketch td,.sketch th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.sketch th{color:var(--ink3);font-weight:500;font-size:12px}
+.mini{border:1px solid var(--line);border-radius:6px;padding:10px;background:var(--panel)}
+.mini .g{display:grid;grid-template-columns:3fr 2fr;grid-template-rows:1fr 1fr;gap:4px;height:180px}
+.mini .g div{border:1px dashed var(--ink3);border-radius:3px;display:grid;place-items:center;font-size:12px;color:var(--ink2)}
+.mini .g div:nth-child(1){grid-row:1} .mini .g div:nth-child(2){grid-row:1} .mini .g div:nth-child(3){grid-row:2} .mini .g div:nth-child(4){grid-row:2}
+.screens{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.scr{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--panel);font-size:13px}
+.scr b{display:block;margin-bottom:3px}
+.scr span{color:var(--ink2);font-size:12px}
+.rules{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 24px;font-size:13px}
+.rules div{display:grid;grid-template-columns:auto 1fr;gap:10px}
+.rules b{color:var(--accent);font-weight:600;white-space:nowrap}
+.q{border-left:3px solid var(--warn);padding:8px 12px;background:var(--panel);font-size:13px;margin-top:8px}
+.q ol{margin:6px 0 0;padding-left:20px}
+@media (max-width:600px){
+  .stage{height:auto;display:block} .stage .grid{flex:none}
+  .grid{flex-direction:column;height:auto}
+  .col.l,.col.r{flex:0 0 auto}
+  #p-chart,#p-order,#p-price,#p-debate{flex:0 0 auto;overflow:visible}
+  .split{display:none}
+  .themes{grid-template-columns:1fr}
+  .notes,.sketch,.screens,.rules,.orderrow{grid-template-columns:1fr}
+  .ph .small{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<p class="eyebrow">Stockholm · 화면 설계 초안 v16 · 2026-09-24 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
+<h1>메인 화면 레이아웃</h1>
+<p class="lede">스케치의 네 영역 — 차트 · 가격 · 매수/매도 정보 · 토론 창(미러피시) — 을 그대로 배치한 초안입니다. 기본 비율은 좌우 6:4, 왼쪽 열의 차트:주문 7:3, 오른쪽 열의 가격:토론 4:6이며, 세 구분선을 드래그해 바꿀 수 있습니다(더블클릭으로 복원). 아래 목업의 각 영역을 클릭하면 해당 영역의 설명이 강조됩니다. 목업 안의 숫자와 종목은 모두 예시 값입니다.</p>
+
+<!-- ===================== 메인 목업 ===================== -->
+<div class="app" id="app">
+  <div class="topbar">
+    <span class="brand">Stockholm</span>
+    <span class="small" id="symbtn" style="cursor:pointer" title="종목 검색 (⌘K)"><b class="symname">삼성전자</b> <span class="num">005930</span> · KOSPI ▾</span>
+    <button class="wlbtn" id="cmbtn" type="button" title="종목 커뮤니티 열기 (⌘U)">💬 커뮤니티</button>
+    <button class="wlbtn" id="wlbtn" type="button" title="관심종목 열기 (⌘L)">☰ 관심종목</button>
+    <button class="wlbtn" id="rkbtn" type="button" title="실시간 급등락 열기 (⌘J)">⚡ 실시간 급등락</button>
+    <button class="wlbtn" id="npsbtn" type="button" title="국민연금 해외투자 현황 (⌘N)">🏛️ 국민연금<i class="bdg" aria-hidden="true"></i></button>
+    <span class="sp"></span>
+    <span class="mk"><i class="dot"></i>KR 정규장</span>
+    <span class="mk"><i class="dot off"></i>US 개장 전 22:30</span>
+    <span class="small">자동화: 국내 <b>모의 실행</b> · 해외 <b>꺼짐</b></span>
+    <span class="small">admin</span>
+    <button class="kill" type="button">전체 정지</button>
+  </div>
+
+  <div class="stage" id="stage">
+  <div class="cdrawer" id="cdrawer" aria-label="종목 커뮤니티">
+    <div class="dh"><b>💬 커뮤니티 · <span id="cmsym">삼성전자</span></b><span class="small" id="cmmkt">KR · 링크아웃</span><span class="x" id="cx">✕</span></div>
+    <div class="grp"><span class="on">피드</span><span>링크</span><span>가족 메모</span></div>
+    <ul class="cm" id="cm">
+      <h4>바로 가기 (외부 브라우저)</h4>
+      <div class="lnk"><span>네이버 종목토론실 ↗</span><span>토스 앱에서 보기 ↗</span><span id="cmus1">Reddit 검색 ↗</span><span id="cmus2">Yahoo 토론 ↗</span></div>
+      <h4>오늘 이 종목 여론 <span class="tg ok">미국 종목 · Reddit 공식 API</span></h4>
+      <div class="sum" id="cmsum">국내 종목은 공식 API로 원문을 가져올 커뮤니티가 없어 요약·피드를 제공하지 않습니다. 위 링크로 이동하세요.</div>
+      <div id="cmfeed" hidden>
+      <h4>Reddit 게시글 <span class="small">r/stocks · r/wallstreetbets · 최근 24시간 · 자동 번역</span></h4>
+      <div class="post"><div class="t">GRML 3분기 생산량 가이던스 상향 — 지금 진입은 늦은 건가요?</div><div class="o">GRML raised Q3 production guidance — am I too late to the party?</div><div class="meta"><span>r/stocks</span><span>▲ 412</span><span>댓글 88</span><span>2시간 전</span><span class="tgl">원문 보기</span></div></div>
+      <div class="post"><div class="t">직접 조사(DD): 희토류 규제 변화가 GRML에 유리한 세 가지 이유</div><div class="o">DD: three reasons the rare-earth rule change favors GRML</div><div class="meta"><span>r/wallstreetbets</span><span>▲ 1.2k</span><span>댓글 240</span><span>5시간 전</span><span class="tgl">원문 보기</span></div></div>
+      <div class="post"><div class="t">물린 사람들 모여라 — 21달러 평단, 존버 중</div><div class="o">Bagholders unite — avg $21, diamond hands</div><div class="meta"><span>r/wallstreetbets</span><span>▲ 96</span><span>댓글 31</span><span>7시간 전</span><span class="tgl">원문 보기</span></div></div>
+      </div>
+      <h4>가족 메모 <span class="small">종목 기록만 공유 · 수량·금액 제외</span></h4>
+      <div class="memo"><b>윤선</b>HBM 인증 뉴스 나오면 분할 1차 들어갈 생각. 74,000 아래 대기.</div>
+      <div class="memo"><b>지민</b>9/22 산업 동향 토론 결론 "비중 확대"였음. 실적 발표(10월 초) 전까지 관망.</div>
+      <div class="minput"><span>이 종목에 메모 남기기…</span><span>저장</span></div>
+    </ul>
+    <div class="df"><span>피드·번역은 미국 종목만(공식 API)</span><span>·</span><span>번역: 로컬 LLM, 원문은 토글</span></div>
+  </div>
+  <div class="split v csp" data-axis="cw" role="separator" aria-orientation="vertical" aria-label="커뮤니티 폭 조절" title="드래그로 폭 조절 · 더블클릭으로 28% 복원"><span class="ratio">28%</span></div>
+  <div class="drawer" id="drawer" aria-label="관심종목">
+    <div class="dh"><b>관심종목</b><span class="small">4그룹 · 12</span><span class="x" id="dx">✕</span></div>
+    <div class="grp"><span class="on">전체</span><span>반도체</span><span>배당</span><span>US</span><span>+</span></div>
+    <ul class="wl">
+      <li class="on"><span><span class="nm">삼성전자</span> <span class="cd">005930</span><span class="cbtn" title="커뮤니티">💬</span><span class="tg">보유</span></span><span class="pr"><span class="num up">74,300</span><span class="num up small">+1.50%</span></span></li>
+      <li><span><span class="nm">SK하이닉스</span> <span class="cd">000660</span><span class="cbtn" title="커뮤니티">💬</span><span class="tg">보유</span></span><span class="pr"><span class="num down">186,100</span><span class="num down small">−1.12%</span></span></li>
+      <li><span><span class="nm">NAVER</span> <span class="cd">035420</span><span class="cbtn" title="커뮤니티">💬</span><span class="tg">보유</span></span><span class="pr"><span class="num up">205,300</span><span class="num up small">+0.39%</span></span></li>
+      <li><span><span class="nm">한미반도체</span> <span class="cd">042700</span><span class="cbtn" title="커뮤니티">💬</span><span class="tg">토론 중</span></span><span class="pr"><span class="num up">118,400</span><span class="num up small">+4.21%</span></span></li>
+      <li><span><span class="nm">현대차</span> <span class="cd">005380</span><span class="cbtn" title="커뮤니티">💬</span></span><span class="pr"><span class="num down">241,000</span><span class="num down small">−0.62%</span></span></li>
+      <li><span><span class="nm">KB금융</span> <span class="cd">105560</span><span class="cbtn" title="커뮤니티">💬</span></span><span class="pr"><span class="num up">92,700</span><span class="num up small">+0.87%</span></span></li>
+      <li><span><span class="nm">NVIDIA</span> <span class="cd">NVDA</span><span class="cbtn" title="커뮤니티">💬</span><span class="tg">US</span></span><span class="pr"><span class="num">$182.44</span><span class="num small" style="color:var(--ink3)">개장 전</span></span></li>
+      <li><span><span class="nm">Apple</span> <span class="cd">AAPL</span><span class="cbtn" title="커뮤니티">💬</span><span class="tg">US</span></span><span class="pr"><span class="num">$246.10</span><span class="num small" style="color:var(--ink3)">개장 전</span></span></li>
+    </ul>
+    <div class="df"><span>드래그로 순서 변경</span><span>·</span><span>우클릭: 그룹 이동 · 삭제</span></div>
+  </div>
+  <div class="split v dsp" data-axis="dw" role="separator" aria-orientation="vertical" aria-label="관심종목 폭 조절" title="드래그로 폭 조절 · 더블클릭으로 30% 복원"><span class="ratio">30%</span></div>
+  <div class="grid" id="grid">
+  <div class="col l" id="colL">
+    <div class="pane" id="p-chart" data-n="1" tabindex="0">
+      <span class="mark">1</span>
+      <div class="ph" id="chartHd"><b>차트</b>
+        <label class="dtog" title="켜면 캔들·이동평균·거래량, 끄면 실시간 선 차트. 설정은 종목 변경·재시작 후에도 유지"><input type="checkbox" id="detail"><i>✓</i><span>자세한 차트</span></label>
+        <div class="tabs" id="tabsS"><span class="on">☀ 장중</span><span>1일</span><span>1주</span><span>3달</span><span>1년</span><span>5년</span><span>전체</span></div>
+        <div class="tabs" id="tabsD"><span>10분 ▾</span><span class="on">일</span><span>주</span><span>월</span><span>년</span></div>
+        <span class="small"><span class="live"><i></i>실시간</span> <span class="ma">이동평균선<b style="color:#1fa463">5</b><b style="color:var(--up)">20</b><b style="color:var(--warn)">60</b><b style="color:#8e44ad">120</b></span></span></div>
+      <div class="chart" id="chartBox">
+        <svg id="lineChart" viewBox="0 0 640 260" role="img" aria-label="장중 선 차트 예시">
+          <line id="lPrevLn" x1="0" y1="150" x2="590" y2="150" stroke="var(--line)" stroke-width="1"/>
+          <text id="lPrevTx" x="596" y="154" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink3)">전일</text>
+          <path id="lArea" fill="var(--up)" opacity=".08"/>
+          <path id="lPath" fill="none" stroke="var(--up)" stroke-width="1.8" stroke-linejoin="round"/>
+          <line id="lNow" x1="0" y1="0" x2="590" y2="0" stroke="var(--ink3)" stroke-dasharray="4 4" opacity=".7"/>
+          <circle id="lHalo" r="9" fill="var(--up)" opacity=".18"/><circle id="lDot" r="4" fill="var(--up)"/>
+          <g font-family="IBM Plex Sans KR, sans-serif" font-size="10" font-weight="600">
+            <text id="lHi" fill="var(--up)"></text><text id="lLo" fill="var(--down)"></text>
+          </g>
+          <rect id="lTagBg" x="592" width="48" height="16" rx="3" fill="var(--up)"/><text id="lTag" x="616" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#fff"></text>
+          <g id="lTime" font-family="JetBrains Mono, monospace" font-size="9" fill="var(--ink3)"><text x="8">09:00</text><text x="200">11:00</text><text x="390">13:00</text><text x="560" id="lClk">15:02</text></g>
+          <text id="lBuy" x="330" font-family="IBM Plex Sans KR, sans-serif" font-size="9" font-weight="600" fill="var(--up)">▲ 매수 11:03</text>
+        </svg>
+        <svg id="candleChart" viewBox="0 0 640 260" role="img" aria-label="일봉 차트 예시">
+          <g id="cGrid" stroke="var(--line)" stroke-width="1"></g>
+          <g id="cAxis" font-family="JetBrains Mono, monospace" font-size="10" fill="var(--ink3)"></g>
+          <g id="candles"></g>
+          <path id="ma5" fill="none" stroke="#1fa463" stroke-width="1.3"/>
+          <path id="ma20" fill="none" stroke="var(--up)" stroke-width="1.3"/>
+          <path id="ma60" fill="none" stroke="var(--warn)" stroke-width="1.3"/>
+          <path id="ma120" fill="none" stroke="#8e44ad" stroke-width="1.3"/>
+          <g id="vol"></g>
+          <g font-family="JetBrains Mono, monospace" font-size="9" font-weight="600"><text id="cHi" fill="var(--up)" text-anchor="middle"></text><text id="cLo" fill="var(--down)" text-anchor="middle"></text></g>
+          <line id="cNow" x1="0" y1="0" x2="590" y2="0" stroke="var(--up)" stroke-dasharray="3 3" opacity=".7"/>
+          <rect id="cTagBg" x="592" width="48" height="16" rx="3" fill="var(--up)"/><text id="cTag" x="616" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" font-weight="700" fill="#fff"></text>
+          <g id="markers" font-family="IBM Plex Sans KR, sans-serif" font-size="9"></g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="split h" data-axis="lt" role="separator" aria-orientation="horizontal" aria-label="차트/주문 높이 조절" title="드래그로 높이 조절 · 더블클릭으로 7:3 복원"><span class="ratio">70 : 30</span></div>
+    <div class="pane" id="p-order" data-n="3" tabindex="0">
+      <span class="mark">3</span>
+      <div class="ph"><b>매수 · 매도</b><span class="small">계좌 ···1234 · 예수금 <span class="num">18,420,000</span></span></div>
+      <div class="orderrow">
+        <div>
+          <dl class="kv" style="margin:0">
+            <dt>현재가</dt><dd class="num up" id="px2">74,300</dd>
+            <dt>매수 가능</dt><dd class="num">18,420,000</dd>
+            <dt>보유 · 매도 가능</dt><dd class="num">120 · 120</dd>
+            <dt>종목 비중</dt><dd class="num">12.4%</dd>
+          </dl>
+          <div class="obtns"><div class="btn buy" data-side="buy">매수</div><div class="btn sell" data-side="sell">매도</div></div>
+          <p class="small" style="margin:6px 0 0">버튼을 누르면 주문 모달이 열립니다. (목업에서 클릭해 보세요)</p>
+        </div>
+        <div>
+          <table class="hold">
+            <tr><th>보유</th><th class="r">수량</th><th class="r">평단</th><th class="r">손익</th><th></th></tr>
+            <tr><td>삼성전자</td><td class="num r">120</td><td class="num r">71,900</td><td class="num r up">+3.3%</td><td><span class="orig">수동</span></td></tr>
+            <tr><td>SK하이닉스</td><td class="num r">15</td><td class="num r">188,200</td><td class="num r down">−1.1%</td><td><span class="orig">AI 추천</span></td></tr>
+            <tr><td>NAVER</td><td class="num r">8</td><td class="num r">204,500</td><td class="num r up">+0.4%</td><td><span class="orig">자동</span></td></tr>
+          </table>
+          <p class="small" style="margin:8px 0 0">미체결 1건 · 오늘 실현손익 <span class="num up">+41,200</span> · 자동 매수 노출 <span class="num">1,636,000 / 10,000,000</span></p>
+        </div>
+      </div>
+    </div>
+      </div>
+  <div class="split v" data-axis="left" role="separator" aria-orientation="vertical" aria-label="좌우 비율 조절" title="드래그로 비율 조절 · 더블클릭으로 6:4 복원"><span class="ratio">60 : 40</span></div>
+  <div class="col r" id="colR">
+    <div class="pane" id="p-price" data-n="2" tabindex="0">
+      <span class="mark">2</span>
+      <div class="ph"><b>가격</b><span class="small"><span class="live"><i></i>실시간</span> · <span id="clock" class="num">15:02:41</span></span></div>
+      <div class="pricebig flash" id="pbox"><span class="num up" id="px">74,300</span><span class="num up" id="pchg">▲ 1,100 (+1.50%)</span></div>
+      <table class="book">
+        <tr><td>매도 3</td><td class="num down">74,600</td><td class="num">18,210</td></tr>
+        <tr><td>매도 2</td><td class="num down">74,500</td><td class="num">31,004</td></tr>
+        <tr><td>매도 1</td><td class="num down">74,400</td><td class="num">42,880</td></tr>
+        <tr><td>매수 1</td><td class="num up">74,300</td><td class="num">39,120</td></tr>
+        <tr><td>매수 2</td><td class="num up">74,200</td><td class="num">27,551</td></tr>
+        <tr><td>매수 3</td><td class="num up">74,100</td><td class="num">15,930</td></tr>
+      </table>
+      <dl class="kv">
+        <dt>거래량</dt><dd class="num">12,481,200</dd>
+        <dt>거래대금</dt><dd class="num">9,214억</dd>
+        <dt>시 / 고 / 저</dt><dd class="num">73,400 / 74,800 / 73,100</dd>
+        <dt>종목 상태</dt><dd><span class="tag ok">정상</span></dd>
+      </dl>
+    </div>
+
+    <div class="split h" data-axis="rt" role="separator" aria-orientation="horizontal" aria-label="가격/토론 높이 조절" title="드래그로 높이 조절 · 더블클릭으로 4:6 복원"><span class="ratio">40 : 60</span></div>
+    <div class="pane" id="p-debate" data-n="4" tabindex="0">
+      <span class="mark">4</span>
+      <div class="ph"><b>토론</b><div class="tabs" id="dtabs"><span data-t="ov">개요</span><span class="on" data-t="live">진행 중</span><span data-t="hist">기록 3</span></div></div>
+
+      <div class="dtab" data-t="ov">
+      <dl class="ovw">
+        <dt>업종</dt><dd>반도체 · 메모리</dd>
+        <dt>시가총액</dt><dd class="num">443조</dd>
+        <dt>PER / PBR</dt><dd class="num">11.2 / 1.3</dd>
+        <dt>배당수익률</dt><dd class="num">1.9%</dd>
+        <dt>최근 공시</dt><dd>3분기 잠정실적 예고 (10/8)</dd>
+        <dt>종목 상태</dt><dd><span class="tag ok" style="margin:0">정상</span></dd>
+        <dt>국민연금 보유</dt><dd id="npsov"><span class="small">해외 종목만 제공</span></dd>
+      </dl>
+      <div class="outlook"><b>전망 요약 <span class="small num">09/21 갱신 · 매주 자동</span></b>메모리 가격 반등과 HBM 수요로 실적 개선 기대. 74,800 저항과 환율이 단기 변수.<span style="color:var(--ink3);font-family:var(--mono);font-size:10px"> [S1][S2]</span></div>
+      <div class="themes">
+        <div class="theme">매수 토론<small>지금 사도 되는가</small></div>
+        <div class="theme">매도 토론<small>보유분을 팔 때인가</small></div>
+        <div class="theme">산업 동향<small>업종 전반 → 투자 의견</small></div>
+      </div>
+      <p class="small" style="margin:0">동종 종목 10: SK하이닉스 · 삼성전기 · DB하이텍 · 한미반도체 · 리노공업 · LX세미콘 … <span class="resume">편집</span></p>
+      </div>
+
+      <div class="dtab on" data-t="live">
+      <div class="verdict"><span class="v">매수 토론</span><span class="live"><i></i>심층 · 미러피시 · 3라운드</span><span class="meter"><i style="width:45%"></i></span><span class="small num">03:12</span></div>
+      <div class="chat">
+        <div class="bub"><span class="av">📚</span><div class="bd"><div class="nm">📚 가치투자자 <span class="t">15:03:41</span></div>3분기 컨센서스 상회 가능성이 큽니다. PER 11배는 부담이 없어요. <span style="color:var(--ink3);font-family:var(--mono);font-size:10px">[S1][S3]</span></div></div>
+        <div class="bub"><span class="av">🚀</span><div class="bd"><div class="nm">🚀 모멘텀 트레이더 <span class="t">15:03:52</span></div>거래량은 붙었지만 74,800을 아직 못 넘었습니다. 돌파 확인 전 추격은 반대. <span style="color:var(--ink3);font-family:var(--mono);font-size:10px">[S2]</span></div></div>
+        <div class="bub me"><span class="av">🙋</span><div class="bd"><div class="nm">🙋 나 · 반박 <span class="t">15:04:10</span></div>10/8 잠정실적 전에 선반영이 이미 시작된 것 아닌가요? 돌파를 기다리면 늦을 것 같습니다.</div></div>
+        <div class="bub"><span class="av">🛡️</span><div class="bd"><div class="nm">🛡️ 리스크 매니저 <span class="t">15:04:25</span></div>사용자 지적에 일부 동의합니다. 다만 현재 비중 12.4%라 추가 매수는 분할 2회로 제한하는 조건이 붙어야 합니다.</div></div>
+        <div class="bub mod"><span class="av">⚖️</span><div class="bd"><div class="nm">⚖️ 사회자 <span class="t">지금</span></div><span class="typing"><i></i><i></i><i></i></span></div></div>
+      </div>
+      <div class="quick"><span class="on">질문</span><span>반박</span><span>동의</span><span>자료 추가</span><span>결론 요청</span></div>
+      <div class="compose"><span class="ph2">토론에 개입하기…</span><span class="send">보내기</span></div>
+      </div>
+
+      <div class="dtab" data-t="hist">
+      <div class="past" style="border-top:0;padding-top:0">
+        <div class="row"><span class="tag" style="margin:0">매수</span><span>보유 · 확신도 62%</span><span class="small num">09/19 14:58</span><span class="sp"></span><span class="resume">재개</span></div>
+        <div class="row"><span class="tag" style="margin:0">산업</span><span>비중 확대 · 미러피시 심층</span><span class="small num">09/12</span><span class="sp"></span><span class="resume">재개</span></div>
+        <div class="row"><span class="tag" style="margin:0">매도</span><span>보류 · 확신도 48%</span><span class="small num">08/30</span><span class="sp"></span><span class="resume">재개</span></div>
+      </div>
+      <p class="small" style="margin:8px 0 0">재개하면 같은 인격들이 이어갑니다. 페르소나 정의가 바뀌었으면 새 정의로 진행합니다.</p>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div class="split v rsp" data-axis="rw" role="separator" aria-orientation="vertical" aria-label="랭킹 서랍 폭 조절" title="드래그로 폭 조절 · 더블클릭으로 25% 복원"><span class="ratio">25%</span></div>
+  <div class="rdrawer" id="rdrawer" aria-label="실시간 급등락">
+    <div class="dh"><b>⚡ 실시간 급등락</b><span class="small"><span class="live"><i></i>10초 갱신</span> · 15:02:41</span><span class="x" id="rx">✕</span></div>
+    <div class="grp"><span class="on">등락률</span><span>거래량 급증</span><span>체결 강도</span></div>
+    <ul class="rk" id="rk">
+      <h4>🇰🇷 국내 · 급등 <span class="tg ok">정규장</span></h4>
+      <li><span class="no">1</span><span><span class="nm">한미반도체</span> <span class="cd">042700</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv n">NEW</span><span class="tg">토론 중</span><br><span class="rs">거래량 8.2× · 뉴스 2</span></span><span class="pr"><span class="num up">118,400</span><span class="num up small">+4.21%</span></span></li>
+      <li><span class="no">2</span><span><span class="nm">이수페타시스</span> <span class="cd">007660</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑3</span><br><span class="rs">거래량 5.1× · 공시 1</span></span><span class="pr"><span class="num up">41,850</span><span class="num up small">+3.97%</span></span></li>
+      <li><span class="no">3</span><span><span class="nm">HPSP</span> <span class="cd">403870</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓1</span><br><span class="rs">거래량 3.4×</span></span><span class="pr"><span class="num up">38,200</span><span class="num up small">+3.10%</span></span></li>
+      <li><span class="no">4</span><span><span class="nm">두산에너빌리티</span> <span class="cd">034020</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑1</span><br><span class="rs">거래량 2.6× · 뉴스 1</span></span><span class="pr"><span class="num up">21,150</span><span class="num up small">+2.92%</span></span></li>
+      <li><span class="no">5</span><span><span class="nm">리노공업</span> <span class="cd">058470</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓2</span><span class="tg warn">투자경고</span><br><span class="rs">거래량 2.1×</span></span><span class="pr"><span class="num up">196,000</span><span class="num up small">+2.62%</span></span></li>
+      <h4>🇰🇷 국내 · 급락</h4>
+      <li><span class="no">1</span><span><span class="nm">엔씨소프트</span> <span class="cd">036570</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv n">NEW</span><br><span class="rs">거래량 4.4× · 뉴스 3</span></span><span class="pr"><span class="num down">178,500</span><span class="num down small">−5.83%</span></span></li>
+      <li><span class="no">2</span><span><span class="nm">카카오</span> <span class="cd">035720</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑1</span><span class="tg">보유</span><br><span class="rs">거래량 2.9×</span></span><span class="pr"><span class="num down">44,300</span><span class="num down small">−3.70%</span></span></li>
+      <li><span class="no">3</span><span><span class="nm">셀트리온</span> <span class="cd">068270</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓1</span><br><span class="rs">거래량 1.8× · 공시 1</span></span><span class="pr"><span class="num down">171,200</span><span class="num down small">−2.95%</span></span></li>
+      <li><span class="no">4</span><span><span class="nm">에코프로</span> <span class="cd">086520</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑2</span><br><span class="rs">거래량 2.2×</span></span><span class="pr"><span class="num down">62,100</span><span class="num down small">−2.51%</span></span></li>
+      <li><span class="no">5</span><span><span class="nm">LG화학</span> <span class="cd">051910</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓3</span><br><span class="rs">거래량 1.5×</span></span><span class="pr"><span class="num down">302,000</span><span class="num down small">−2.11%</span></span></li>
+      <h4>🇺🇸 미국 · 급등 <span class="tg">프리마켓 · 전일 기준</span></h4>
+      <li><span class="no">1</span><span><span class="nm">Greenland Minerals</span> <span class="cd">GRML</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv n">NEW</span><span class="tg warn">저유동성</span><br><span class="rs">거래량 37× · 뉴스 5</span></span><span class="pr"><span class="num up">$16.22</span><span class="num up small">+14.6%</span></span></li>
+      <li><span class="no">2</span><span><span class="nm">Intel</span> <span class="cd">INTC</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑4</span><br><span class="rs">거래량 3.1× · 뉴스 4</span></span><span class="pr"><span class="num up">$31.40</span><span class="num up small">+6.8%</span></span></li>
+      <li><span class="no">3</span><span><span class="nm">Micron</span> <span class="cd">MU</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓1</span><br><span class="rs">거래량 2.4×</span></span><span class="pr"><span class="num up">$168.90</span><span class="num up small">+4.2%</span></span></li>
+      <li><span class="no">4</span><span><span class="nm">Palantir</span> <span class="cd">PLTR</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑1</span><br><span class="rs">거래량 1.9×</span></span><span class="pr"><span class="num up">$182.10</span><span class="num up small">+3.5%</span></span></li>
+      <li><span class="no">5</span><span><span class="nm">AMD</span> <span class="cd">AMD</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓2</span><br><span class="rs">거래량 1.6×</span></span><span class="pr"><span class="num up">$161.70</span><span class="num up small">+2.9%</span></span></li>
+      <h4>🇺🇸 미국 · 급락</h4>
+      <li><span class="no">1</span><span><span class="nm">Tesla</span> <span class="cd">TSLA</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑2</span><br><span class="rs">거래량 2.7× · 뉴스 6</span></span><span class="pr"><span class="num down">$412.30</span><span class="num down small">−4.9%</span></span></li>
+      <li><span class="no">2</span><span><span class="nm">Nike</span> <span class="cd">NKE</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv n">NEW</span><br><span class="rs">거래량 3.3× · 실적</span></span><span class="pr"><span class="num down">$68.20</span><span class="num down small">−4.1%</span></span></li>
+      <li><span class="no">3</span><span><span class="nm">Boeing</span> <span class="cd">BA</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓1</span><br><span class="rs">거래량 1.7×</span></span><span class="pr"><span class="num down">$214.60</span><span class="num down small">−3.2%</span></span></li>
+      <li><span class="no">4</span><span><span class="nm">Pfizer</span> <span class="cd">PFE</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv d">↓1</span><br><span class="rs">거래량 1.4×</span></span><span class="pr"><span class="num down">$25.10</span><span class="num down small">−2.6%</span></span></li>
+      <li><span class="no">5</span><span><span class="nm">Starbucks</span> <span class="cd">SBUX</span><span class="cbtn" title="커뮤니티">💬</span><span class="mv u">↑1</span><br><span class="rs">거래량 1.3×</span></span><span class="pr"><span class="num down">$88.40</span><span class="num down small">−2.2%</span></span></li>
+    </ul>
+    <div class="df"><span>순위 옆 화살표 = 직전 갱신 대비 순위 변동</span><span>·</span><span>클릭 → 그 종목으로 이동(서랍 유지)</span></div>
+  </div>
+  </div>
+
+  <div class="pop" id="pop" hidden>
+    <div class="pi">종목명 · 코드 · 초성 (예: ㅅㅅㅈㅈ)</div>
+    <ul><li><span>삼성전자 <span class="tg">보유</span></span><span>005930</span></li><li><span>삼성전기</span><span>009150</span></li><li><span>삼성SDI</span><span>006400</span></li><li><span>삼성바이오로직스</span><span>207940</span></li></ul>
+  </div>
+  <div class="modal buy" id="omodal" hidden role="dialog" aria-label="주문">
+    <div class="mh" id="mh"><b id="mtitle">매수 · 삼성전자</b><span class="small num" id="mcode">005930</span><span class="x" id="mx">✕</span></div>
+    <div class="mb">
+      <div class="mlive flash" id="mbox"><span class="num up" id="mpx">74,300</span><span class="num up small" id="mchg">▲ 1,100 (+1.50%)</span><span class="live" style="margin-left:auto"><i></i>실시간</span></div>
+      <div class="mform">
+        <label>지정가</label><div class="inp num"><span>원</span><span>74,200</span></div>
+        <label>수량</label><div class="inp num"><span>주 · 가능 248</span><span>10</span></div>
+        <label>예상 금액</label><div class="inp num"><span>수수료 111</span><span>742,000</span></div>
+      </div>
+      <div class="mguard" id="mguard">가드레일 통과 · 종목 비중 12.4% → 12.9%</div>
+      <div class="mbtns">
+        <div class="mbtn" id="mordinary">지정가 매수<small>확인 창 후 주문</small></div>
+        <div class="mbtn now" id="mnow">현재가 즉시 매수<small>확인 없이 바로</small></div>
+      </div>
+      <p class="small" style="margin:0">즉시 주문은 시장가가 아니라 <b>이 순간의 현재가 지정가</b>로 나갑니다. 체결되지 않으면 미체결로 남습니다.</p>
+    </div>
+  </div>
+  <div class="confirm" id="oconfirm" hidden>
+    <div class="cbox"><b id="ctitle">매수 주문 확인</b><span id="cbody">삼성전자 10주 × 74,200원 = 742,000원 (지정가)</span><div class="cb"><span id="cno">취소</span><span class="ok" id="cok">주문</span></div></div>
+  </div>
+
+  <div class="modal nps" id="npsmodal" hidden role="dialog" aria-label="국민연금 해외투자 현황">
+    <div class="mh" id="nph"><b>🏛️ 국민연금 해외주식 투자 현황</b><span class="sub">연간 <span class="num">2024-12-31</span> · 13F <span class="num">2026-06-30</span></span><span class="tag ok">13F 2Q · 08/13 제출</span><span class="sp"></span><span class="sub">마지막 확인 <span class="num">09/24 06:30</span></span><span class="chk" id="npschk">지금 확인</span><span class="x" id="npx">✕</span></div>
+    <div class="mb">
+      <div class="nsum">
+        <div><b>보유 종목</b><span class="num">1,214</span> <span class="sm">신규 12 · 제외 8</span></div>
+        <div><b>총 평가액</b><span class="num">4,210,000</span> <span class="sm">억원 · 전년 대비 +18.2%</span></div>
+        <div><b>13F 미국 상장분</b><span class="num">$184.2B</span> <span class="sm">612종목 · 2026-06-30 · 전분기 +4.1%</span></div>
+        <div><b>내 종목</b><span class="num">2</span> <span class="sm">관심 2 · 보유 0 · 분기 변동 2</span></div>
+      </div>
+      <div class="nbar">
+        <div class="tabs" id="ntabs"><span class="on" data-t="q13f">분기 13F</span><span data-t="all">연간 전체</span><span data-t="chg">전년 대비 변화</span><span data-t="mine">내 종목 2</span></div>
+        <span class="sp"></span>
+        <span class="srch">종목명 검색</span>
+        <span class="sel">평가액 순 ▾</span>
+        <span class="sel">2026 2Q ▾</span>
+      </div>
+      <div class="ntab on" data-t="q13f">
+        <table class="npst">
+          <tr><th>#</th><th>종목명</th><th class="r">주식 수</th><th class="r">평가액(백만 $)</th><th class="r">전분기 대비</th><th class="r">비고</th></tr>
+          <tr class="mine" data-code="NVDA" data-name="NVIDIA" data-price="182.44" data-chg="0"><td class="num">1</td><td>NVIDIA Corp<span class="tk">NVDA</span><span class="tag">관심</span></td><td class="num r">24,930,000</td><td class="num r">3,940</td><td class="num r up">▲ 6.2%</td><td class="r"><span class="small">추가 매수</span></td></tr>
+          <tr data-code="MSFT" data-name="Microsoft" data-price="512.30" data-chg="0.4"><td class="num">2</td><td>Microsoft Corp<span class="tk">MSFT</span></td><td class="num r">5,880,000</td><td class="num r">2,990</td><td class="num r down">▼ 0.7%</td><td class="r"><span class="small">일부 매도</span></td></tr>
+          <tr class="mine" data-code="AAPL" data-name="Apple" data-price="246.10" data-chg="0"><td class="num">3</td><td>Apple Inc<span class="tk">AAPL</span><span class="tag">관심</span></td><td class="num r">12,410,000</td><td class="num r">2,546</td><td class="num r up">▲ 1.8%</td><td class="r"><span class="small">추가 매수</span></td></tr>
+          <tr data-code="AMZN" data-name="Amazon.com" data-price="221.40" data-chg="-0.3"><td class="num">4</td><td>Amazon.com Inc<span class="tk">AMZN</span></td><td class="num r">9,120,000</td><td class="num r">2,000</td><td class="num r up">▲ 0.4%</td><td class="r"><span class="small">유지</span></td></tr>
+          <tr data-code="AVGO" data-name="Broadcom" data-price="344.10" data-chg="2.0"><td class="num">5</td><td>Broadcom Inc<span class="tk">AVGO</span></td><td class="num r">3,150,000</td><td class="num r">1,080</td><td class="num r up">▲ 12.5%</td><td class="r"><span class="small">추가 매수</span></td></tr>
+          <tr data-code="META" data-name="Meta Platforms" data-price="742.60" data-chg="1.1"><td class="num">6</td><td>Meta Platforms Inc<span class="tk">META</span></td><td class="num r">1,410,000</td><td class="num r">1,040</td><td class="num r" style="color:var(--ink3)">—</td><td class="r"><span class="small">유지</span></td></tr>
+          <tr data-code="PLTR" data-name="Palantir" data-price="182.10" data-chg="3.5"><td class="num">41</td><td>Palantir Technologies<span class="tk">PLTR</span></td><td class="num r">2,410,000</td><td class="num r">358</td><td class="r"><span class="tag ok" style="margin:0">신규</span></td><td class="r"><span class="small">전분기 없음</span></td></tr>
+          <tr><td class="num">—</td><td>Walgreens Boots Alliance<span class="tk">WBA</span></td><td class="num r">0</td><td class="num r">0</td><td class="r"><span class="tag warn" style="margin:0">전량 매도</span></td><td class="r"><span class="small">전분기 2,080,000주</span></td></tr>
+        </table>
+        <p class="small" style="margin:6px 0 0">SEC 13F-HR · 2026-06-30 기준 · 08/13 제출 · 612종목 중 8 · 미국 상장분(ADR 포함) 롱 포지션만 · 평가액은 보고서 원본 USD, 원화 환산은 분기 말 환율 · 지분율은 발행주식수로 계산</p>
+      </div>
+      <div class="ntab" data-t="all">
+        <table class="npst">
+          <tr><th>#</th><th>종목명</th><th class="r">평가액(억원)</th><th class="r">비중</th><th class="r">지분율</th><th class="r">전년 대비</th></tr>
+          <tr class="mine" data-code="AAPL" data-name="Apple Inc" data-price="246.10" data-chg="0"><td class="num">1</td><td>Apple Inc<span class="tk">AAPL</span><span class="tag">관심</span></td><td class="num r">152,300</td><td class="num r">3.62%</td><td class="num r">0.30%</td><td class="num r up">▲ 0.21<span class="pp">pp</span></td></tr>
+          <tr class="mine" data-code="NVDA" data-name="NVIDIA Corp" data-price="182.44" data-chg="0"><td class="num">2</td><td>NVIDIA Corp<span class="tk">NVDA</span><span class="tag">관심</span></td><td class="num r">148,900</td><td class="num r">3.54%</td><td class="num r">0.28%</td><td class="num r up">▲ 1.13<span class="pp">pp</span></td></tr>
+          <tr data-code="MSFT" data-name="Microsoft Corp" data-price="512.30" data-chg="0.4"><td class="num">3</td><td>Microsoft Corp<span class="tk">MSFT</span></td><td class="num r">131,200</td><td class="num r">3.12%</td><td class="num r">0.29%</td><td class="num r down">▼ 0.12<span class="pp">pp</span></td></tr>
+          <tr data-code="AMZN" data-name="Amazon.com Inc" data-price="221.40" data-chg="-0.3"><td class="num">4</td><td>Amazon.com Inc<span class="tk">AMZN</span></td><td class="num r">78,400</td><td class="num r">1.86%</td><td class="num r">0.25%</td><td class="num r up">▲ 0.09<span class="pp">pp</span></td></tr>
+          <tr data-code="GOOGL" data-name="Alphabet Inc Class A" data-price="251.20" data-chg="0.6"><td class="num">5</td><td>Alphabet Inc Class A<span class="tk">GOOGL</span></td><td class="num r">52,100</td><td class="num r">1.24%</td><td class="num r">0.27%</td><td class="num r" style="color:var(--ink3)">—</td></tr>
+          <tr data-code="META" data-name="Meta Platforms Inc" data-price="742.60" data-chg="1.1"><td class="num">6</td><td>Meta Platforms Inc<span class="tk">META</span></td><td class="num r">49,800</td><td class="num r">1.18%</td><td class="num r">0.31%</td><td class="num r up">▲ 0.17<span class="pp">pp</span></td></tr>
+          <tr data-code="AVGO" data-name="Broadcom Inc" data-price="344.10" data-chg="2.0"><td class="num">7</td><td>Broadcom Inc<span class="tk">AVGO</span></td><td class="num r">41,500</td><td class="num r">0.99%</td><td class="num r">0.36%</td><td class="num r up">▲ 0.31<span class="pp">pp</span></td></tr>
+          <tr data-code="TSLA" data-name="Tesla Inc" data-price="412.30" data-chg="-4.9"><td class="num">8</td><td>Tesla Inc<span class="tk">TSLA</span></td><td class="num r">38,700</td><td class="num r">0.92%</td><td class="num r">0.24%</td><td class="num r up">▲ 0.10<span class="pp">pp</span></td></tr>
+          <tr data-code="LLY" data-name="Eli Lilly and Co" data-price="751.00" data-chg="0.2"><td class="num">9</td><td>Eli Lilly and Co<span class="tk">LLY</span></td><td class="num r">30,200</td><td class="num r">0.72%</td><td class="num r">0.30%</td><td class="num r up">▲ 0.06<span class="pp">pp</span></td></tr>
+          <tr data-code="TSM" data-name="Taiwan Semiconductor ADR" data-price="288.50" data-chg="1.4"><td class="num">10</td><td>Taiwan Semiconductor ADR<span class="tk">TSM</span></td><td class="num r">29,600</td><td class="num r">0.70%</td><td class="num r">0.28%</td><td class="num r up">▲ 0.19<span class="pp">pp</span></td></tr>
+        </table>
+        <p class="small" style="margin:6px 0 0">공공데이터포털 연간 자료 · 2024-12-31 기준 · 1,214종목 중 10 · 미국 밖 보유분(유럽·일본·홍콩·신흥국)은 이 탭에서만 보임 · 행을 누르면 그 종목으로 이동(티커가 확인된 종목만, 모달은 열린 채)</p>
+      </div>
+      <div class="ntab nchg" data-t="chg">
+        <h4>신규 편입 12 <span class="small">평가액 상위 4</span></h4>
+        <table class="npst">
+          <tr><th>종목명</th><th class="r">평가액(억원)</th><th class="r">비중</th><th class="r">지분율</th></tr>
+          <tr data-code="PLTR" data-name="Palantir" data-price="182.10" data-chg="3.5"><td>Palantir Technologies<span class="tk">PLTR</span></td><td class="num r">6,100</td><td class="num r">0.14%</td><td class="num r">0.19%</td></tr>
+          <tr><td>Arm Holdings ADR<span class="tk">ARM</span></td><td class="num r">4,300</td><td class="num r">0.10%</td><td class="num r">0.21%</td></tr>
+          <tr><td>Reddit Inc<span class="tk">RDDT</span></td><td class="num r">1,200</td><td class="num r">0.03%</td><td class="num r">0.35%</td></tr>
+          <tr><td>Rubrik Inc<span class="tag warn">티커 미확인</span></td><td class="num r">640</td><td class="num r">0.02%</td><td class="num r">0.41%</td></tr>
+        </table>
+        <h4>제외 8 <span class="small">전년 평가액 상위 4</span></h4>
+        <table class="npst">
+          <tr><th>종목명</th><th class="r">전년 평가액(억원)</th><th class="r">전년 비중</th><th class="r">전년 지분율</th></tr>
+          <tr><td>Walgreens Boots Alliance<span class="tk">WBA</span></td><td class="num r">2,900</td><td class="num r">0.08%</td><td class="num r">0.33%</td></tr>
+          <tr><td>Paramount Global<span class="tk">PARA</span></td><td class="num r">1,700</td><td class="num r">0.05%</td><td class="num r">0.29%</td></tr>
+          <tr><td>Hasbro Inc<span class="tk">HAS</span></td><td class="num r">1,100</td><td class="num r">0.03%</td><td class="num r">0.31%</td></tr>
+          <tr><td>Wolfspeed Inc<span class="tk">WOLF</span></td><td class="num r">420</td><td class="num r">0.01%</td><td class="num r">0.38%</td></tr>
+        </table>
+        <h4>비중 변동 상위 <span class="small">퍼센트포인트 · 증가 3 · 감소 3</span></h4>
+        <table class="npst">
+          <tr><th>종목명</th><th class="r">전년</th><th class="r">올해</th><th class="r">변동</th></tr>
+          <tr class="mine"><td>NVIDIA Corp<span class="tk">NVDA</span><span class="tag">관심</span></td><td class="num r">2.41%</td><td class="num r">3.54%</td><td class="num r up">▲ 1.13<span class="pp">pp</span></td></tr>
+          <tr><td>Broadcom Inc<span class="tk">AVGO</span></td><td class="num r">0.68%</td><td class="num r">0.99%</td><td class="num r up">▲ 0.31<span class="pp">pp</span></td></tr>
+          <tr class="mine"><td>Apple Inc<span class="tk">AAPL</span><span class="tag">관심</span></td><td class="num r">3.41%</td><td class="num r">3.62%</td><td class="num r up">▲ 0.21<span class="pp">pp</span></td></tr>
+          <tr><td>Microsoft Corp<span class="tk">MSFT</span></td><td class="num r">3.24%</td><td class="num r">3.12%</td><td class="num r down">▼ 0.12<span class="pp">pp</span></td></tr>
+          <tr><td>Pfizer Inc<span class="tk">PFE</span></td><td class="num r">0.31%</td><td class="num r">0.21%</td><td class="num r down">▼ 0.10<span class="pp">pp</span></td></tr>
+          <tr><td>Nike Inc<span class="tk">NKE</span></td><td class="num r">0.19%</td><td class="num r">0.10%</td><td class="num r down">▼ 0.09<span class="pp">pp</span></td></tr>
+        </table>
+      </div>
+      <div class="ntab" data-t="mine">
+        <table class="npst">
+          <tr><th>#</th><th>종목명</th><th class="r">평가액(억원)</th><th class="r">비중</th><th class="r">지분율</th><th class="r">전년 대비</th></tr>
+          <tr class="mine" data-code="NVDA" data-name="NVIDIA Corp" data-price="182.44" data-chg="0"><td class="num">2</td><td>NVIDIA Corp<span class="tk">NVDA</span><span class="tag">관심</span></td><td class="num r">148,900</td><td class="num r">3.54%</td><td class="num r">0.28%</td><td class="num r up">▲ 1.13<span class="pp">pp</span></td></tr>
+          <tr class="mine" data-code="AAPL" data-name="Apple Inc" data-price="246.10" data-chg="0"><td class="num">1</td><td>Apple Inc<span class="tk">AAPL</span><span class="tag">관심</span></td><td class="num r">152,300</td><td class="num r">3.62%</td><td class="num r">0.30%</td><td class="num r up">▲ 0.21<span class="pp">pp</span></td></tr>
+        </table>
+        <p class="small" style="margin:6px 0 0">관심종목·보유 종목 가운데 국민연금이 보유한 종목만 보입니다. 국내 종목은 이 데이터에 없습니다.</p>
+      </div>
+      <div class="nfoot"><span>출처 SEC EDGAR 13F-HR(분기, 미국 상장분) · 공공데이터포털 국민연금공단(연간, 전 지역)</span><span>·</span><span>13F는 분기 말 후 45일 안, 연간은 이듬해 가을~겨울 공개</span><span>·</span><span>모두 과거 시점 자료라 현재 보유와 다를 수 있음</span><span>·</span><a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;CIK=0001608046&amp;type=13F-HR" target="_blank" rel="noopener">EDGAR ↗</a><a href="https://www.data.go.kr/data/3070517/fileData.do" target="_blank" rel="noopener">공공데이터포털 ↗</a></div>
+    </div>
+  </div>
+  <div class="toast" id="npstoast" hidden role="status"><span>🏛️</span><span><b>국민연금 13F 2분기 보고서가 제출됐습니다</b><span class="sub">2026-06-30 기준 · 612종목 · 신규 9 · 전량 매도 7 · 관심종목 2개 변동 (NVDA ▲6.2% · AAPL ▲1.8%)</span></span><span class="go" id="npsgo">보기</span><span class="x" id="npstx">✕</span></div>
+
+  <div class="status">
+    <span>데몬 연결됨 · 로컬</span><span>토스 API 정상 · 잔여 호출 여유</span><span>DART 마지막 확인 15:01</span><span>LLM 오늘 사용 <span class="num">₩2,140</span> / 예산 <span class="num">₩10,000</span></span><span>Ollama 실행 중</span>
+  </div>
+</div>
+
+<!-- ===================== 영역 설명 ===================== -->
+<h2>영역별 설계</h2>
+<div class="notes" id="notes">
+  <div class="note" data-n="1">
+    <h3><i>1</i>차트 <span class="tag">F3</span></h3>
+    <p>가장 넓은 자리. 왼쪽 열 기본 폭 60%, 그 안에서 차트 : 주문 = 7 : 3. 두 값 모두 구분선을 끌어 바꿀 수 있습니다.</p>
+    <ul>
+      <li><b>두 모드, 토글 하나.</b> 헤더의 "자세한 차트"를 끄면(기본) 현재가를 따라 실시간으로 그려지는 <b>선 차트</b>(구간 최고·최저, 현재가 태그, 전일 종가선), 켜면 <b>캔들 + 이동평균 5/20/60/120 + 거래량</b>(최고·최저 캔들에 값·현재가 대비 등락률·날짜). 국내 관례대로 상승·양봉 빨강, 하락·음봉 파랑.</li>
+      <li><b>토글 상태는 사용자 설정으로 저장</b>됩니다. 종목을 바꿔도, 앱을 종료했다 켜도 그대로이고 디바이스 간 동기화됩니다. 모드별 마지막 기간 탭도 기억합니다. (이 목업에서도 새로고침 후 유지)</li>
+      <li>기간 탭은 모드마다 다릅니다 — 간단: 장중 · 1일 · 1주 · 3달 · 1년 · 5년 · 전체 / 자세한: 분(1·3·5·10·30·60) · 일 · 주 · 월 · 년.</li>
+      <li><b>실시간.</b> 마지막 캔들이 체결마다 움직입니다. WebSocket 체결 데이터를 데몬이 분봉으로 집계해 내려주고, 화면은 Lightweight Charts의 update()로 마지막 봉만 갱신합니다. 봉이 닫히면 새 봉이 붙습니다.</li>
+      <li>차트 위 마커: 본인 매수·매도 시점(▲▼), AI 토론·추천 시점(◆). 마커를 누르면 4번 토론 창이 그 시점의 기록으로 바뀝니다.</li>
+      <li>토글·기간 탭·이동평균 범례는 헤더 한 줄에만 둡니다. 도구 팔레트를 늘리지 않습니다. 보조지표 추가는 설정에서.</li>
+      <li>구현: TradingView Lightweight Charts — 간단 모드는 영역/선 시리즈, 자세한 모드는 캔들 + 히스토그램 시리즈로 전환. 이동평균·거래량 평균은 데몬이 계산해서 내려줍니다.</li>
+    </ul>
+  </div>
+  <div class="note" data-n="2">
+    <h3><i>2</i>가격 <span class="tag">F1·F4</span></h3>
+    <p>현재가를 크게, 그 아래 호가 3단과 요약 수치. 오른쪽 열에서 가격 : 토론 = 4 : 6. 왼쪽 열과 높이를 맞출 필요가 없으므로 구분선이 열마다 따로 있습니다.</p>
+    <ul>
+      <li><b>실시간.</b> 토스 WebSocket(trade, orderbook)으로 현재가·호가가 틱 단위로 바뀝니다. 변동 시 숫자가 잠깐 빨강/파랑으로 깜빡이는 토스 앱 방식. 화면 갱신은 초당 4회로 묶어 깜빡임을 줄입니다. 연결이 끊기면 REST 폴링으로 내려가고 "지연" 표시가 뜹니다.</li>
+      <li>호가 행을 누르면 3번 주문 폼의 가격에 들어갑니다.</li>
+      <li>종목 상태 칩: 투자경고·거래정지·VI 등을 여기서 바로 보이게 합니다. 자동 매수 제외 사유이기도 합니다.</li>
+      <li>종목 검색은 상단 바의 종목명을 눌러 여는 팝오버, 관심종목은 왼쪽 슬라이드 서랍. 둘 다 평소에는 닫혀 있어 네 영역을 유지합니다. (목업에서 상단 바의 종목명과 "관심종목" 버튼을 눌러 보세요)</li>
+    </ul>
+  </div>
+  <div class="note" data-n="3">
+    <h3><i>3</i>매수 · 매도 정보 <span class="tag">F1·F2</span></h3>
+    <p>왼쪽은 현재가·매수 가능 금액·보유 수량 요약과 <b>매수 / 매도 버튼</b>, 오른쪽은 보유·손익 요약. 주문 입력은 모달에서 합니다.</p>
+    <ul>
+      <li><b>주문 모달.</b> 버튼을 누르면 모달이 뜹니다. 바깥 화면은 흐리게 하지 않고, 모달 테두리에만 발광 효과를 주어 경계를 보입니다(매수는 빨강 계열, 매도는 파랑 계열 — 제목 색도 같음). 기본 위치는 앱 정중앙, 제목 바를 잡고 끌어 옮길 수 있고, 옮긴 위치는 앱이 켜져 있는 동안 유지되며 재시작하면 중앙으로 돌아옵니다.</li>
+      <li><b>모달 안의 실시간 가격.</b> 현재가가 본 화면과 같은 스트림으로 계속 바뀝니다. 지정가 입력란을 비워 두면 현재가가 기본값입니다.</li>
+      <li><b>두 가지 주문 버튼.</b> <b>지정가 매수/매도</b>는 사용자가 넣은 가격·수량과 함께 확인 창을 거칩니다. <b>현재가 즉시 매수/매도</b>는 확인 창 없이 그 순간의 현재가로 곧바로 주문합니다(시장가가 아니라 현재가 지정가 — 급등락 시 예상 밖 체결을 막기 위함). 즉시 버튼은 테두리만 있는 스타일로 구분합니다.</li>
+      <li><b>가드레일 판정</b>은 모달 안에서 실시간으로 보입니다. 통과하지 못하면 사유를 같은 자리에 보여 주고 두 버튼을 모두 잠급니다. 즉시 주문도 가드레일은 우회하지 못합니다. step-up 인증 대상(원격 모드, 고액)이면 즉시 버튼에도 TOTP가 붙습니다.</li>
+      <li>보유 표의 출처 칩(수동 · AI 추천 · 자동)과 "자동 매수 노출 / 한도"는 상시 표시합니다.</li>
+    </ul>
+  </div>
+  <div class="note" data-n="4">
+    <h3><i>4</i>토론 창 · 미러피시 <span class="tag">F6</span></h3>
+    <p>오른쪽 열의 60%. 종목을 고르면 먼저 <b>개요와 전망</b>이 뜨고, 토론은 사용자가 요청할 때만 시작합니다. 위 목업의 탭을 눌러 세 상태를 볼 수 있습니다.</p>
+    <ul>
+      <li><b>세 가지 테마.</b> 매수 토론 · 매도 토론 · 산업 동향(업종 전반 → 투자 의견). 테마에 따라 시드 자료와 사회자의 질문이 달라집니다.</li>
+      <li><b>개요 탭</b>: 업종, 시총, PER/PBR, 배당, 최근 공시, 종목 상태, AI 전망 요약(주 1회 자동 갱신, 출처 포함), 동종 종목 목록(편집 가능).</li>
+      <li><b>진행 중 탭 — 메신저 UI.</b> 심층 토론이 백그라운드로 도는 동안 페르소나들의 대화가 실시간 말풍선으로 흐릅니다. 발언 중인 페르소나는 입력 중 표시(···). 상단 카드는 테마 · 엔진 · 라운드 · 경과 시간.</li>
+      <li><b>사용자 개입.</b> 아래 입력창으로 언제든 끼어듭니다. 종류 칩: 질문 · 반박 · 동의 · 자료 추가 · 결론 요청. 사용자 발언은 오른쪽 정렬 말풍선으로 들어가고 다음 라운드에서 페르소나들이 반드시 응답합니다.</li>
+      <li><b>기록 탭과 재개</b>: 결론이 난 토론도 같은 인격들로 이어갑니다. 페르소나 정의가 바뀌었으면 새 정의로 갑니다. 재개 시 이전 결론 이후 새 자료를 넣고 "무엇이 달라졌는가"부터 시작합니다.</li>
+      <li>토론 결과에는 주문 버튼을 두지 않습니다. 주문은 항상 3번 영역에서만 합니다.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== 스케치 해석 ===================== -->
+<h2>스케치 해석</h2>
+<div class="sketch">
+  <div class="mini">
+    <p class="small" style="margin:0 0 8px">읽어낸 구조 — 왼쪽 열이 넓고, 오른쪽 열은 위가 작고 아래가 큼</p>
+    <div class="g"><div>chart</div><div>가격</div><div>매수 매도 정보</div><div>토론 창 · mirror fish</div></div>
+  </div>
+  <table>
+    <tr><th>스케치</th><th>해석</th><th>추가한 것</th></tr>
+    <tr><td>chart (좌상, 큼)</td><td>선 차트 ↔ 캔들+MA+거래량 ("자세한 차트" 토글, 설정 저장)</td><td>매매·토론 마커, 모드별 기간 탭</td></tr>
+    <tr><td>가격 (우상, 작음)</td><td>현재가 + 호가</td><td>종목 상태 칩</td></tr>
+    <tr><td>매수 매도 정보 (좌하)</td><td>요약 + 매수/매도 버튼 → 주문 모달, 보유 요약</td><td>이동 가능 모달, 즉시 주문 버튼, 가드레일 판정, 출처 칩</td></tr>
+    <tr><td>토론 창 / mirror fish (우하, 큼)</td><td>개요·전망 → 요청 시 토론(매수·매도·산업 동향)</td><td>결론 카드 고정, 출처 번호, 기록·재개</td></tr>
+    <tr><td>(없음)</td><td>상단 바 · 하단 상태줄</td><td>장 상태, 자동화 단계, 전체 정지, 연결 상태</td></tr>
+    <tr><td>(없음)</td><td>실시간 급등락 서랍 (F11)</td><td>오른쪽 슬라이드(폭 25%, 15~50%), 국내·미국 × 급등·급락 5개씩, 10초 갱신, 순위 변동 화살표, ⌘J</td></tr>
+    <tr><td>(없음)</td><td>종목 커뮤니티 서랍 (F12)</td><td>왼쪽 슬라이드(폭 28%, 15~50%), 링크아웃 + 미국 Reddit 피드·번역 + 가족 메모, 관심종목과 겹쳐 열림, ⌘U</td></tr>
+    <tr><td>(없음)</td><td>종목 검색 팝오버 · 관심종목 서랍</td><td>상단 바 종목명 클릭 / 왼쪽 슬라이드(폭 30%, 조절 가능, 네 영역을 밀어냄), 평소엔 닫힘</td></tr>
+    <tr><td>(없음)</td><td>국민연금 해외투자 현황 모달 (F13)</td><td>상단 바 🏛️ 버튼·⌘N, 13F(분기)·연간 파일 갱신 감지 → 배지·토스트·알림 센터·Slack, 분기 13F 탭·연간 전체·전년 대비 변화·내 종목 탭, 토론 개요의 "국민연금 보유" 행</td></tr>
+  </table>
+</div>
+
+<!-- ===================== 원칙 ===================== -->
+<h2>화면 전반의 규칙</h2>
+<div class="rules">
+  <div><b>한 화면</b><span>네 영역은 항상 같은 자리. 종목을 바꾸면 네 영역이 함께 바뀝니다. 탭으로 화면을 갈아끼우지 않습니다.</span></div>
+  <div><b>비율 6:4 · 7:3 · 4:6, 모두 조절 가능</b><span>좌우 기본 6:4. 왼쪽 열 안에서 차트:주문 7:3, 오른쪽 열 안에서 가격:토론 4:6. 세 구분선을 마우스로 끌어 바꾸고 더블클릭하면 기본값으로 돌아갑니다. 좌우 열의 가로 구분선은 독립적이라 옆 영역과 높이가 같을 필요가 없습니다. 비율은 사용자 설정으로 저장돼 다음 실행에도 유지됩니다(동기화 대상). 최소 25%.</span></div>
+  <div><b>전체 정지</b><span>상단 바 오른쪽 끝, 어느 화면에서든 한 번에. 누르면 확인 없이 즉시 정지하고 Slack 알림.</span></div>
+  <div><b>돈은 오른쪽 정렬 고정폭</b><span>모든 금액·수량은 tabular 숫자로 오른쪽 정렬. 상승 빨강, 하락 파랑(국내 관례).</span></div>
+  <div><b>상태는 색 + 형태</b><span>정상/경고/위험을 색만으로 구분하지 않고 칩·아이콘을 함께 씁니다.</span></div>
+  <div><b>서랍 세 개 — 왼쪽 둘, 오른쪽 하나</b><span>관심종목과 커뮤니티는 왼쪽에서, 실시간 급등락은 오른쪽에서 슬라이드로 나오며 모두 네 영역을 덮지 않고 <b>밀어냅니다</b>. 상단 바 버튼(순서: Stockholm · 종목명 · 커뮤니티 · 관심종목 · 실시간 급등락) 또는 ⌘U / ⌘L / ⌘J로 열고 ✕·같은 버튼·Esc로 닫습니다. 기본 폭은 관심종목 30%, 커뮤니티 28%, 급등락 25%이고 구분선으로 15~50% 조절(더블클릭 복원, 설정 저장). <b>왼쪽 두 서랍은 겹쳐 열립니다</b>: 관심종목을 펼친 채 어느 종목의 💬를 누르면 |커뮤니티|관심종목|Main| 순으로 펼쳐집니다. 오른쪽 급등락은 왼쪽 서랍과 동시에 열리지 않습니다(급등락에서 💬를 누르면 급등락이 닫히고 커뮤니티가 왼쪽에 열림). 관심종목에서 종목을 고르면 서랍이 닫히지만, 급등락에서 고르면 서랍은 열린 채 네 영역만 바뀝니다.</span></div>
+<div><b>구분선</b><span>보이는 선은 1px이지만 마우스가 잡히는 영역은 좌우(상하) 4px씩 넓습니다. 올리면 강조색으로 바뀌고, 끄는 동안 비율 배지가 뜹니다.</span></div>
+<div><b>실시간 급등락 (F11)</b><span>옛날 포털 실시간 검색어처럼 국내·미국 각각 급등 5 · 급락 5를 순위로 보여줍니다. 기준 탭: 등락률(기본) · 거래량 급증 · 체결 강도. 10초마다 갱신되고 순위 옆에 직전 갱신 대비 변동(↑3 · ↓1 · NEW)이 붙습니다. 각 행에 거래량 배수와 뉴스·공시 건수, 보유·토론 중·투자경고·저유동성 칩을 함께 보여 F7의 제외 필터 판단 근거가 그대로 보이게 합니다. 미국은 장 밖 시간에는 프리·애프터마켓 또는 전일 기준으로 표시하고 그 사실을 칩으로 밝힙니다. 데이터는 토스 랭킹 API와 F7(b)의 규칙 기반 급등 탐지기를 공유합니다.</span></div>
+  <div><b>국민연금 해외투자 현황 (F13)</b><span>상단 바 🏛️ 국민연금 버튼 또는 ⌘N으로 여는 정보 모달. 주문 모달과 같은 틀(바깥을 흐리지 않음, 테두리 발광은 강조색, 제목 바로 이동, ✕·같은 버튼·Esc로 닫음)이고 서랍 위에 뜹니다. 데이터는 둘입니다: SEC EDGAR 13F(분기, 미국 상장분, 주식 수·평가액)와 공공데이터포털 연간 자료(연말 기준, 전 지역, 평가액·비중·지분율). 데몬이 앱 기동 시와 매일 한 번 두 출처의 새 보고서를 확인해 변화가 있으면 버튼의 빨간 점, 오른쪽 아래 토스트, 알림 센터 항목, (켜 둔 사용자에게) Slack DM으로 알립니다. 정보 표시와 토론 근거일 뿐 어떤 자동 주문의 트리거도 아닙니다.</span></div>
+  <div><b>주문은 모달에서</b><span>매수·매도 버튼 → 이동 가능한 모달. 지정가 주문은 확인 창, 현재가 즉시 주문은 확인 없음. 둘 다 가드레일은 통과해야 합니다.</span></div>
+  <div><b>실시간</b><span>차트·가격·토론은 WebSocket으로 밀려오는 데이터에 따라 스스로 움직입니다. 새로고침 버튼이 없습니다.</span></div>
+  <div><b>키는 보이지 않음</b><span>설정 화면에도 키 값은 없습니다. 등록 여부, 끝 4자리, 검증 시각만.</span></div>
+  <div><b>원격 모드 동일</b><span>웹으로 접속해도 같은 화면. 주문·설정 변경 버튼만 step-up 인증이 추가로 붙습니다.</span></div>
+</div>
+
+<!-- ===================== 나머지 화면 ===================== -->
+<h2>그 밖의 화면</h2>
+<p class="lede">메인 화면 외에 필요한 화면입니다. 모두 상단 바 왼쪽의 메뉴에서 열리고, 메인 위에 패널로 겹치거나 전체 화면으로 전환됩니다.</p>
+<div class="screens">
+  <div class="scr"><b>최초 구동 마법사</b><span>admin 생성 → 공유 키 입력·검증 → 본인 토스 키 → LLM 프리셋 → 구성원 코드 발급. 끝내기 전엔 다른 화면 없음.</span></div>
+  <div class="scr"><b>로그인 · 구성원 등록</b><span>비밀번호 + TOTP. 구성원은 등록 코드로 첫 로그인 후 본인 토스 키 입력.</span></div>
+  <div class="scr"><b>손익</b><span>기간별 실현·평가 손익, 종목별·출처별 분해. "AI 추천을 따랐을 때" 성과 비교.</span></div>
+  <div class="scr"><b>추천</b><span>오늘의 유력 종목 목록. 사유·반대 논거·확신도·유효기간. 누르면 메인 화면이 그 종목으로 바뀜.</span></div>
+  <div class="scr"><b>자동화</b><span>시장별 단계(모의/승인/자동), 한도, 예수금 하한, 제외 종목, 자동 매도 허용 종목. 모의 실행 성적표. 승인 대기 목록.</span></div>
+  <div class="scr"><b>시장 리포트</b><span>일간·주간 리포트 열람. 전망의 적중 여부 표시.</span></div>
+  <div class="scr"><b>학습 현황</b><span>페르소나별·모델별 성적표, 회고 목록, 가중치 변경 이력.</span></div>
+  <div class="scr"><b>설정</b><span>키 관리(admin), LLM 경로, 페르소나 편집, 알림·Slack, 서버 연결, 디바이스.</span></div>
+  <div class="scr"><b>알림 · 승인 센터</b><span>가드레일 발동, 승인 요청(만료 시간 표시), 토론 완료, 데이터 갱신(국민연금 해외투자 현황). 승인은 여기서 step-up 인증 후.</span></div>
+</div>
+
+<!-- ===================== 국민연금 해외투자 현황 (F13) ===================== -->
+<h2>국민연금 해외투자 현황 모달 <span class="tag">F13</span> <span class="tag warn">제안</span></h2>
+<p class="lede">국민연금의 해외주식 종목별 보유를 두 출처로 보여주는 정보 모달과, 새 보고서가 올라오면 알려 주는 푸시입니다. 분기마다 SEC에 내는 13F(미국 상장분, 주식 수·평가액, 분기 말 후 45일 안)와 공공데이터포털의 연간 자료(전 지역, 연말 기준 평가액·비중·지분율)를 한 모달에 탭으로 나눕니다. 종목 단위 실시간·일간·주간 공개는 어디에도 없어 분기가 가장 촘촘한 주기입니다. 위 목업에서 상단 바의 🏛️ 국민연금 버튼을 누르거나, 잠시 뒤 오른쪽 아래에 뜨는 토스트의 "보기"를 눌러 보세요. 숫자는 모두 예시 값입니다.</p>
+<div class="notes">
+  <div class="note">
+    <h3>여는 곳과 닫는 법</h3>
+    <p>상단 바에서 ⚡ 실시간 급등락 다음 자리. 서랍 버튼과 같은 모양이라 배지가 붙습니다.</p>
+    <ul>
+      <li>🏛️ 국민연금 버튼 또는 ⌘N. 열려 있는 동안 버튼은 강조색, ✕·같은 버튼·Esc로 닫습니다.</li>
+      <li>새 데이터가 있으면 버튼 오른쪽 위에 빨간 점. 모달을 한 번 열면 점이 사라집니다(사용자별 확인 처리).</li>
+      <li>토론 개요 탭의 "국민연금 보유" 행(해외 종목만)에서 "현황"을 눌러도 열립니다. 토스트의 "보기"도 같습니다.</li>
+      <li>공공데이터포털 키가 없으면 버튼은 흐리게 남고, 누르면 모달 대신 "admin이 설정에서 공공데이터포털 키를 등록해야 합니다" 안내가 뜹니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>모달 구성</h3>
+    <p>주문 모달과 같은 틀이되 넓고(760px), 표를 담습니다. 제목 바를 끌어 옮길 수 있고 위치는 앱 실행 중 유지됩니다.</p>
+    <ul>
+      <li><b>제목 바</b>: 두 기준일(연간 연말 · 13F 분기 말), 최근 보고서 칩("13F 2Q · 08/13 제출"), 마지막 확인 시각, 지금 확인 버튼.</li>
+      <li><b>요약 4칸</b>: 연간 보유 종목 수(신규·제외), 연간 총 평가액(억원, 전년 대비), 13F 미국 상장분(평가액 USD·종목 수·전분기 대비), 내 종목 수(분기 변동).</li>
+      <li><b>탭 넷</b>: 분기 13F(기본. 종목명·티커·주식 수·평가액 USD·전분기 대비 주식 수·신규/전량 매도) · 연간 전체(순위·평가액 억원·비중·지분율·전년 대비 pp, 미국 밖 보유분은 여기서만) · 전년 대비 변화(신규 편입, 제외, 비중 변동 상위) · 내 종목(관심·보유 중 국민연금 보유분만, 강조색 배경). 검색·정렬·기준 시점(분기 2014~ / 연도 2017~) 선택.</li>
+      <li><b>행 클릭</b>: 티커가 확인된 종목이면 네 영역이 그 종목으로 바뀝니다. 모달은 열린 채. 티커를 못 찾은 종목은 "티커 미확인" 칩만 붙고 이동하지 않습니다.</li>
+      <li><b>바닥 줄</b>: 출처, 연 1회·연말 기준, 10억원 미만 제외, "현재 보유와 다를 수 있음" 경고, 원본 링크아웃.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>푸시(변화 알림)</h3>
+    <p>13F는 분기 4회, 연간 파일은 1회 갱신되므로 실시간이 아니라 "새 보고서가 올라왔는가"를 하루 한 번 확인합니다. 13F는 EDGAR 제출 목록(JSON)에서 새 접수번호를, 연간은 Swagger 카탈로그에서 새 연도 데이터셋을 봅니다.</p>
+    <ul>
+      <li><b>앱 기동 시</b>: 데몬이 마지막 확인이 24시간 이전이면 확인하고, 화면이 붙으면 아직 확인하지 않은 알림을 토스트와 배지로 보여 줍니다.</li>
+      <li><b>실행 중</b>: 매일 06:30(KST, 장 전·리포트 생성 전) 정기 확인. 변화가 있으면 로컬 WebSocket으로 화면에 바로 토스트. 창을 닫아 트레이만 남았으면 macOS 알림, 누르면 창을 열고 모달을 띄웁니다.</li>
+      <li><b>Slack</b>: 설정에서 "데이터 갱신 알림"을 켠 사용자에게만 DM 한 통(요약만, 야간 방해 금지 적용, 긴급 아님).</li>
+      <li>같은 변화는 한 번만 알립니다(13F는 접수번호, 연간은 데이터셋·내용 해시 기준). 정정 보고서(13F-HR/A)는 "정정"으로 따로 알립니다. 확인 처리는 사용자별.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>상태와 예외</h3>
+    <p>확인에 실패해도 알림을 내지 않고 캐시를 보여 줍니다. 돈이 걸린 경로가 아니므로 조용히 다음 기회를 기다립니다.</p>
+    <ul>
+      <li><b>첫 실행</b>: 연도별 데이터를 모두 내려받아 기준선을 만들고 알림은 내지 않습니다.</li>
+      <li><b>확인 실패</b>: 제목 바에 "마지막 확인 실패 09/24 06:30 · 캐시 표시". 3일 연속 실패 시 admin에게 한 번 알림.</li>
+      <li><b>변화 없음</b>: 배지·토스트 없음. 제목 바의 "마지막 확인" 시각만 갱신.</li>
+      <li><b>컬럼 이름 변형</b>: 연도마다 컬럼명이 조금씩 다릅니다(평가액(억원)/평가액(억 원), 비중(%)/비중(퍼센트)). 어댑터가 정규화하고, 새 변형이면 저장하지 않고 admin에게 알립니다.</li>
+      <li><b>EDGAR 차단</b>: 연락처 없는 User-Agent나 초당 10회 초과는 SEC가 차단합니다. 설정에 "SEC 연락처 이메일"(admin, 공유 설정)을 두고 그 값으로 User-Agent를 만듭니다. 비어 있으면 13F 확인을 건너뛰고 사유를 표시합니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>데이터 출처와 이용 허가</h3>
+    <p>둘 다 무료 공개 자료이고 별도 계약이 없습니다. 지켜야 할 조건만 다릅니다.</p>
+    <ul>
+      <li><b>SEC EDGAR 13F-HR</b> (CIK 0001608046): 회원가입·API 키 없음. 공공 데이터. 조건은 User-Agent에 이름과 연락처 이메일, 초당 10회 이하, 대량 내려받기는 미국 야간 권장. 분기 말 후 45일 안 제출(최근 08/13, 05/12, 02/10, 11/04).</li>
+      <li><b>공공데이터포털 국민연금공단_해외주식 투자정보</b>: 활용신청으로 발급된 서비스 키 사용(이미 확보). 이용허락범위 제한 없음. 일일 트래픽 한도는 계정 종류에 따름.</li>
+      <li><b>기금운용본부 월간 운용현황</b>: 자산군 합계만 있고 종목별이 없어 이번 설계에서 뺐습니다. 필요하면 페이지 수집이라 약관 확인이 먼저입니다.</li>
+      <li>둘 다 자동 주문의 입력이 아닙니다. 토론 자료로 쓸 때는 우리가 처음 본 시각을 기준 시점(asOf) 필터에 씁니다.</li>
+    </ul>
+  </div>
+</div>
+<table class="flow">
+  <tr><th>상황</th><th>데몬이 하는 일</th><th>화면·알림</th></tr>
+  <tr><td>앱 기동</td><td>마지막 확인이 24시간 이전이면 즉시 확인(EDGAR 제출 목록 1회 + 새 13F가 있으면 정보표 1회, 연간 카탈로그 1회 + 새 데이터셋이 있으면 3~4회)</td><td>접속 직후 미확인 알림 → 토스트 + 버튼 배지 + 알림 센터</td></tr>
+  <tr><td>실행 중</td><td>매일 06:30 KST 정기 확인(미국 동부 17:30, EDGAR 갱신 후). 실패 시 1시간 뒤 최대 3회 재시도</td><td>로컬 WebSocket EVENT → 토스트·배지. 창이 닫혀 있으면 macOS 알림</td></tr>
+  <tr><td>수동</td><td>모달의 "지금 확인"</td><td>결과를 제목 바에 즉시 표시</td></tr>
+  <tr><td>Slack</td><td>사용자별 설정이 켜진 경우 NotifierPort로 DM</td><td>요약 한 통. 야간 방해 금지 적용</td></tr>
+  <tr><td>원격 모드</td><td>relay가 EVENT를 중계(7단계)</td><td>같은 토스트·배지</td></tr>
+</table>
+
+<div class="q">
+  <b>확인이 필요한 것</b>
+  <ol>
+    <li>상단 바 순서 [확정]에 🏛️ 국민연금 버튼을 ⚡ 실시간 급등락 다음에 추가하는 개정(대안: 상단 바 왼쪽 메뉴 안, 하단 상태줄)과 단축키 ⌘N.</li>
+    <li>공공데이터포털 파일데이터 API의 일일 트래픽 한도와 perPage 상한(문서에 없음). 한 번 확인에 5회 안팎이라 여유는 있으나 수치 확인 필요.</li>
+    <li>종목명(영문 회사명)→티커 매핑: 토스 종목 마스터 영문명 정확 일치 + 별칭 표(사용자 편집) 제안. 미매칭 종목은 칩 없이 표시.</li>
+    <li>알림 기본값(제안: 앱 내 켬, Slack 끔)과 토론의 심리·수급 스냅샷 표에 "국민연금 보유" 줄을 넣을지.</li>
+    <li>13F: 정보표 XML 파일명(접수별 index.json으로 확인), CUSIP→티커 매핑(토스 종목 마스터가 ISIN을 주면 ISIN 3~11자리가 CUSIP), SEC 연락처 이메일을 admin 공유 설정에 두는 안.</li>
+  </ol>
+</div>
+</div>
+
+<script>
+(function(){
+  // 예시 캔들 데이터 (임의 값). S = 현재 종목 가격 스케일(삼성전자 74,300 기준 1.0), US = 미국 종목 여부
+  var S=1, US=false, sym={name:'삼성전자',code:'005930',mkt:'KOSPI'};
+  function fmt(v){return US?'$'+v.toFixed(2):Math.round(v).toLocaleString();}
+  function tick(){return US?0.01:(S*74300>=100000?100:S*74300>=10000?50:10);}
+  var data=[], cg=document.getElementById('candles'), vg=document.getElementById('vol'), w=12, gap=14.5, hiI=0, loI=0;
+  // viewBox 높이 CH는 영역의 실제 비율을 따라간다(폭 640 고정). 가격 축은 CH의 19%~77%, 그 아래가 거래량.
+  var CH=260, pHi=76000, pLo=70000; function cT(){return CH*0.08;} function cB(){return CH*0.76;} function cStep(){return (cB()-cT())/3;}
+  var y=function(v){return cT()+((pHi-v)/(pHi-pLo))*(cB()-cT());};
+  function buildCandles(){
+    data=[]; var p=72000*S; cg.innerHTML=''; vg.innerHTML='';
+    for(var i=0;i<40;i++){var o=p, c=o+(Math.sin(i*1.3)*700+Math.cos(i*0.7)*500)*S, h=Math.max(o,c)+Math.abs(Math.sin(i*2.1))*400*S, l=Math.min(o,c)-Math.abs(Math.cos(i*1.7))*400*S; data.push({o:o,c:c,h:h,l:l,v:6+Math.abs(Math.sin(i*0.9))*10}); p=c;}
+    var mxH=Math.max.apply(null,data.map(function(d){return d.h})), mnL=Math.min.apply(null,data.map(function(d){return d.l})); pHi=mxH+(mxH-mnL)*0.06; pLo=mnL-(mxH-mnL)*0.06;
+    var ma5='',ma20='';
+    data.forEach(function(d,i){
+      var x=8+i*gap, up=d.c>=d.o, col=up?'var(--up)':'var(--down)';
+      cg.insertAdjacentHTML('beforeend','<line x1="'+(x+w/2)+'" y1="'+y(d.h)+'" x2="'+(x+w/2)+'" y2="'+y(d.l)+'" stroke="'+col+'" stroke-width="1"/>'+
+        '<rect x="'+x+'" y="'+Math.min(y(d.o),y(d.c))+'" width="'+w+'" height="'+Math.max(1,Math.abs(y(d.o)-y(d.c)))+'" fill="'+col+'"/>');
+      var vh=d.v*(CH*0.2/16); vg.insertAdjacentHTML('beforeend','<rect x="'+x+'" y="'+(CH-2-vh)+'" width="'+w+'" height="'+vh+'" fill="'+col+'" opacity=".35"/>');
+      var s5=0,s20=0; for(var k=Math.max(0,i-4);k<=i;k++)s5+=data[k].c; for(k=Math.max(0,i-19);k<=i;k++)s20+=data[k].c;
+      var n5=Math.min(5,i+1), n20=Math.min(20,i+1);
+      ma5+=(i?'L':'M')+(x+w/2)+' '+y(s5/n5)+' '; ma20+=(i?'L':'M')+(x+w/2)+' '+y(s20/n20)+' ';
+    });
+    document.getElementById('ma5').setAttribute('d',ma5); document.getElementById('ma20').setAttribute('d',ma20);
+    // 60·120일선은 예시 데이터가 40개뿐이라 완만한 추세선으로 대신 그린다
+    var m60='',m120=''; data.forEach(function(d,i){var x=8+i*gap+w/2; m60+=(i?'L':'M')+x+' '+(y((71800+i*45)*S))+' '; m120+=(i?'L':'M')+x+' '+(y((71200+i*20)*S))+' ';});
+    document.getElementById('ma60').setAttribute('d',m60); document.getElementById('ma120').setAttribute('d',m120);
+    hiI=0; loI=0; data.forEach(function(d,i){if(d.h>data[hiI].h)hiI=i; if(d.l<data[loI].l)loI=i;});
+    var gg=document.getElementById('cGrid'), ga=document.getElementById('cAxis'); gg.innerHTML=''; ga.innerHTML='';
+    for(var i=0;i<4;i++){var yy=cT()+i*cStep(), v=pHi-(pHi-pLo)*i/3; gg.insertAdjacentHTML('beforeend','<line x1="0" y1="'+yy+'" x2="590" y2="'+yy+'"/>'); ga.insertAdjacentHTML('beforeend','<text x="596" y="'+(yy+4)+'">'+fmtK(v)+'</text>');}
+  }
+  buildCandles();
+  var cHi=document.getElementById('cHi'), cLo=document.getElementById('cLo'), cNow=document.getElementById('cNow'), cTag=document.getElementById('cTag'), cTagBg=document.getElementById('cTagBg');
+  function fmtK(v){var t=tick(); return fmt(Math.round(v/t)*t);}
+  function drawHiLo(cur){
+    var hi=data[hiI], lo=data[loI];
+    cHi.setAttribute('x',Math.min(520,Math.max(70,8+hiI*gap+w/2))); cHi.setAttribute('y',y(hi.h)-5); cHi.textContent=fmtK(hi.h)+' ('+((cur/hi.h-1)*100).toFixed(1)+'%, 09.22)';
+    cLo.setAttribute('x',Math.max(60,8+loI*gap+w/2)); cLo.setAttribute('y',y(lo.l)+12); cLo.textContent=fmtK(lo.l)+' (+'+((cur/lo.l-1)*100).toFixed(1)+'%, 09.05)';
+    cNow.setAttribute('y1',y(cur)); cNow.setAttribute('y2',y(cur)); cTagBg.setAttribute('y',y(cur)-8); cTag.setAttribute('y',y(cur)+4); cTag.textContent=fmt(cur);
+  }
+  // ===== 간단 모드: 장중 선 차트 (예시) =====
+  var lp=[], lprev=73200;
+  function buildLine(){lp=[]; var lv0=73400*S; for(var j=0;j<70;j++){lv0+=(Math.sin(j*0.6)*120+Math.cos(j*0.23)*160+8)*S; lp.push(lv0);}}
+  buildLine();
+  var lCenter=73200, lRange=1800;
+  var ly=function(v){return CH*0.5-((v-lCenter)/lRange)*(CH*0.78);};
+  function fitLine(){var mx=Math.max.apply(null,lp.concat([lprev])), mn=Math.min.apply(null,lp.concat([lprev])); lCenter=(mx+mn)/2; lRange=Math.max((mx-mn)*1.1,1e-9); var yp=ly(lprev); document.getElementById('lPrevLn').setAttribute('y1',yp); document.getElementById('lPrevLn').setAttribute('y2',yp); document.getElementById('lPrevTx').setAttribute('y',yp+4);}
+  var lPath=document.getElementById('lPath'), lArea=document.getElementById('lArea'), lDot=document.getElementById('lDot'), lHalo=document.getElementById('lHalo'), lHi=document.getElementById('lHi'), lLo=document.getElementById('lLo'), lNow=document.getElementById('lNow'), lTag=document.getElementById('lTag'), lTagBg=document.getElementById('lTagBg');
+  function drawLine(){
+    fitLine(); var n=lp.length, step=560/Math.max(n-1,1), d='', hi=0, lo=0;
+    for(var i=0;i<n;i++){d+=(i?'L':'M')+(8+i*step).toFixed(1)+' '+ly(lp[i]).toFixed(1)+' '; if(lp[i]>lp[hi])hi=i; if(lp[i]<lp[lo])lo=i;}
+    var cur=lp[n-1], col=cur>=lprev?'var(--up)':'var(--down)';
+    lPath.setAttribute('d',d); lPath.setAttribute('stroke',col); lArea.setAttribute('d',d+'L'+(8+(n-1)*step)+' '+(CH-15)+' L8 '+(CH-15)+' Z'); lArea.setAttribute('fill',col);
+    var ex=8+(n-1)*step, ey=ly(cur); lDot.setAttribute('cx',ex); lDot.setAttribute('cy',ey); lDot.setAttribute('fill',col); lHalo.setAttribute('cx',ex); lHalo.setAttribute('cy',ey); lHalo.setAttribute('fill',col);
+    lNow.setAttribute('y1',ey); lNow.setAttribute('y2',ey); lTagBg.setAttribute('y',ey-8); lTagBg.setAttribute('fill',col); lTag.setAttribute('y',ey+4); lTag.textContent=fmt(cur);
+    lHi.setAttribute('x',Math.min(8+hi*step,520)); lHi.setAttribute('y',ly(lp[hi])-8); lHi.textContent='최고 '+fmtK(lp[hi]);
+    lLo.setAttribute('x',Math.min(8+lo*step,520)); lLo.setAttribute('y',ly(lp[lo])+14); lLo.textContent='최저 '+fmtK(lp[lo]);
+  }
+  function relayout(){var box=document.getElementById('chartBox'); var r=box.getBoundingClientRect(); if(r.width<50||r.height<50)return; CH=Math.max(200,Math.round(640*r.height/r.width));
+    ['lineChart','candleChart'].forEach(function(id){document.getElementById(id).setAttribute('viewBox','0 0 640 '+CH);});
+    document.querySelectorAll('#lTime text').forEach(function(t){t.setAttribute('y',CH-4);}); document.getElementById('lBuy').setAttribute('y',CH*0.9);
+    buildCandles(); if(typeof bindLast==='function')bindLast(); drawLine(); drawHiLo(px);}
+  drawLine(); drawHiLo(74300);
+  if(window.ResizeObserver){new ResizeObserver(function(){relayout();}).observe(document.getElementById('chartBox'));} else {window.addEventListener('resize',relayout);}
+  setTimeout(relayout,0);
+  // ===== "자세한 차트" 토글: 설정으로 저장 (종목 변경·재시작 후 유지, 동기화 대상) =====
+  var detail=document.getElementById('detail'), chartBox=document.getElementById('chartBox'), chartHd=document.getElementById('chartHd');
+  var saved=false; try{saved=localStorage.getItem('stockholm.chart.detail')==='1';}catch(e){}
+  function applyMode(){var on=detail.checked; chartBox.classList.toggle('simple',!on); chartHd.classList.toggle('simple',!on); try{localStorage.setItem('stockholm.chart.detail',on?'1':'0');}catch(e){}}
+  detail.checked=saved; applyMode();
+  detail.addEventListener('change',applyMode); detail.parentNode.addEventListener('click',function(e){e.stopPropagation();});
+  document.querySelectorAll('#tabsS span,#tabsD span').forEach(function(t){t.addEventListener('click',function(e){e.stopPropagation(); t.parentNode.querySelectorAll('span').forEach(function(x){x.classList.toggle('on',x===t)});});});
+  var mk=document.getElementById('markers');
+  [[14,'▲ 매수','var(--up)',data[14].l+300,14],[27,'◆ 토론','var(--accent)',data[27].h-300,-6],[33,'▼ 매도','var(--down)',data[33].h-300,-6]].forEach(function(m){
+    var x=8+m[0]*gap+w/2; mk.insertAdjacentHTML('beforeend','<text x="'+x+'" y="'+(y(m[3])+m[4])+'" text-anchor="middle" fill="'+m[2]+'" font-weight="600">'+m[1]+'</text>');
+  });
+  // 구분선 세 개: left(좌우 6:4), lt(차트:주문 7:3), rt(가격:토론 4:6). 최소 25%.
+  var grid=document.getElementById('grid'), stage=document.getElementById('stage'), DEF={left:60,lt:70,rt:40,dw:30,rw:25,cw:28}, LIM={left:[25,75],lt:[25,75],rt:[25,75],dw:[15,50],rw:[15,50],cw:[15,50]}, cur={};
+  var boxOf={left:grid,lt:document.getElementById('colL'),rt:document.getElementById('colR'),dw:stage,rw:stage,cw:stage};
+  function apply(ax,pct){pct=Math.max(LIM[ax][0],Math.min(LIM[ax][1],pct));cur[ax]=pct;((ax==='dw'||ax==='rw'||ax==='cw')?stage:grid).style.setProperty('--'+ax,pct+'%');
+    var r=document.querySelector('.split[data-axis="'+ax+'"] .ratio'); if(r)r.textContent=(ax==='dw'||ax==='rw'||ax==='cw')?Math.round(pct)+'%':Math.round(pct)+' : '+Math.round(100-pct);}
+  document.getElementById('resetRatios').addEventListener('click',function(e){e.preventDefault();try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('stockholm.')===0)localStorage.removeItem(k);});}catch(x){}location.reload();});
+  Object.keys(DEF).forEach(function(ax){var v=DEF[ax];try{var sv=localStorage.getItem('stockholm.ratio.v2.'+ax);if(sv)v=parseFloat(sv)||v;}catch(e){}apply(ax,v);});
+  document.querySelectorAll('.split').forEach(function(sp){
+    var ax=sp.dataset.axis, vert=sp.classList.contains('v'), on=false;
+    sp.addEventListener('pointerdown',function(e){on=true;sp.classList.add('drag');sp.setPointerCapture(e.pointerId);e.preventDefault();});
+    sp.addEventListener('pointermove',function(e){if(!on)return;var r=boxOf[ax].getBoundingClientRect();apply(ax,ax==='rw'?(r.right-e.clientX)/r.width*100:vert?(e.clientX-r.left)/r.width*100:(e.clientY-r.top)/r.height*100);});
+    function end(){if(!on)return;on=false;sp.classList.remove('drag');try{localStorage.setItem('stockholm.ratio.v2.'+ax,String(cur[ax]));}catch(e){}}
+    sp.addEventListener('pointerup',end);sp.addEventListener('pointercancel',end);
+    sp.addEventListener('dblclick',function(){apply(ax,DEF[ax]);try{localStorage.removeItem('ws-'+ax);}catch(e){}});
+  });
+  // 토론 탭
+  var dt=document.querySelectorAll('#dtabs span'), dp=document.querySelectorAll('.dtab');
+  dt.forEach(function(t){t.addEventListener('click',function(e){e.stopPropagation();dt.forEach(function(x){x.classList.toggle('on',x===t)});dp.forEach(function(x){x.classList.toggle('on',x.dataset.t===t.dataset.t)});})});
+  // 실시간 시늉: 현재가와 마지막 캔들이 움직인다 (예시 데이터)
+  var px=74300, prev=73200, last=data[data.length-1];
+  var mpx=document.getElementById('mpx'), mchg=document.getElementById('mchg'), mbox=document.getElementById('mbox'), px2=document.getElementById('px2');
+  var pxEl=document.getElementById('px'), chEl=document.getElementById('pchg'), box=document.getElementById('pbox'), clk=document.getElementById('clock');
+  var lastRect, lastLine; function bindLast(){last=data[data.length-1]; lastRect=cg.querySelectorAll('rect')[data.length-1]; lastLine=cg.querySelectorAll('line')[data.length-1];} bindLast();
+  function paintPrice(dir){
+    pxEl.textContent=fmt(px); pxEl.className='num '+(px>=prev?'up':'down');
+    var diff=px-prev; chEl.textContent=(diff>=0?'▲ ':'▼ ')+fmt(Math.abs(diff))+' ('+(diff>=0?'+':'')+(diff/prev*100).toFixed(2)+'%)'; chEl.className='num '+(diff>=0?'up':'down');
+    mpx.textContent=pxEl.textContent; mpx.className=pxEl.className; mchg.textContent=chEl.textContent; mchg.className=chEl.className+' small'; px2.textContent=pxEl.textContent; px2.className=pxEl.className;
+    if(dir){[box,mbox].forEach(function(b){b.classList.remove('up','down'); void b.offsetWidth; b.classList.add(dir); setTimeout(function(){b.classList.remove(dir)},350);});}
+  }
+  // 종목 전환: 관심종목·랭킹·검색 어디서 골라도 네 영역이 이 종목으로 바뀐다 (목업: 가격 스케일만 바꿔 다시 그림)
+  function selectSymbol(o){
+    sym=o; US=!/^\d{6}$/.test(o.code); S=o.price/74300; prev=o.price/(1+o.chg/100); px=o.price; lprev=prev;
+    document.getElementById('symbtn').innerHTML='<b class="symname">'+o.name+'</b> <span class="num">'+o.code+'</span> · '+(US?'US':'KOSPI')+' ▾';
+    document.getElementById('mcode').textContent=o.code; symName=o.name; updateNpsOverview(o);
+    buildCandles(); bindLast(); buildLine(); drawLine(); drawHiLo(px); paintPrice(null);
+    document.querySelectorAll('.wl li, .rk li').forEach(function(li){var c=li.querySelector('.cd'); li.classList.toggle('on',!!c&&c.textContent.trim()===o.code);});
+  }
+  var symName='삼성전자';
+  function rowSymbol(li){var nm=li.querySelector('.nm'), cd=li.querySelector('.cd'), pr=li.querySelector('.pr .num'), ch=li.querySelector('.pr .small'); if(!nm||!cd||!pr)return null;
+    var price=parseFloat(pr.textContent.replace(/[^0-9.]/g,'')), m=ch?ch.textContent.match(/([+−-]?\d+(?:\.\d+)?)%/):null, chg=m?parseFloat(m[1].replace('−','-')):0;
+    return {name:nm.textContent.trim(),code:cd.textContent.trim(),price:price,chg:chg};}
+  var t0=Date.now(), base=new Date(); base.setHours(15,2,41,0);
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(function(){
+    var d=(Math.random()-.48)*200*S, t=tick(); var np=Math.round((px+d)/t)*t; if(US)np=Math.round(np*100)/100; if(np===px)return;
+    var dir=np>px?'up':'down'; px=np;
+    paintPrice(dir);
+    box.classList.remove('up','down'); void box.offsetWidth; box.classList.add(dir); setTimeout(function(){box.classList.remove(dir)},350);
+    mbox.classList.remove('up','down'); void mbox.offsetWidth; mbox.classList.add(dir); setTimeout(function(){mbox.classList.remove(dir)},350);
+    last.c=Math.max(70500*S,Math.min(75800*S,last.c+d)); last.h=Math.max(last.h,last.c); last.l=Math.min(last.l,last.c);
+    var up=last.c>=last.o, col=up?'var(--up)':'var(--down)';
+    lastRect.setAttribute('y',Math.min(y(last.o),y(last.c))); lastRect.setAttribute('height',Math.max(1,Math.abs(y(last.o)-y(last.c)))); lastRect.setAttribute('fill',col);
+    lastLine.setAttribute('y1',y(last.h)); lastLine.setAttribute('y2',y(last.l)); lastLine.setAttribute('stroke',col);
+    if(last.h>data[hiI].h)hiI=data.length-1; if(last.l<data[loI].l)loI=data.length-1; drawHiLo(px);
+    lp.push(Math.max(72500*S,Math.min(75300*S,lp[lp.length-1]+d))); if(lp.length>90)lp.shift(); drawLine();
+    document.getElementById('lClk').textContent=new Date(base.getTime()+(Date.now()-t0)).toTimeString().slice(0,5);
+    clk.textContent=new Date(base.getTime()+(Date.now()-t0)).toTimeString().slice(0,8);
+  },900);
+  // 주문 모달: 중앙 기본, 드래그 이동, 세션 동안 위치 유지(메모리), 재시작 시 초기화
+  var app=document.getElementById('app'), modal=document.getElementById('omodal'), mh=document.getElementById('mh'), mpos=null;
+  var mtitle=document.getElementById('mtitle'), mord=document.getElementById('mordinary'), mnow=document.getElementById('mnow');
+  var conf=document.getElementById('oconfirm'), ctitle=document.getElementById('ctitle'), cbody=document.getElementById('cbody');
+  function place(){ if(mpos){modal.style.left=mpos.x+'px';modal.style.top=mpos.y+'px';return;}
+    var aw=app.clientWidth, ah=app.clientHeight, mw=modal.offsetWidth, mhh=modal.offsetHeight; modal.style.left=Math.max(12,(aw-mw)/2)+'px'; modal.style.top=Math.max(12,(ah-mhh)/2)+'px'; }
+  function openModal(side){ modal.classList.remove('buy','sell'); modal.classList.add(side); var v=side==='buy'?'매수':'매도';
+    mtitle.textContent=v+' · '+symName; mord.innerHTML='지정가 '+v+'<small>확인 창 후 주문</small>'; mnow.innerHTML='현재가 즉시 '+v+'<small>확인 없이 바로</small>';
+    modal.hidden=false; place(); }
+  document.querySelectorAll('.obtns .btn').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();openModal(b.dataset.side);});});
+  document.getElementById('mx').addEventListener('click',function(){modal.hidden=true;});
+  modal.addEventListener('click',function(e){e.stopPropagation();});
+  var drag=null;
+  mh.addEventListener('pointerdown',function(e){if(e.target.id==='mx')return;drag={dx:e.clientX-modal.offsetLeft,dy:e.clientY-modal.offsetTop};mh.setPointerCapture(e.pointerId);});
+  mh.addEventListener('pointermove',function(e){if(!drag)return;var x=Math.max(0,Math.min(app.clientWidth-modal.offsetWidth,e.clientX-drag.dx)),y=Math.max(0,Math.min(app.clientHeight-modal.offsetHeight,e.clientY-drag.dy));mpos={x:x,y:y};place();});
+  mh.addEventListener('pointerup',function(){drag=null;}); mh.addEventListener('pointercancel',function(){drag=null;});
+  mord.addEventListener('click',function(){var v=modal.classList.contains('buy')?'매수':'매도';ctitle.textContent=v+' 주문 확인';cbody.textContent='삼성전자 10주 × 74,200원 = 742,000원 (지정가 '+v+')';conf.hidden=false;});
+  conf.addEventListener('click',function(e){e.stopPropagation();});
+  document.getElementById('cno').addEventListener('click',function(){conf.hidden=true;});
+  document.getElementById('cok').addEventListener('click',function(){conf.hidden=true;modal.hidden=true;});
+  mnow.addEventListener('click',function(){modal.hidden=true;}); // 즉시 주문: 확인 창 없음 → 바로 접수(목업에서는 닫힘)
+  // 관심종목 서랍 + 종목 검색 팝오버
+  var drawer=document.getElementById('drawer'), wlbtn=document.getElementById('wlbtn'), pop=document.getElementById('pop');
+  var rkbtn=document.getElementById('rkbtn'), rdrawer=document.getElementById('rdrawer');
+  var cmbtn=document.getElementById('cmbtn'), cdrawer=document.getElementById('cdrawer');
+  // 서랍 규칙: 왼쪽에는 커뮤니티·관심종목이 겹쳐 열릴 수 있고(|커뮤니티|관심종목|Main|), 오른쪽 급등락은 왼쪽 서랍과 동시에 열리지 않는다
+  function setRDrawer(o){stage.classList.toggle('ropen',o);rkbtn.classList.toggle('on',o);if(o){setDrawer(false);setCDrawer(false);}}
+  function setDrawer(o){stage.classList.toggle('open',o);wlbtn.classList.toggle('on',o);if(o&&stage.classList.contains('ropen'))setRDrawer(false);}
+  function setCDrawer(o,o2){stage.classList.toggle('copen',o);cmbtn.classList.toggle('on',o);if(o){if(stage.classList.contains('ropen'))setRDrawer(false);if(o2)showCommunity(o2);else showCommunity(sym);}}
+  function showCommunity(o){var us=!/^\d{6}$/.test(o.code);document.getElementById('cmsym').textContent=o.name;document.getElementById('cmmkt').textContent=us?'US · Reddit 피드 + 링크':'KR · 링크아웃';document.getElementById('cmfeed').hidden=!us;
+    document.getElementById('cmsum').textContent=us?('오늘 '+o.name+' 여론: 생산 가이던스 상향 소식에 낙관 우세. 다만 저유동성·급등 후 차익 실현 경고가 댓글 상위에 반복된다. (Reddit 게시글 37건 요약, 자동 번역)'):'국내 종목은 공식 API로 원문을 가져올 커뮤니티가 없어 요약·피드를 제공하지 않습니다. 위 링크로 이동하세요.';
+    document.getElementById('cmus1').style.display=us?'':'none';document.getElementById('cmus2').style.display=us?'':'none';}
+  cmbtn.addEventListener('click',function(e){e.stopPropagation();setCDrawer(!stage.classList.contains('copen'));pop.hidden=true;});
+  document.getElementById('cx').addEventListener('click',function(){setCDrawer(false);});
+  cdrawer.addEventListener('click',function(e){e.stopPropagation();var t=e.target;if(t.classList.contains('tgl')){var p=t.closest('.post');p.classList.toggle('orig');t.textContent=p.classList.contains('orig')?'번역 보기':'원문 보기';}});
+  // 목록의 💬 버튼: 그 종목의 커뮤니티를 왼쪽에 연다 (관심종목이 열려 있으면 |커뮤니티|관심종목|Main|)
+  document.querySelectorAll('.wl .cbtn, .rk .cbtn').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();var o=rowSymbol(b.closest('li'));if(o)setCDrawer(true,o);});});
+  rkbtn.addEventListener('click',function(e){e.stopPropagation();setRDrawer(!stage.classList.contains('ropen'));pop.hidden=true;});
+  document.getElementById('rx').addEventListener('click',function(){setRDrawer(false);});
+  rdrawer.addEventListener('click',function(e){e.stopPropagation();});
+  document.querySelectorAll('.rk li').forEach(function(li){li.addEventListener('click',function(){var o=rowSymbol(li);if(o)selectSymbol(o);li.classList.remove('flash');void li.offsetWidth;li.classList.add('flash');});});
+  function togD(e){e.stopPropagation();setDrawer(!stage.classList.contains('open'));pop.hidden=true;}
+  wlbtn.addEventListener('click',togD);
+  document.getElementById('dx').addEventListener('click',function(){setDrawer(false);});
+  drawer.addEventListener('click',function(e){e.stopPropagation();});
+  document.querySelectorAll('.wl li').forEach(function(li){li.addEventListener('click',function(){var o=rowSymbol(li);if(o)selectSymbol(o);setDrawer(false);});});
+  document.getElementById('symbtn').addEventListener('click',function(e){e.stopPropagation();pop.hidden=!pop.hidden;setDrawer(false);});
+  pop.addEventListener('click',function(e){e.stopPropagation();var li=e.target.closest('li');if(li){var sp=li.querySelectorAll(':scope > span');var name=sp[0].childNodes[0].textContent.trim(), code=sp[1].textContent.trim();var known={'005930':[74300,1.5],'009150':[151200,-0.33],'006400':[312000,2.12],'207940':[1012000,0.8]};var k=known[code]||[50000,0];selectSymbol({name:name,code:code,price:k[0],chg:k[1]});}pop.hidden=true;});
+  app.addEventListener('click',function(){pop.hidden=true;});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){setDrawer(false);setRDrawer(false);setCDrawer(false);pop.hidden=true;conf.hidden=true;} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='u'){e.preventDefault();setCDrawer(true);} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='j'){e.preventDefault();setRDrawer(true);} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='l'){e.preventDefault();setDrawer(true);} if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();pop.hidden=false;}});
+  // ===== 국민연금 해외투자 현황 모달 (F13): 상단 바 🏛️ 버튼·⌘N, 앱 기동 시 푸시(토스트 + 배지) =====
+  var npsm=document.getElementById('npsmodal'), npsbtn=document.getElementById('npsbtn'), nph=document.getElementById('nph'), npst=document.getElementById('npstoast'), nppos=null;
+  function placeNps(){ if(nppos){npsm.style.left=nppos.x+'px';npsm.style.top=nppos.y+'px';return;} npsm.style.left=Math.max(12,(app.clientWidth-npsm.offsetWidth)/2)+'px'; npsm.style.top=Math.max(12,(app.clientHeight-npsm.offsetHeight)/2)+'px'; }
+  function openNps(){ npsm.hidden=false; placeNps(); npsbtn.classList.add('on'); npsbtn.classList.remove('new'); npst.hidden=true; pop.hidden=true; }
+  function closeNps(){ npsm.hidden=true; npsbtn.classList.remove('on'); }
+  npsbtn.addEventListener('click',function(e){e.stopPropagation(); if(npsm.hidden)openNps(); else closeNps();});
+  document.getElementById('npx').addEventListener('click',closeNps);
+  npsm.addEventListener('click',function(e){e.stopPropagation();});
+  var ndrag=null;
+  nph.addEventListener('pointerdown',function(e){if(e.target.id==='npx'||e.target.id==='npschk')return;ndrag={dx:e.clientX-npsm.offsetLeft,dy:e.clientY-npsm.offsetTop};nph.setPointerCapture(e.pointerId);});
+  nph.addEventListener('pointermove',function(e){if(!ndrag)return;var x=Math.max(0,Math.min(app.clientWidth-npsm.offsetWidth,e.clientX-ndrag.dx)),y=Math.max(0,Math.min(app.clientHeight-npsm.offsetHeight,e.clientY-ndrag.dy));nppos={x:x,y:y};placeNps();});
+  nph.addEventListener('pointerup',function(){ndrag=null;}); nph.addEventListener('pointercancel',function(){ndrag=null;});
+  var nt=document.querySelectorAll('#ntabs span'), np=document.querySelectorAll('.ntab');
+  nt.forEach(function(t){t.addEventListener('click',function(){nt.forEach(function(x){x.classList.toggle('on',x===t)});np.forEach(function(x){x.classList.toggle('on',x.dataset.t===t.dataset.t)});});});
+  document.getElementById('npschk').addEventListener('click',function(){var s=this;s.textContent='확인 중…';setTimeout(function(){s.textContent='지금 확인';},900);});
+  // 표의 행을 누르면 그 종목으로 이동(티커가 확인된 종목만). 모달은 열린 채 유지.
+  document.querySelectorAll('.npst tr[data-code]').forEach(function(tr){tr.addEventListener('click',function(){selectSymbol({name:tr.dataset.name,code:tr.dataset.code,price:parseFloat(tr.dataset.price),chg:parseFloat(tr.dataset.chg)});});});
+  // 앱 기동 시 푸시: 데몬이 새 데이터를 감지해 두었으면 접속 직후 토스트와 버튼 배지가 뜬다 (목업: 1.5초 뒤)
+  setTimeout(function(){ if(npsm.hidden){ npst.hidden=false; npsbtn.classList.add('new'); } },1500);
+  document.getElementById('npsgo').addEventListener('click',function(e){e.stopPropagation();openNps();});
+  document.getElementById('npstx').addEventListener('click',function(e){e.stopPropagation();npst.hidden=true;});
+  npst.addEventListener('click',function(e){e.stopPropagation();});
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape')closeNps(); if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='n'){e.preventDefault();openNps();} });
+  // 토론 개요 탭의 "국민연금 보유" 행: 해외 종목만, 티커가 확인된 종목이면 비중·지분율·전년 대비
+  var NPS={AAPL:['3.62%','0.30%','▲ 0.21pp','12.4M주','▲ 1.8%'],NVDA:['3.54%','0.28%','▲ 1.13pp','24.9M주','▲ 6.2%'],MSFT:['3.12%','0.29%','▼ 0.12pp','5.9M주','▼ 0.7%'],AVGO:['0.99%','0.36%','▲ 0.31pp','3.2M주','▲ 12.5%'],PLTR:['0.14%','0.19%','신규','2.4M주','신규'],AMZN:['1.86%','0.25%','▲ 0.09pp'],GOOGL:['1.24%','0.27%','—'],META:['1.18%','0.31%','▲ 0.17pp'],TSLA:['0.92%','0.24%','▲ 0.10pp'],LLY:['0.72%','0.30%','▲ 0.06pp'],TSM:['0.70%','0.28%','▲ 0.19pp'],MU:['0.31%','0.29%','▲ 0.04pp'],INTC:['0.22%','0.31%','▼ 0.06pp'],AMD:['0.41%','0.27%','▲ 0.02pp'],NKE:['0.10%','0.27%','▼ 0.09pp'],BA:['0.18%','0.30%','—'],PFE:['0.21%','0.28%','▼ 0.10pp'],SBUX:['0.15%','0.26%','—']};
+  function updateNpsOverview(o){var el=document.getElementById('npsov'), us=!/^\d{6}$/.test(o.code); if(!us){el.innerHTML='<span class="small">해외 종목만 제공</span>';return;} var v=NPS[o.code]; el.innerHTML=v?('<span class="num">'+(v[3]?('13F 2Q26 '+v[3]+' ('+v[4]+') · '):'')+'연간 비중 '+v[0]+' · 지분율 '+v[1]+' ('+v[2]+')</span> <span class="resume" id="npsovgo">현황</span>'):'<span class="small">없음 (미보유 또는 10억원 미만)</span>'; var g=document.getElementById('npsovgo'); if(g)g.addEventListener('click',function(e){e.stopPropagation();openNps();});}
+  updateNpsOverview(sym);
+  // 영역 클릭 → 설명 강조
+  var panes=document.querySelectorAll('.pane'), notes=document.querySelectorAll('.note');
+  function sel(n){panes.forEach(function(p){p.classList.toggle('on',p.dataset.n===n)});notes.forEach(function(x){x.classList.toggle('on',x.dataset.n===n)});}
+  panes.forEach(function(p){p.addEventListener('click',function(){sel(p.dataset.n)});p.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();sel(p.dataset.n)}})});
+  notes.forEach(function(x){x.addEventListener('click',function(){sel(x.dataset.n)})});
+})();
+</script>
+
+</body></html>
