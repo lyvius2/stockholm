@@ -33,8 +33,12 @@ API 규격은 바뀐다. 어댑터를 구현할 때는 이 문서가 아니라 *
 | 주문 | `POST /api/v1/orders`, `…/{orderId}/modify`, `…/{orderId}/cancel` | F1, F7, F8 |
 | 주문 조회 | `GET /api/v1/orders`, `/orders/{orderId}` | F2, **자동 주문 직전 중복 확인** |
 | 주문 정보 | `GET /api/v1/buying-power`, `/sellable-quantity`, `/commissions` | **예수금 하한 검사**, 90% 한도 계산, 순손익 계산 |
+| 가격 제한 | `GET /api/v1/price-limits` (상·하한가) | **F7 제외 필터 "상한가 근접"**, 주문 모달 가격 검증 |
+| 종목 수급 상세 | `GET /api/v1/stocks/{symbol}/investor-trading`, `/program-trades`, `/credit-trades`, `/securities-lending`, `/short-selling` | F5 수급 스크리닝, 토론 자료, F12 대신 쓰는 "수급 심리" 지표 |
 | 조건주문 | `POST /api/v1/conditional-orders` (SINGLE·OCO·OTO), 수정·삭제·조회 | 아래 "설계 영향 4" 참조 |
 | 실시간 | WebSocket `trade:{kr\|us}`, `orderbook:{kr\|us}`, `personal:order` | 급등 탐지, 체결 알림 |
+
+**커뮤니티 없음(2026-09-23 전체 엔드포인트 확인).** 게시글·댓글·소셜 관련 엔드포인트는 없다. 비공식 WTS 내부 엔드포인트는 약관 밖이며 주문 계정과 같은 계정을 쓰므로 절대 쓰지 않는다. 커뮤니티는 F12(링크아웃 + StockTwits 공개 API)로 간다.
 
 **호출 제한(초당, 클라이언트×그룹).** ACCOUNT 1 · STOCK_ALL 1 · MARKET_INFO 3 · AUTH/ASSET/STOCK/RANKING/ORDER_HISTORY/CONDITIONAL_ORDER 5 · ORDER_INFO 6(09:00~09:10에는 3) · ORDER 10 · MARKET_DATA 15 · MARKET_DATA_CHART 20. 응답 헤더 `X-RateLimit-*`, 429 시 `Retry-After`. WebSocket은 계정당 동시 연결 2개, 연결당 구독 100건, 구독 선언 5회/초, 180초 무수신 시 종료(60초 PING 권장). 시세 채널은 유실 가능(LOSSY), `personal:order`는 세션 내 무손실이나 재연결 시 재동기 필요.
 
@@ -161,7 +165,8 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 
 포트: `NewsPort`.
 
-- 네이버 검색 API(뉴스): https://developers.naver.com — 무료, 일일 한도. 제목·요약·링크만 제공(본문 없음). 종목명 키워드 수집에 적합
+- **네이버 검색 API(뉴스·블로그·카페)** [확정 2026-09-23, 사용자 결정]: RSS에 더하는 **추가 소스**로, 이미 발급된 키로 사용한다. 개인 단독 사용 프로그램이라는 판단. 제목·요약(`description`)·링크·`pubDate`를 받아 국내 종목 뉴스 목록과 토론 근거로 쓴다. **약관 위험은 기록해 둔다**: 2026-09-07 시행 약관은 검색 결과의 AI 입력·학습·평가 이용, 저장·캐싱, 제3자 제공을 금지한다. 따라서 (a) 네이버 어댑터는 `NewsPort` 구현체 중 하나일 뿐이고 RSS 어댑터를 항상 함께 두어 **키가 막히거나 약관 판단이 바뀌면 설정만으로 뺄 수 있게** 한다, (b) 네이버 출처 문서는 RAG 코퍼스에 `source=naver` 태그를 달아 **한 번에 삭제·재색인 가능**하게 한다, (c) 운영이 개발자센터 → NAVER API HUB로 이관 중이므로 **기존 키 유예 종료(2027-06-30) 전에 HUB 이관과 유료화 여부를 재확인**한다(신규 신청은 2026-07-31 종료). 블로그·카페 검색은 국내 종목의 개인 투자자 글을 잡는 보조 소스로 같은 조건에서 쓴다
+- **국내 뉴스의 1차 소스는 RSS**: 언론사 공식 RSS(경제지·통신사)와 Google News RSS(한국어, 종목명 검색 피드). 제목·링크·발행 시각은 저장하고, 본문은 각 사이트 robots.txt·약관이 허용하는 범위에서만 수집·색인한다. 빅카인즈(한국언론진흥재단) 뉴스 API는 비상업 이용 조건 확인 후 후보 [확인 필요]
 - 언론사·Google News RSS: 키 불필요. 발행 시각 확보가 쉽다
 - 본문 수집은 각 사이트의 robots.txt와 약관을 따른다. RAG에는 요약과 링크·발행 시각을 저장하고, 본문 전문 저장은 허용된 소스에 한한다
 
@@ -174,7 +179,10 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 | Finnhub / Polygon / Alpha Vantage | 미국 종목 뉴스, 실적 일정, 애널리스트 추정치, 기업 기본정보 | 무료 등급에 분당 제한. 해외 자동화를 본격화할 때 도입 |
 | 실적·경제 캘린더 (Finnhub, FMP 등) | "판단을 뒤집을 이벤트" 자동 채우기, 실적 발표일 전후 자동 매수 제한 | 가드레일 입력으로도 유용 |
 | KIND(한국거래소 공시) | 거래정지·관리종목 지정, 시장조치의 1차 출처 | 공식 API 없음 → 토스 `warnings` API로 충분한지 먼저 확인 |
-| 네이버 데이터랩 / Google Trends | 종목·테마 검색량 → 개인 투자자 관심도 | 모멘텀 페르소나의 보조 신호 |
+| 네이버 데이터랩 / Google Trends | 종목·테마 검색량 → 개인 투자자 관심도 | 모멘텀 페르소나의 보조 신호. 데이터랩(Search Trend)도 API HUB로 이관 중 — 이관 시점·유료화 [확인 필요] |
+| Reddit Data API | (피드 소스에서 제외) F12는 Reddit 검색 **링크아웃만** | [확정 2026-09-23] Responsible Builder Policy: 개인·비상업도 **사전 승인 필수**(예외 없음, 폼 신청), 승인 후 무료 한도 OAuth 클라이언트당 100회/분, 삭제된 글 동기 삭제 의무·48시간 내 저장 데이터 정리 권고·AI/ML 이용 금지. 원문 보관·RAG 투입이 불가하므로 승인받더라도 **표시 전용(원문 미저장, 캐시 48시간 이내)** 어댑터로만 [보류] |
+| StockTwits (공개 비인증 엔드포인트) | F12 미국 종목 심리 피드: 종목별 Bullish/Bearish 심리, 트렌딩 종목, 종목 메시지 스트림 | 포트 `CommunityPort`의 두 번째 구현체 [확정 2026-09-23]. 공식 문서 https://api-docs.stocktwits.com. **IP당 시간당 200회** → 커뮤니티 서랍을 연 종목만 조회, 응답 캐시 TTL 10분, 백그라운드 폴링 없음. 엔드포인트 규격은 공식 MCP 서버 소스(https://github.com/stocktwits/stocktwits-mcp, MIT, Node 18+, stdio)에서 확인한다. **제품에 MCP 서버를 넣지 않는다** — 어댑터가 같은 공개 엔드포인트를 직접 HTTP로 호출한다(Node 런타임·자식 프로세스 관리 회피, 기준 시점 `asOf` 원칙 유지). MCP 서버는 개발 중 데이터 품질 검증(사전 실험)에만 쓴다. 개인 비상업 용도이며 엔터프라이즈 API는 쓰지 않는다 |
+| DeepL / Google Cloud Translation / Papago | F12 번역이 LLM으로 부족할 때의 전용 번역기 | `TranslationPort` [제안]. 무료 등급 월 50만 자 안팎. 기본은 LLM 번역 |
 | 미러피시 | 심층 토론 | 선택적. `docs/MIROFISH_EXPERIMENT_GUIDE.md`, 내부 API이므로 실험으로 규격 확인 |
 | Ollama (로컬 LLM) | 비용 0의 요약·분류·임베딩, 급등 재료 확인 같은 저지연 작업 | Mac mini 32GB에서 8B~14B급 현실적 |
 | 웹 검색 API (Tavily, Brave 등) | 토론 중 최신 정보 보강 | LLM 제공자의 내장 검색 도구로 대체 가능 |
@@ -188,6 +196,7 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 
 - **증권사 HTS/MTS 화면 자동화, 비공식·역공학 API**: 약관 위반과 계정 제한 위험. 토스 웹 전용 기능을 긁는 비공식 도구도 쓰지 않는다.
 - **네이버 금융·증권사 리서치 페이지의 무단 대량 크롤링**: 공식 API와 RSS로 대체한다.
+- **네이버 종목토론실·토스 커뮤니티의 프레임 삽입(iframe/webview) 또는 크롤링**: `X-Frame-Options`·약관에 걸리고, 헤더를 벗겨 띄우는 방식은 우리 창에 남의 스크립트를 들이는 것이라 하지 않는다. F12는 링크아웃만 한다.
 - **타 증권사 API의 주문 기능**: D8.
 
 ---
@@ -203,7 +212,7 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 | `IdentityPort`, `AssetPort` | 금융결제원 |
 | `DisclosurePort` | DART(KR), SEC EDGAR(US) |
 | `FundamentalsPort` | DART 재무정보(KR), SEC EDGAR company facts(US), (KIS 재무비율 보조) |
-| `NewsPort` | 네이버 검색, RSS, (Finnhub) |
+| `NewsPort` | 네이버 검색(뉴스·블로그·카페), 언론사·Google News RSS, (빅카인즈), (Finnhub) |
 | `MacroIndicatorPort` | ECOS, FRED, Toss market-indicators |
 | `LlmPort`, `EmbeddingPort` | Spring AI 기반 다중 제공자, Ollama |
 | `SimulationPort` | 미러피시 (선택) |
@@ -229,3 +238,8 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 - [신한 Open API](https://openapi.shinhan.com/)
 - [KRX Open API](https://openapi.krx.co.kr/)
 - [공공데이터포털 금융위원회 주식시세정보](https://www.data.go.kr/data/15094808/openapi.do)
+- [Reddit Responsible Builder Policy](https://support.reddithelp.com/hc/en-us/articles/42728983564564-Responsible-Builder-Policy)
+- [Reddit Developer Platform & Accessing Reddit Data](https://support.reddithelp.com/hc/en-us/articles/14945211791892-Developer-Platform-Accessing-Reddit-Data)
+- [네이버 검색 API AI 활용 금지 보도(한국데이터경제신문, 2026-09)](https://www.dataeconomy.co.kr/news/articleView.html?idxno=42307)
+- [네이버 검색 API → API HUB 이관 안내(와플보드)](https://waffleboard.io/blog/naver-search-api-hub-migration-guide)
+- [StockTwits 공식 MCP 서버](https://github.com/stocktwits/stocktwits-mcp)

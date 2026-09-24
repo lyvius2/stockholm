@@ -38,6 +38,7 @@ Spring AI가 네 제공자 모두의 채팅 모델 구현을 제공한다(DeepSe
 | `DOCUMENT_DIGEST` | 공시·뉴스 요약, 분류, 태깅, 악재 유형 판정 보조 | 대량 처리 단가 | 20초 | 없음 |
 | `RETROSPECTIVE` | F10 회고 작성 | 분석 품질 | 120초 | **있음**(매매 결과) |
 | `USER_CHAT` | 종목 질의응답 | 대화 품질, 스트리밍 | 첫 토큰 2초 | 상황에 따라 |
+| `TRANSLATE` | F12 커뮤니티 게시글·댓글 영→한 번역 (제목은 배치, 본문은 펼칠 때) | 투자 은어 처리, 대량 단가 | 10초(배치 30건) | 없음(공개 글) |
 
 `PERSONA_TURN`은 **페르소나별로 다른 경로를 지정**할 수 있다(가치투자자=Claude, 모멘텀=DeepSeek, 리스크 매니저=OpenAI 식). 임베딩은 채팅과 성격이 달라 별도 포트(`EmbeddingPort`)로 둔다(`docs/RAG_DESIGN.md`).
 
@@ -57,6 +58,7 @@ Spring AI가 네 제공자 모두의 채팅 모델 구현을 제공한다(DeepSe
 | `DOCUMENT_DIGEST` | Ollama → DeepSeek | OpenAI 소형 → Ollama | Ollama → DeepSeek | Ollama |
 | `RETROSPECTIVE` | Claude → OpenAI | Claude 상위 모델 | DeepSeek → Claude | Ollama |
 | `USER_CHAT` | Claude → OpenAI | Claude → OpenAI | DeepSeek → Ollama | Ollama |
+| `TRANSLATE` | Ollama → DeepSeek | OpenAI 소형 → Ollama | Ollama → DeepSeek | Ollama |
 
 키가 등록되지 않은 제공자는 경로에서 자동으로 빠진다. 한 제공자만 등록해도 전 기능이 동작해야 한다.
 
@@ -108,6 +110,7 @@ engine.llm
 | `SELL_DECISION` | **판단 보류**(매도하지 않음) + Slack 알림. 토스에 걸어 둔 조건주문(손절)은 LLM과 무관하게 작동 |
 | `STRUCTURED_EXTRACTION` | 결론을 "구조화 실패"로 기록, 자동화 입력으로 쓰지 않음 |
 | `PERSONA_TURN` | 해당 페르소나를 이번 토론에서 제외하고 그 사실을 결론에 명시. 과반이 빠지면 토론 무효 |
+| `TRANSLATE` | 원문을 그대로 보여주고 "번역 안 됨" 표시. 재시도는 사용자가 펼칠 때 |
 | 그 외 | 재시도 큐에 넣고 사용자에게 지연 안내 |
 
 **폴백은 개인정보 규칙을 넘지 못한다.** 개인 데이터가 든 요청이 "개인 데이터 허용" 제공자에서 모두 실패하면, 허용되지 않은 제공자로 넘어가지 않고 실패 처리한다.
