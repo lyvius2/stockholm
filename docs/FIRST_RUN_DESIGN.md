@@ -1,6 +1,6 @@
 # 최초 구동과 시작 종목 (F19)
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-25 / 상태: **[확정 2026-09-25]** (토스 키 "나중에"+조회 제한 모드, 로그인 모달 바깥 흐림, TOTP 포함, 시작 종목 = 평가금액 최대 보유 → 기본 종목 삼성전자/엔비디아. 남은 것은 토스 API 필드 [확인 필요]뿐) — 사용자가 준 6단계(admin 비밀번호 → 공유 키 → 토스 키 안내 → 검증 후 메인 → 시작 종목 규칙 → 직전 종목)를 화면과 로직으로 푼 것. 결정 대기 항목은 9장 / 관련: [`PROJECT.md`](../PROJECT.md) 5장·D17·D18·F19·11.3, [`docs/KEY_MANAGEMENT.md`](KEY_MANAGEMENT.md) 3장(마법사 원안)·5장(저장), [`docs/LLM_ROUTING.md`](LLM_ROUTING.md) 4장(프리셋), [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md), 화면 설계 아티팩트 "최초 구동 마법사"
 

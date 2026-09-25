@@ -231,7 +231,7 @@ npm --prefix desktop run lint                        # TS 린트
 
 ## 문서
 
-- [`docs/README.md`](docs/README.md) — **문서 지도.** 읽는 순서, 주제별·기능별·단계별 색인, 문서 규약. 어떤 문서를 봐야 할지 모르면 여기부터.
+- [`docs/INDEX.md`](docs/INDEX.md) — **문서 지도.** 읽는 순서, 주제별·기능별·단계별 색인, 문서 규약. 어떤 문서를 봐야 할지 모르면 여기부터.
 - [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) — 단계별 착수 순서·읽을 문서·완료 기준. 작업을 고를 때 HANDOFF와 함께 본다.
 - [`docs/HANDOFF.md`](docs/HANDOFF.md) — 세션 인수인계: 지금 상태, 다음 작업, 사용자 결정 대기, 외부 확인 필요. **세션을 시작할 때 먼저 읽고, 작업이 끝나면 갱신한다.**
 - [`docs/CORE_DOMAIN.md`](docs/CORE_DOMAIN.md) — `core` 도메인 모델(값 객체, 주문·lot·노출액, 가드레일 규칙 목록, 이벤트 타입, 포트 시그니처, 예외 분류, 필수 테스트). `core` 코드 작업 전에 읽는다.

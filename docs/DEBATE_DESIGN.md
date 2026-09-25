@@ -1,6 +1,6 @@
 # 토론(F6) 설계 — 세 가지 테마, 재개, 기술 방안
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-22 / 상태: v3 — 여론·수급 자료 투입 규칙(3.2) 추가 2026-09-23 / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F6, [`docs/LLM_ROUTING.md`](LLM_ROUTING.md), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md), [`docs/MIROFISH_EXPERIMENT_GUIDE.md`](MIROFISH_EXPERIMENT_GUIDE.md)
 

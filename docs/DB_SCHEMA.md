@@ -1,6 +1,6 @@
 # DB 스키마 설계 (SQLite · Flyway)
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-25 / 상태: **[확정 2026-09-25]** — 12장의 결정 1·6·9(BigDecimal TEXT, relay TOTP는 클라이언트 검증, 보존 기간)는 사용자 승인, 정합성 항목 3·4·5·7·8·10은 관련 문서에 반영 완료. 남은 것은 11(메일박스 30일, 제안)과 12(정정 주문 clientOrderId 승계, 확인 필요). 각 설계 문서가 정한 표(`installation`, `credential_meta`, `broker_order`, `pension_*`, `financial_*`, `knowledge_*`)를 그대로 받고, 나머지는 기능 서술에서 끌어냈다. 결정 대기 항목은 12장 / 관련: [`PROJECT.md`](../PROJECT.md) 6장(데이터와 동기화)·11.1, [`CLAUDE.md`](../CLAUDE.md) 시스템 절, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 9장(이벤트 로그), 각 기능 설계 문서의 "저장" 절
 
@@ -21,7 +21,7 @@
 | 설치·계정 | `installation` `app_user` `recovery_code` `registration_code` `device` `user_session` `credential_meta` `shared_setting` `audit_log` | ④ | 설치 / 사용자 | 1 |
 | 이벤트·동기화 | `event_log` `sync_cursor` `user_setting` `watchlist_group` `watchlist_item` `persona_definition` | ①② | 사용자 | 1 |
 | 종목·시세 | `stock_master` `stock_warning` `candle` `exchange_rate` `market_calendar` `krx_daily_price` `krx_etf_daily` `krx_index_daily` `dart_corp` `edgar_entity` `us_ticker_ref` | ③ | 설치 공용 | 1~2 |
-| 주문·보유 | `broker_order` `lot` `portfolio_cache` `notification` `approval_request` | ③② | 사용자 | 2, 6 |
+| 주문·보유 | `broker_order` `lot` `lot_disposal` `portfolio_cache` `notification` `approval_request` | ③② | 사용자 | 2, 6 |
 | 자동화 | `automation_setting` `guardrail_limits` `auto_sell_permission` `kill_switch` `auto_buy_exclusion` `lease` `simulated_order` | ② | 사용자 | 6, 8 |
 | 지식·공시·재무 | `knowledge_document` `knowledge_symbol` `index_status` `symbol_alias` `kr_disclosure` `us_disclosure` `financial_fact` `financial_statement` `dividend_payment` `dividend_yield_weekly` `dividend_upcoming` `industry_profile` `sentiment_snapshot` `translation_cache` `translation_glossary` `journal_memo` `etf_composition` `etf_digest` | ③(정정은 버전) | 설치 공용 / 사용자 | 3 |
 | 연기금 | `pension_dataset` `pension_holdings_snapshot` `pension_holding` `pension_holdings_change` `pension_symbol_alias` `pension_check_log` | ③ | 설치 공용 | 3 |
@@ -448,6 +448,8 @@ erDiagram
   broker_order ||--o| broker_order : "replaces (no FK)"
   app_user ||--o{ lot : owns
   broker_order ||--o{ lot : "opened by (no FK)"
+  lot ||--o{ lot_disposal : "FIFO 소진"
+  broker_order ||--o{ lot_disposal : "sold by (no FK)"
   app_user ||--o| portfolio_cache : "per market"
   app_user ||--o{ notification : "receives (no FK)"
   app_user ||--o{ approval_request : "approves (no FK)"
@@ -505,6 +507,32 @@ erDiagram
     string aged_out_at "168h"
     string closed_at
   }
+  lot_disposal {
+    string disposal_id PK
+    string user_id
+    string lot_id FK
+    string broker_order_id
+    string market
+    string code
+    string quantity
+    string sell_price_amount
+    string sell_price_currency
+    string buy_unit_cost_amount
+    string buy_unit_cost_currency
+    string fee_amount
+    string tax_amount
+    string fx_from
+    string fx_to
+    string fx_rate
+    string fx_as_of "매도 시"
+    string realized_amount "외화"
+    string realized_currency
+    string realized_krw
+    string fx_pnl_krw
+    int holding_days
+    string lot_origin
+    string disposed_at
+  }
   portfolio_cache {
     string user_id PK
     string market PK
@@ -543,11 +571,12 @@ erDiagram
 - `origin`은 `OrderOrigin {MANUAL, AI_RECOMMENDED, AUTO_BUY, AUTO_SELL}`로 두고 `lot.origin`은 `BuyOrigin` 그대로. CORE_DOMAIN에 `OrderOrigin`을 추가해야 한다(12장 결정 3).
 - `client_order_id`는 NULL 허용(정정·취소로 생긴 주문에 토스가 원 키를 이어 주는지 [확인 필요]). `(user_id, client_order_id)` 부분 유일 인덱스는 벤더별로 달라 두지 않고 애플리케이션이 `lookup` 후 삽입한다.
 - `lot`은 `LotOpened/Reduced/Closed/AgedOutOfAutoBuy`의 projection(②). 청산 lot도 남긴다. `fx_*`는 US면 NOT NULL(값 객체가 검증). 노출액 계산 입력은 `origin, bought_at, remaining_quantity, unit_cost, fx_*`.
+- `lot_disposal`은 매도 체결이 lot을 **선입선출**로 소진한 기록(`LotReduced`·`LotClosed` payload의 projection, ②). 매도 1건이 여러 lot을 소진하면 lot마다 한 행. F20 거래내역 손익 탭·F2·F17의 원천이며 원화 실현손익 = `realized_krw` = 매매손익 + `fx_pnl_krw`. 물리 FK는 `lot`에만(같은 사용자 projection, 함께 재생). [제안 2026-09-25]
 - `portfolio_cache`는 마지막 스냅샷(패널의 "지연·실패 시각" 표시용). `snapshot_json` 안에 계좌번호는 없다(끝 4자리도 넣지 않음, `credential_meta`에 있음).
 - `notification`은 알림 센터의 원천이며 `(user_id, kind, dedupe_key)` 유일. NPS의 `pension_holdings_change_ack`는 이 표의 `kind=DATA_UPDATED, dedupe_key=change_id, acked_at`로 흡수한다(NPS_HOLDINGS_DESIGN 6장 수정 대상). 보존 180일.
 - `approval_request`는 승인 후 실행 단계(6단계)의 대기 목록. 이벤트 목록에 없던 `ApprovalRequested/Decided/Expired`를 CORE_DOMAIN에 추가한다(12장 결정 4).
 
-인덱스: `broker_order(user_id, status)`, `broker_order(user_id, market, code, ordered_at)`, `broker_order(user_id, client_order_id)`, `broker_order(replaces_broker_order_id)`, `lot(user_id, market, code, closed_at)`, `lot(user_id, origin, bought_at)`, `notification(user_id, kind, dedupe_key) UNIQUE`, `notification(user_id, acked_at)`, `approval_request(user_id, status, expires_at)`.
+인덱스: `broker_order(user_id, status)`, `broker_order(user_id, market, code, ordered_at)`, `broker_order(user_id, client_order_id)`, `broker_order(replaces_broker_order_id)`, `lot(user_id, market, code, closed_at)`, `lot(user_id, origin, bought_at)`, `lot_disposal(user_id, disposed_at)`, `lot_disposal(user_id, market, code, disposed_at)`, `lot_disposal(lot_id)`, `notification(user_id, kind, dedupe_key) UNIQUE`, `notification(user_id, acked_at)`, `approval_request(user_id, status, expires_at)`.
 
 ## 8. 자동화·가드레일 (V6, lease는 V8)
 
@@ -1326,7 +1355,7 @@ erDiagram
 | 버전 | 단계 | 내용 |
 |---|---|---|
 | V1 | 1 리포 골격 | 4장 전부, 5장 전부, `stock_master`·`stock_warning`·`exchange_rate`·`market_calendar` |
-| V2 | 2 토스·F1~F4 | `candle`, `broker_order`, `lot`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref` |
+| V2 | 2 토스·F1~F4 | `candle`, `broker_order`, `lot`, `lot_disposal`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref` |
 | V3 | 3 수집·RAG | 9장 전부(`pension_*`, `etf_*`, `translation_*` 포함) |
 | V4 | 4 토론·추천·리포트 | `debate_*`, `stock_outlook_digest`, `industry_digest`, `related_symbol`, `recommendation`, `market_report`, `llm_route`·`llm_budget`·`llm_price`·`llm_usage` |
 | V5 | 5 학습 | `prediction_outcome`, `persona_weight`, `persona_weight_history`, `retrospective` |

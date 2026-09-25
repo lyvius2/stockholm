@@ -1,6 +1,6 @@
 # RAG 설계 초안
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-20 / 상태: 초안 v1 [제안]
 관련: [`PROJECT.md`](../PROJECT.md) 6장(데이터), 9장(F5·F6·F9·F10), [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md)

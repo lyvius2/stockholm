@@ -1,6 +1,6 @@
 # SEC EDGAR 어댑터 규격 — 미국 공시·재무 가져오기
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-24 / 상태: **[제안]** (규격은 실측 [확인함] / [확인 필요] 표기) / 관련: [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.6, [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md)(F15), [`docs/NPS_HOLDINGS_DESIGN.md`](NPS_HOLDINGS_DESIGN.md)(13F), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 4.3, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 10장(`DisclosurePort`, `FundamentalsPort`)
 

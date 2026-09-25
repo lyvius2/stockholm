@@ -1,6 +1,6 @@
 # 종목 정보 서랍 (F15) — 재무제표 · 배당 · 산업군 · 관련 종목 · 공시
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-24 / 상태: **[확정 2026-09-25]** — 탭·항목·마지막 탭 기억 승인. ETF 구성종목 탭은 화면·설계 유지, **구현 보류**(국내 데이터 제공자 확보 시 해제). 배당은 정보 표시만(F7 필터에 쓰지 않음) / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F15·11.3, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.3(DART)·2.6(EDGAR), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 4.3·5장, [`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md) 3.1(동종 종목), 화면 설계 아티팩트 v22 "종목 정보 서랍"
 

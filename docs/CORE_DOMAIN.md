@@ -1,6 +1,6 @@
 # CORE_DOMAIN.md — `core` 도메인 모델 설계
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 > `backend/src/main/java/banghak/stockholm/core` 의 기준 문서. 프레임워크를 모르는 순수 Java 21 코드의 형태를 정한다.
 > 여기 적힌 타입 이름과 시그니처가 이후 `engine`·`localapi`·`desktop`·`protocol/` 의 공통 어휘다.
@@ -205,7 +205,7 @@ public record DepositBalance(Money available, Money total, Instant asOf) {}
 public record ProfitLoss(Money realized, Money unrealized, Money fees, Money taxes, Optional<Money> realizedKrw, Optional<Money> unrealizedKrw) {}
 ```
 
-**매도 시 lot 소진 순서 [제안]**: 세무상 기본은 선입선출(FIFO). 자동 매도 한도(90%)는 lot이 아니라 종목 기준 수량으로 세므로 소진 순서와 무관하다. FIFO를 기본으로 두고 상수화한다.
+**매도 시 lot 소진 순서 [확정 2026-09-25]**: 선입선출(FIFO). 토스증권 앱의 잔고 화면이 "잔고(선입선출)"이므로 증권사 계산과 일치한다. 소진 기록은 `LotReduced`·`LotClosed` payload(매도 주문 id·수량·단가·비용·매도 시 환율)로 남기고 `lot_disposal`로 projection한다(F20). 자동 매도 한도(90%)는 lot이 아니라 종목 기준 수량으로 세므로 소진 순서와 무관하다. FIFO를 기본으로 두고 상수화한다.
 
 ## 6. 자동화 (automation) [확정]
 
@@ -481,6 +481,6 @@ public final class SecretMissing extends DomainException {}
 ## 13. 열린 항목
 
 - **수량의 소수점**: 토스 미국 주식 소수점 주문 지원 여부 → `Quantity` scale 규칙 [확인 필요]
-- **lot 소진 순서 FIFO** [제안]
+- **lot 소진 순서 FIFO** [확정 2026-09-25, 토스 "잔고(선입선출)"]
 - `Percent`를 비율로 저장하는 결정(0.9) — 프론트 표시 변환 규칙과 함께 `protocol/`에 명시 [제안]
 - `Conclusion` 열거값이 세 테마를 다 덮는지(산업 동향은 OVERWEIGHT/UNDERWEIGHT) — 토론 설계와 맞춰 확정 [제안]

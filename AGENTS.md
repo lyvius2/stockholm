@@ -6,7 +6,7 @@
 
 1. [CLAUDE.md](CLAUDE.md) — 작업 규칙. 절대 규칙 8개(실제 주문 API 호출 금지, 비밀값 금지, 가드레일 우회 금지, LLM 출력을 주문에 직접 쓰지 않음, `BigDecimal`, 토스 어댑터만 주문, 로그에 금융정보 금지, `userId` 경계)는 어떤 편의를 위해서도 어기지 않는다.
 2. [PROJECT.md](PROJECT.md) — 기준 문서. CLAUDE.md는 첫 줄에서 `@PROJECT.md`로 이 문서를 끌어들이는데, 그 문법을 지원하지 않는 도구는 **PROJECT.md를 직접 읽는다.**
-3. [docs/README.md](docs/README.md) — 문서 지도. 어떤 설계 문서를 봐야 할지 여기서 찾는다.
+3. [docs/INDEX.md](docs/INDEX.md) — 문서 지도. 어떤 설계 문서를 봐야 할지 여기서 찾는다.
 4. [docs/HANDOFF.md](docs/HANDOFF.md) — 지금 상태와 다음 작업. 세션을 시작할 때 읽고 끝날 때 갱신한다.
 5. [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) — 단계별 착수 순서와 완료 기준.
 

@@ -1,6 +1,6 @@
 # DART 어댑터 설계 — 국내 공시 감시 · 재무 · 배당 · 기업 정보
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-25 / 상태: **[제안]** (API 이용 자격·그룹·한도·상태 코드는 [확인함], 엔드포인트명·파라미터는 개발가이드와 대조 필요 [확인 필요]) / 관련: [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.3, [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md)(F15), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 4.3·5장, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 7·10장, [`docs/EDGAR_DESIGN.md`](EDGAR_DESIGN.md)(미국 대응)
 

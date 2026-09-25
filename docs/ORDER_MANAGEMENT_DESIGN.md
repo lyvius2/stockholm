@@ -1,6 +1,6 @@
 # 주문 관리 (F14) — 체결 현황과 미체결 정정·취소 설계
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-24 / 상태: **[확정 2026-09-24]** — 탭·모달 구성, 자동 주문 정정 규칙, clientOrderId, 정정 가능 수량은 사용자 결정(8장). 토스 규격은 [확인함 2026-09-24, OpenAPI v1.2.17] / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F1·F14·11.3, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 4·9·10장, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.1, 화면 설계 아티팩트 v18 "주문 관리"
 
@@ -68,7 +68,9 @@
 - 체결(`FILLED`, `PARTIAL_FILLED` 증가) 시 오른쪽 아래 토스트 "체결 · 삼성전자 10주 @74,200" + 알림 센터 항목 + **Slack DM. 기본값은 앱 안 알림·Slack 모두 켬 [확정 2026-09-25]**(사용자 설정으로 끌 수 있음). 단독 모드에서는 앱(데몬)이 켜져 있을 때 클라이언트가 직접 Slack을 보내고, relay 서버가 생기면 앱을 꺼 둔 채로도 서버 경유로 온다. 거부도 알림.
 - 연결이 끊기면 3번 영역에 "지연" 칩. 재연결 후 `OPEN` 목록을 다시 받아 로컬과 맞춘다(사라진 주문은 상세 조회로 최종 상태 확정).
 
-### 3.5 주문 내역 화면 (그 밖의 화면)
+### 3.5 주문 내역 화면 (그 밖의 화면) → F20 거래내역 패널의 체결내역 탭으로 흡수 [2026-09-25]
+
+> 별도 화면은 두지 않는다. 아래 규칙은 [TRADE_HISTORY_DESIGN.md](TRADE_HISTORY_DESIGN.md) 3.2 체결내역 탭에 그대로 적용된다.
 
 - 기간·종목·상태 필터. `CLOSED` 커서 페이지(100건)를 로컬 캐시 표에 쌓아 보여 준다(토스 조회 범위 밖의 시간외 주문은 안 보이므로 "Open API로 낸 주문만" 안내).
 - 정정 체인(원주문 → 정정 1 → 정정 2)은 한 묶음으로 접어 보여 준다.

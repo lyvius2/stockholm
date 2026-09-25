@@ -1,6 +1,6 @@
 # 자산 조회 (F16) — 사용자 메뉴와 자산 모달 (금융결제원)
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-25 / 상태: **[확정 2026-09-25]** — 전체 자산 조회, 사용자 메뉴 → 자산 모달 흐름은 사용자 결정. 금융결제원 API 종류·범위는 [확인 필요](구현 시) / 관련: [`PROJECT.md`](../PROJECT.md) D9·D17·F16, [`docs/KEY_MANAGEMENT.md`](KEY_MANAGEMENT.md) 2·4장, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.2, 화면 설계 아티팩트 "자산 조회 모달"
 

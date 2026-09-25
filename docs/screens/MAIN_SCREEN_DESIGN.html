@@ -177,7 +177,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 .symname{font-size:14px;color:var(--ink);font-weight:700}
 .wlbtn{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:3px 9px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--ink)}
 .wlbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
-.pop{position:absolute;top:40px;left:120px;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.2);z-index:16;font-size:12px}
+.pop{position:absolute;z-index:19;top:40px;left:120px;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 30px rgba(0,0,0,.2);z-index:16;font-size:12px}
 .pop .pi{margin:8px;border:1px solid var(--accent);border-radius:4px;padding:6px 8px;color:var(--ink3)}
 .pop ul{list-style:none;margin:0;padding:0 8px 8px}
 .pop li{display:flex;justify-content:space-between;padding:5px 6px;border-radius:4px;cursor:pointer}
@@ -284,7 +284,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 .toast .sub{color:var(--ink2);font-size:11px;display:block}
 .toast .go{border:1px solid var(--accent);color:var(--accent);border-radius:4px;padding:2px 9px;font-size:11px;cursor:pointer;white-space:nowrap}
 .toast .x{color:var(--ink3);cursor:pointer}
-.umenu{left:auto;right:14px;top:70px;width:210px}
+.umenu{left:auto;right:14px;top:70px;width:210px;z-index:19}
 .umenu li{justify-content:flex-start;gap:8px}
 .umenu li.sep{border-top:1px solid var(--line);margin-top:4px;padding-top:8px}
 .modal.asset{--mcol:var(--accent);width:760px;max-width:calc(100% - 24px)}
@@ -312,6 +312,27 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 .evalp .tsum{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;display:none;font-size:11px;color:var(--ink2);line-height:1.6}
 .evalp.tod .tsum{display:block} .evalp.tod .tbtn{background:var(--down);color:#fff}
 .evalp .foot{margin-top:8px;font-size:10px;color:var(--ink3)}
+/* 거래내역 패널 (F20): 오른쪽 위에서 슬라이딩, 폭 60%. F18(왼쪽 40%)과 나란히 */
+.histp{position:absolute;top:0;right:0;width:60%;min-width:480px;z-index:18;background:var(--panel);border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;box-shadow:0 18px 40px rgba(0,0,0,.22);padding:12px 16px 10px;transform:translateY(-110%);transition:transform .26s ease;font-size:12px;display:grid;gap:8px}
+.histp.open{transform:translateY(0)}
+.histp .hh{display:flex;align-items:center;gap:8px} .histp .hh b{font-size:14px} .histp .hh .sp{flex:1} .histp .hh .x{color:var(--ink3);cursor:pointer;font-size:15px;padding:0 2px}
+.histp .tabs{display:flex;gap:2px;border:1px solid var(--line);border-radius:6px;padding:2px}
+.histp .tabs span{padding:3px 12px;border-radius:4px;cursor:pointer;color:var(--ink2);font-weight:600} .histp .tabs span.on{background:var(--accent);color:#fff}
+.histp .ch{display:flex;gap:4px;font-size:10px} .histp .ch span{padding:1px 8px;border-radius:9px;background:var(--panel2);color:var(--ink2);cursor:pointer} .histp .ch span.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.histp .period{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--ink2)}
+.histp .period .range{border:1px solid var(--line);border-radius:5px;padding:3px 8px;background:var(--bg);font-variant-numeric:tabular-nums}
+.histp .body{display:none;gap:8px;max-height:360px;overflow:auto} .histp .body.on{display:grid}
+.histp .sum{display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 1fr 1fr;gap:6px 12px;background:var(--panel2);border-radius:8px;padding:10px 12px;align-items:end}
+.histp .sum .k{font-size:10px;color:var(--ink3)} .histp .sum .v{font-weight:600;font-variant-numeric:tabular-nums} .histp .sum .big{font-size:22px;font-weight:700;white-space:nowrap}
+.histp .grp{font-size:11px;color:var(--ink2);display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0 3px;margin-top:2px}
+.histp .row{display:grid;grid-template-columns:1.4fr .7fr 1fr .7fr .7fr .8fr;gap:8px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.histp .row:hover{background:var(--accent-soft)}
+.histp .row .n{font-weight:600} .histp .row .s{font-size:10px;color:var(--ink3)} .histp .row .r{text-align:right;font-variant-numeric:tabular-nums}
+.histp table{width:100%;border-collapse:collapse;font-size:11px} .histp th{color:var(--ink3);font-weight:500;text-align:right;padding:4px 6px;border-bottom:1px solid var(--line)} .histp th:first-child,.histp td:first-child{text-align:left}
+.histp td{padding:5px 6px;border-bottom:1px dashed var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.histp .st{font-size:10px;border-radius:9px;padding:1px 7px;background:var(--panel2);color:var(--ink2)} .histp .st.ok{background:var(--accent-soft);color:var(--accent)} .histp .st.no{background:var(--warn-soft);color:var(--warn)}
+.histp .og{font-size:10px;border-radius:3px;padding:0 5px;border:1px solid var(--line);color:var(--ink3)}
+.histp .hfoot{display:flex;gap:10px;align-items:center;font-size:10px;color:var(--ink3);flex-wrap:wrap} .histp .hfoot .sp{flex:1} .histp .hfoot a{color:var(--accent);cursor:pointer}
 .wlbtn.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
 .flow{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
 .flow th,.flow td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:top}
@@ -471,7 +492,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 </style>
 
 <div class="wrap">
-<p class="eyebrow">Stockholm · 화면 설계 초안 v34 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
+<p class="eyebrow">Stockholm · 화면 설계 초안 v36 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
 <h1>메인 화면 레이아웃</h1>
 <p class="lede">스케치의 네 영역 — 차트 · 가격 · 매수/매도 정보 · 토론 창(미러피시) — 을 그대로 배치한 초안입니다. 기본 비율은 좌우 6:4, 왼쪽 열의 차트:주문 7:3, 오른쪽 열의 가격:토론 4:6이며, 세 구분선을 드래그해 바꿀 수 있습니다(더블클릭으로 복원). 아래 목업의 각 영역을 클릭하면 해당 영역의 설명이 강조됩니다. 목업 안의 숫자와 종목은 모두 예시 값입니다.</p>
 
@@ -501,6 +522,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
       <span class="small" id="symbtn" style="cursor:pointer" title="종목 검색 (⌘K)"><b class="symname">삼성전자</b> <span class="num">005930</span> · KOSPI ▾</span>
       <button class="wlbtn" id="cmbtn" type="button" title="종목 커뮤니티 열기 (⌘U)">💬 커뮤니티</button>
       <button class="wlbtn" id="evbtn" type="button" title="보유주식 평가금액 (⌘E)">💰 보유주식 평가금액</button>
+      <button class="wlbtn" id="hsbtn" type="button" title="거래내역 (⌘H)">📒 거래내역</button>
       <span class="sp"></span>
       <span class="mk"><i class="dot"></i>KR 정규장</span>
       <span class="mk"><i class="dot off"></i>US 개장 전 22:30</span>
@@ -510,6 +532,60 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   </div>
 
   <div class="stage" id="stage">
+  <div class="histp" id="histp" role="dialog" aria-label="거래내역">
+    <div class="hh"><b>거래내역</b>
+      <span class="tabs" id="htabs"><span class="on" data-t="pl">손익</span><span data-t="fill">체결내역</span><span data-t="trade">매매내역</span></span>
+      <span class="ch"><span class="on">전체</span><span>국내</span><span>미국</span></span>
+      <span class="ch" title="미국 종목 표시 통화"><span>외화</span><span class="on">원화</span></span>
+      <span class="sp"></span><span style="color:var(--ink3);cursor:pointer" title="다시 적재">↻</span><span class="x" id="hsx" title="닫기 (Esc)">✕</span></div>
+    <div class="period">
+      <span class="ch"><span>일별</span><span class="on">월별</span><span>분기별</span><span>직접</span></span>
+      <span class="range">2026.06 ~ 2026.09 ▾</span>
+      <span class="ch"><span>오늘</span><span>1주</span><span>1개월</span><span class="on">3개월</span><span>올해</span><span>1년</span></span>
+      <span class="ch"><span class="on">매매</span><span>매수</span><span>매도</span></span>
+      <span class="range" style="color:var(--ink3)">종목 검색…</span>
+      <span style="color:var(--warn);font-size:10px" title="국내 종목은 KST, 미국 종목은 미국 동부시간(America/New_York) 날짜로 묶습니다">🇺🇸 미국 종목 날짜는 미국 동부시간(ET) 기준</span>
+    </div>
+    <div class="body on" data-b="pl">
+      <div class="sum">
+        <div><div class="k">실현손익 · 2026.06 ~ 09 · 모든 시장</div><div class="big num up">+182,135원</div><div class="v up">(+14.02%)</div></div>
+        <div><div class="k">매매손익</div><div class="v num up">+182,079원</div></div>
+        <div><div class="k">환차손익</div><div class="v num up">+56원</div></div>
+        <div><div class="k">매수금액</div><div class="v num">1,299,076원</div></div>
+        <div><div class="k">매도금액</div><div class="v num">1,488,273원</div></div>
+        <div><div class="k">수수료·세금</div><div class="v num">7,062원</div></div>
+      </div>
+      <div class="ch" style="font-size:11px;align-items:center"><span id="taxtg">양도세 손익 보기</span></div>
+      <div id="taxcard" hidden style="background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:11px;line-height:1.6">2026년 해외주식 양도세 (안내용) · 양도차익 합계 <b class="num">1,842,300원</b> − 기본공제 2,500,000원 → <b>양도세 대상 금액 0원</b> · <b>예상 부과액 0원</b> (22% = 양도소득세 20% + 지방소득세 2%) · 환율은 결제일 기준환율(없으면 체결일 근사) · 실제 신고는 증권사 자료로</div>
+      <div class="grp"><span>2026.09 · 3건 <span style="color:var(--ink3)">(KST · 🇺🇸 ET)</span></span><span class="num up">+182,135원 (+14.02%)</span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 에너지</span> <span class="s">GREE</span></span><span class="r">매도 10주</span><span class="r num up">+0.65 USD<br><span class="s">+904원</span></span><span class="r num up">+1.40%</span><span class="r s">보유 1일</span><span class="r"><span class="og">수동</span></span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 마인스</span> <span class="s">GRML</span></span><span class="r">매도 30주</span><span class="r num up">+19.38 USD<br><span class="s">+26,950원</span></span><span class="r num up">+4.52%</span><span class="r s">보유 1일</span><span class="r"><span class="og">수동</span></span></div>
+      <div class="row"><span><span class="n">🇰🇷 삼성전자</span> <span class="s">005930</span></span><span class="r">매도 20주</span><span class="r num up">+154,281원</span><span class="r num up">+11.6%</span><span class="r s">보유 38일</span><span class="r"><span class="og" style="color:var(--accent);border-color:var(--accent)">AI 추천</span></span></div>
+      <div class="grp"><span>2026.08 · 1건</span><span class="num down">▼ 41,200원 (−2.1%)</span></div>
+      <div class="row"><span><span class="n">🇰🇷 SK하이닉스</span> <span class="s">000660</span></span><span class="r">매도 5주</span><span class="r num down">−41,200원</span><span class="r num down">−2.1%</span><span class="r s">보유 12일</span><span class="r"><span class="og">수동</span></span></div>
+    </div>
+    <div class="body" data-b="fill">
+      <div class="ch" style="font-size:11px"><span>전체</span><span class="on">체결</span><span>미체결 3</span></div>
+      <div style="overflow-x:auto"><table>
+        <tr><th>종목명 / 매매구분</th><th>주문수량 / 단가</th><th>체결수량 / 단가</th><th>미체결 / 수수료</th><th>주문 / 체결 시각</th><th>상태</th><th>출처</th></tr>
+        <tr><td><b>그린란드 에너지</b> GREE<br><span class="down">매도</span></td><td>10<br>4.7000</td><td>10<br>4.7000</td><td>0<br>0.1300</td><td>09/24 22:41<br>09/24 22:41</td><td><span class="st ok">체결</span></td><td><span class="og">수동</span></td></tr>
+        <tr><td><b>그린란드 마인스</b> GRML<br><span class="down">매도정정</span> <span class="s" style="color:var(--ink3)">▸ 체인 2건</span></td><td>20<br>15.1000</td><td>20<br>15.1000</td><td>0<br>0.7700</td><td>09/24 22:38<br>09/24 22:40</td><td><span class="st ok">체결</span></td><td><span class="og">수동</span></td></tr>
+        <tr><td><b>그린란드 에너지</b> GREE<br><span class="up">매수</span></td><td>10<br>4.6100</td><td>10<br>4.6100</td><td>0<br>0.1300</td><td>09/24 22:31<br>09/24 22:31</td><td><span class="st ok">체결</span></td><td><span class="og">수동</span></td></tr>
+        <tr><td><b>삼성전자</b> 005930<br><span class="up">매수</span></td><td>10<br>73,900</td><td>4<br>73,900</td><td>6<br>—</td><td>09/25 09:31<br>—</td><td><span class="st">부분 체결</span> <span class="og">정정</span> <span class="og">취소</span></td><td><span class="og" style="color:var(--accent);border-color:var(--accent)">자동</span></td></tr>
+        <tr><td><b>SK하이닉스</b> 000660<br><span class="up">매수</span></td><td>5<br>185,000</td><td>0<br>—</td><td>5<br>—</td><td>09/25 09:30<br>—</td><td><span class="st no">거부 · 예수금 부족</span></td><td><span class="og">수동</span></td></tr>
+      </table></div>
+    </div>
+    <div class="body" data-b="trade">
+      <div class="grp"><span>2026.09.24 <span style="color:var(--warn)">🇺🇸 미국 동부시간(ET)</span> · 6건</span><span class="num">매수 474.40 USD · 매도 496.90 USD</span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 마인스</span> <span class="s">GRML</span></span><span class="r down">매도 10주</span><span class="r num">147.90 USD<br><span class="s">205,760원</span></span><span class="r num">14.7900</span><span class="r s">수수료 0.38</span><span class="r s">22:44</span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 마인스</span> <span class="s">GRML</span></span><span class="r down">매도 20주</span><span class="r num">302.00 USD<br><span class="s">420,142원</span></span><span class="r num">15.1000</span><span class="r s">수수료 0.77</span><span class="r s">22:40</span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 에너지</span> <span class="s">GREE</span></span><span class="r down">매도 10주</span><span class="r num">47.00 USD<br><span class="s">65,386원</span></span><span class="r num">4.7000</span><span class="r s">수수료 0.13</span><span class="r s">22:41</span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 마인스</span> <span class="s">GRML</span></span><span class="r up">매수 10주</span><span class="r num">128.30 USD<br><span class="s">178,496원</span></span><span class="r num">12.8300</span><span class="r s">수수료 0.33</span><span class="r s">22:35</span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 마인스</span> <span class="s">GRML</span></span><span class="r up">매수 20주</span><span class="r num">300.00 USD<br><span class="s">417,360원</span></span><span class="r num">15.0000</span><span class="r s">수수료 0.77</span><span class="r s">22:33</span></div>
+      <div class="row"><span><span class="n">🇺🇸 그린란드 에너지</span> <span class="s">GREE</span></span><span class="r up">매수 10주</span><span class="r num">46.10 USD<br><span class="s">64,134원</span></span><span class="r num">4.6100</span><span class="r s">수수료 0.13</span><span class="r s">22:31</span></div>
+    </div>
+    <div class="hfoot"><span>토스 종료 주문 조회 캐시 + 선입선출 계산 · 마지막 적재 09/25 08:12 · 본인 계좌만</span><span class="sp"></span><a>매매 통계 (F17) →</a></div>
+  </div>
   <div class="evalp" id="evalp" role="dialog" aria-label="보유주식 평가금액">
     <div class="eh"><b>평가금액</b><span class="q" title="보유 주식의 현재가 × 수량 합. 미국 주식은 실시간 환율로 원화 환산">?</span><span class="mkt" style="margin:0 0 0 6px"><span class="on">전체</span><span>국내</span><span>미국</span></span><span class="sp"></span><span class="set" title="표시 항목·금액 숨김 설정">설정</span><span class="x" id="evx" title="닫기 (Esc)">✕</span></div>
     <div class="big num" id="evtotal">44,164,219원</div>
@@ -1122,6 +1198,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div><b>연기금종목 · 국민연금 해외투자 현황 (F13)</b><span>상단 바 🏛️ 연기금종목 버튼(☰ 관심종목과 ⚡ 실시간 급등락 사이) 또는 ⌘N으로 여는 정보 모달. 화면은 항상 데몬의 SQLite 스냅샷(캐시)만 읽고, 데몬은 TTL 24시간이 지났을 때만 출처를 다시 부릅니다(cache-aside). 주문 모달과 같은 틀(바깥을 흐리지 않음, 테두리 발광은 강조색, 제목 바로 이동, ✕·같은 버튼·Esc로 닫음)이고 서랍 위에 뜹니다. 데이터는 둘입니다: SEC EDGAR 13F(분기, 미국 상장분, 주식 수·평가액)와 공공데이터포털 연간 자료(연말 기준, 전 지역, 평가액·비중·지분율). 데몬이 앱 기동 시와 매일 한 번 두 출처의 새 보고서를 확인해 변화가 있으면 버튼의 빨간 점, 오른쪽 아래 토스트, 알림 센터 항목, (켜 둔 사용자에게) Slack DM으로 알립니다. 정보 표시와 토론 근거일 뿐 어떤 자동 주문의 트리거도 아닙니다.</span></div>
   <div><b>주문은 모달에서</b><span>매수·매도 버튼 → 이동 가능한 모달. 지정가 주문은 확인 창, 현재가 즉시 주문은 확인 없음. 둘 다 가드레일은 통과해야 합니다. <b>"지정가만" 원칙의 예외 [확정 2026-09-25]</b>: 미국 소수점 보유분 매도(시장가만 가능 → "소수점 잔량 시장가 매도" 버튼), 미국 금액($) 매수(시장가, 수량/금액 전환), 유효 조건 노출(국내 DAY·OPG, 미국 DAY·CLS). 시장가는 정규장 시작~종료 1시간 전에만 활성이고 자동 주문은 여전히 지정가만입니다.</span></div>
   <div><b>보유주식 평가금액 패널 (F18)</b><span>상단 바 2행의 💰 보유주식 평가금액 버튼(💬 커뮤니티 오른쪽) 또는 ⌘E. 메인 영역 왼쪽 위에서 아래로 슬라이딩해 내려오는 팝업이며 폭은 메인의 40%, 서랍과 독립(서랍을 밀지 않고 위에 뜸). 오른쪽 위 ✕·같은 버튼·Esc로 닫습니다. 내용: 평가금액(전체/국내/미국 탭, 미국은 실시간 환율 원화 환산), 평가손익(금액·%), 매수금액, 담보비율(체결), 예수금 D+1·D+2, 외화 예수금, 매수 가능, "오늘 내 주식은"(오늘 평가·실현손익, 체결·미체결 건수, 오른/내린 종목 수, 자동 매수 노출)과 설정(표시 항목·금액 숨김). 보유 시세 스트림으로 실시간 갱신. 종목을 바꿔도 패널은 유지되고 금액 숨김 모드는 기본 꺼짐입니다 [확정 2026-09-25]. 위 목업에서 눌러 보세요.</span></div>
+  <div><b>거래내역 패널 (F20)</b><span>상단 바 2행의 📒 거래내역 버튼(💰 오른쪽) 또는 ⌘H. 메인 오른쪽 위에서 아래로 슬라이딩, 폭 60%, F18(왼쪽 40%)과 겹치지 않고 나란히. 탭: 손익(F2) · 체결내역(F14 주문 내역) · 매매내역. 기간: 일별·월별·분기별·직접. 원천은 토스 종료 주문 캐시 + lot 선입선출 매칭. 상세 docs/TRADE_HISTORY_DESIGN.md [제안 2026-09-25].</span></div>
   <div><b>사용자 메뉴 · 자산 조회 (F16)</b><span>상단 바 2행의 사용자 이름을 누르면 드롭다운(자산 조회 · 회원정보 변경 · 알림 설정 · 로그아웃, admin은 회원 관리·공유 키 추가). "자산 조회"는 금융결제원 동의(처음 한 번, 기본 브라우저)를 거쳐 본인의 모든 자산을 자산 모달에 보입니다. 계좌번호는 끝 4자리만, 저장·동기화 없음. 위 목업의 "admin ▾"을 눌러 보세요.</span></div>
   <div><b>주문 관리 (F14)</b><span>3번 영역 오른쪽 표가 보유 · 미체결 · 오늘 체결 세 탭입니다. 미체결 행의 정정 버튼은 주문 모달과 같은 틀의 정정 모달(원주문 카드 · 실시간 현재가 · 새 가격/수량 · 가드레일)을 열고, 확인 창을 거쳐 정정합니다. 국내는 가격·수량, 미국은 가격만(토스 규격). 취소는 확인 창 한 번. 자동 주문 미체결도 사람이 정정할 수 있습니다. 사람의 정정은 수동 주문으로 취급하되 lot 출처는 자동으로 남겨 노출액에 계속 계산하고, 정정 결과가 자동 매수 한도를 넘으면 확인 창을 한 번 더 띄웁니다(자동매매 한도의 유일한 예외). 상태는 토스 실시간 주문 채널로 바로 바뀌고 체결되면 토스트와 알림 센터에 남습니다. 정정·취소는 새 주문번호를 발급하므로 화면은 원주문→새 주문을 한 줄로 이어 보여 줍니다.</span></div>
   <div><b>실시간</b><span>차트·가격·토론은 WebSocket으로 밀려오는 데이터에 따라 스스로 움직입니다. 새로고침 버튼이 없습니다.</span></div>
@@ -1145,6 +1222,49 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div class="scr"><b>설정</b><span>키 관리(admin), LLM 경로, 페르소나 편집, 알림·Slack, 서버 연결, 디바이스.</span></div>
   <div class="scr"><b>자산 조회 (F16)</b><span>사용자 메뉴 → 금융결제원 동의 → 자산 모달(총자산·현금성·투자 요약, 기관별 계좌·종류·잔액). 본인만, 저장 없음. 상세 docs/ASSET_DESIGN.md.</span></div>
   <div class="scr"><b>알림 · 승인 센터</b><span>가드레일 발동, 승인 요청(만료 시간 표시), 토론 완료, 데이터 갱신(국민연금 해외투자 현황). 승인은 여기서 step-up 인증 후.</span></div>
+</div>
+
+<!-- ===================== 거래내역 패널 (F20) ===================== -->
+<h2>거래내역 패널 · 손익 · 체결내역 · 매매내역 <span class="tag">F20</span> <span class="tag ok">확정 2026-09-25</span></h2>
+<p class="lede">상단 바 2행의 📒 거래내역 버튼(💰 오른쪽) 또는 ⌘H로 여는 패널입니다. 보유주식 평가금액 패널과 같은 방식으로 위에서 내려오되 오른쪽에 붙고 폭은 메인의 60%라, 둘을 함께 열어도 겹치지 않고 40:60으로 나란히 섭니다. 위 목업에서 💰와 📒를 차례로 눌러 보세요. 탭은 손익 · 체결내역 · 매매내역, 기간은 일별 · 월별 · 분기별 · 직접 지정입니다. 토스증권 앱의 잔고 &gt; 손익·체결내역·매매내역 화면을 참고했습니다. 상세 docs/TRADE_HISTORY_DESIGN.md.</p>
+<div class="notes">
+  <div class="note">
+    <h3>여는 곳과 동작</h3>
+    <ul>
+      <li>📒 거래내역 · ⌘H. 닫기는 ✕ · 같은 버튼 · Esc(가장 나중에 연 패널부터). 열린 동안 버튼은 강조색.</li>
+      <li>메인 오른쪽 위에서 슬라이딩, 폭 60%(최소 480px). 서랍을 밀지 않고 위에 뜨며 z-order는 F18과 같습니다.</li>
+      <li>F18과 동시에 열리면 |평가금액 40%|거래내역 60%|. 서로를 닫지 않습니다. <b>z-order는 메인 &lt; 평가금액·거래내역 패널 &lt; 종목 검색 팝오버·사용자 메뉴 &lt; 모달</b>: 팝오버·메뉴는 패널 위에 뜨고 패널은 닫히지 않습니다(F18도 같음) [확정].</li>
+      <li>손익·매매내역의 종목 행을 누르면 네 영역이 그 종목으로 바뀌고 패널은 열린 채. 체결내역의 미체결 행에서 정정·취소 → F14 모달.</li>
+      <li>저장: 마지막 탭, 기간 단위(기본 월별), 통화(기본 원화), 금액 숨김(F18과 공유). 열림 상태·날짜 범위는 저장 안 함.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>세 탭</h3>
+    <ul>
+      <li><b>손익(F2)</b>: 요약 카드(실현손익·수익률 → 매매손익 · 환차손익 · 매수금액 · 매도금액 · 수수료·세금) → 단위별 묶음 소계 → 행(종목 · 매도 수량 · 실현손익 외화/원화 · 수익률 · 보유 기간 · 출처 칩). "양도세 손익 보기" 토글을 켜면 올해 해외주식 <b>양도세 대상 금액</b>(양도차익 − 기본공제 250만원)과 <b>예상 부과액</b>(22%)만 한 줄 카드로 보입니다 [확정]. 위 목업에서 눌러 보세요.</li>
+      <li><b>체결내역(F14 주문 내역)</b>: 전체/체결/미체결 · 표(종목·매매구분, 주문수량/단가, 체결수량/단가, 미체결/수수료, 시각, 상태, 출처), 정정 체인은 한 묶음으로 접음. 토스는 건별 체결을 주지 않아 주문 1건 = 행 1건. 별도 "주문 내역" 화면은 두지 않습니다.</li>
+      <li><b>매매내역</b>: 날짜 묶음(매수 합·매도 합) → 체결된 주문 그대로(종목 · 매수/매도 수량 · 체결금액 외화/원화 · 단가 · 수수료 · 시각). lot 매칭 없음.</li>
+      <li>미국 종목은 외화/원화 토글. 시장 칩 전체/국내/미국, 매매구분, 종목 검색으로 거릅니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>계산 (데몬, BigDecimal)</h3>
+    <ul>
+      <li><b>lot 소진 = 선입선출</b>. 토스 앱이 "잔고(선입선출)"를 쓰므로 [확정]으로 올립니다. 매도 1건이 여러 lot을 소진하면 <code>lot_disposal</code> 행이 lot마다 생깁니다.</li>
+      <li>외화 실현손익 = Σ(매도단가 − lot 매입단가) × 소진 수량 − 수수료 − 세금.</li>
+      <li>원화 실현손익 = 매도금액 × 매도 시 환율 − Σ 매입원가 × 매입 시 환율 − 비용 원화 = <b>매매손익</b>(외화 손익 × 매도 시 환율) + <b>환차손익</b>(매입원가 × 환율 차). 합이 같은지 테스트로 강제. 국내는 환차손익 0.</li>
+      <li>수익률 = 실현손익 ÷ 매입원가. 보유 기간 = 매도 − lot 매수(일). 묶음 날짜는 <b>국내 KST · 미국 동부시간(ET)</b>이며 미국 종목이 있으면 기간 줄과 묶음 머리에 ET 기준임을 알립니다 [확정].</li>
+      <li>매도 시 환율은 토스 체결 응답 필드가 있으면 그것, 없으면 체결 시각의 환율 캐시 [확인 필요]. 없으면 별도 환율 API를 붙입니다(구현 단계 확정). <b>실현손익의 원천은 우리 DB</b>: 매도 체결 때마다 <code>lot_disposal</code>을 저장하고 기간별 손익은 그 합입니다. 토스 실현손익 API는 있으면 대조 표시만.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>데이터와 예외</h3>
+    <ul>
+      <li>원천: 토스 종료 주문 조회(커서 100건)의 로컬 캐시 <code>broker_order</code> + <code>lot</code>·<code>lot_disposal</code> + 환율 캐시. 기간이 캐시보다 과거면 뒤로 더 적재하며 바닥 줄에 진행 표시. 동기화 안 함.</li>
+      <li>토스 키 없음 → "본인 토스 키를 등록해야 합니다". 조회 실패 → 마지막 캐시 + 지연 표시. 환율 없음 → 원화 "—". 소수점 매도 → 6자리.</li>
+      <li>바닥 줄: 출처 · 마지막 적재 시각 · 매매 통계(F17) 열기. CSV 내보내기는 두지 않습니다.</li>
+    </ul>
+  </div>
 </div>
 
 <!-- ===================== 최초 구동 마법사 (F19) ===================== -->
@@ -1487,6 +1607,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
     <li>남은 외부 확인: 13F 정보표 XML 파일명(접수별 index.json), 토스 미국 종목 마스터의 ISIN·영문 회사명 제공 여부, 공공데이터포털 일일 트래픽 한도 수치(캐시로 대응하되 확인).</li>
     <li>F15 결정됨(2026-09-25): 탭·항목 승인, 마지막 탭 기억, 배당은 정보만, ETF 구성종목은 구현 보류(국내 데이터 제공자 확보 시 해제). 미국 배당 캘린더는 Massive로 해결.</li>
     <li>F1 예외·F16 자산 조회·F17 매매 통계 결정됨(2026-09-25). F17·F2 화면 목업은 후속.</li>
+    <li>F20 거래내역 패널: 확정(2026-09-25) — z-order(검색·사용자 메뉴가 패널 위), 묶음 날짜 국내 KST·미국 ET, 양도세 토글은 대상 금액·예상 부과액만, CSV 없음, 실현손익 원천은 우리 DB(<code>lot_disposal</code>). 구현 단계 확인: 토스 매도 시 환율 필드(없으면 별도 환율 API), 실현손익 API(있으면 대조만).</li>
     <li>F19 최초 구동 마법사·시작 종목: 모두 확정(2026-09-25) — 토스 키 "나중에"·조회 제한 모드, 로그인 모달 바깥 흐림, TOTP 포함, 시작 종목 = 직전 종목 → 평가금액 최대 보유 → 삼성전자/엔비디아. 남은 확인: 토스 보유 조회 평가금액 필드명, ZXing 의존성.</li>
     <li>F18 보유주식 평가금액: 토스 API에서 예수금 D+1/D+2와 담보비율을 어떤 필드로 주는지 [확인 필요](신용 미사용이면 담보비율은 0.00% 고정 표시 또는 숨김). 종목 변경 시 유지·금액 숨김 기본 꺼짐은 결정됨(2026-09-25).</li>
     <li>F14 결정됨(2026-09-24): 3번 영역 탭·정정 모달 승인 · 자동 주문도 사람이 정정 가능(수동 취급, 한도 초과 시 확인 창 한 번, 자동매매 한도의 유일한 예외) · 정정 주문의 clientOrderId는 새로 발급 · 정정 가능 수량은 잔량까지. 남은 것: 정정 API의 quantity가 "새 잔량"인지 "새 총 주문 수량"인지(화면은 잔량 입력, 어댑터가 변환), 체결 알림 기본값(제안: 앱 안 켬·Slack 끔).</li>
@@ -1696,6 +1817,16 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   document.getElementById('evtoday').addEventListener('click',function(){evp.classList.toggle('tod');});
   evp.querySelectorAll('.mkt span').forEach(function(t){t.addEventListener('click',function(){evp.querySelectorAll('.mkt span').forEach(function(x){x.classList.toggle('on',x===t)});var v={'전체':['44,164,219원','▲ 5,748,369원 (+14.96%)'],'국내':['28,120,400원','▲ 3,910,200원 (+16.15%)'],'미국':['16,043,819원','▲ 1,838,169원 (+12.94%) · $11,240.55']}[t.textContent];document.getElementById('evtotal').textContent=v[0];document.getElementById('evpl').textContent=v[1];});});
   document.addEventListener('keydown',function(e){ if(e.key==='Escape')setEval(false); if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='e'){e.preventDefault();setEval(true);} });
+  // 거래내역 패널 (F20): 2행 📒 버튼·⌘H, 메인 오른쪽 위에서 슬라이딩(폭 60%), F18과 동시에 열림
+  var hsp=document.getElementById('histp'), hsbtn=document.getElementById('hsbtn');
+  function setHist(o){hsp.classList.toggle('open',o);hsbtn.classList.toggle('on',o);}
+  hsbtn.addEventListener('click',function(e){e.stopPropagation();setHist(!hsp.classList.contains('open'));});
+  document.getElementById('hsx').addEventListener('click',function(){setHist(false);});
+  hsp.addEventListener('click',function(e){e.stopPropagation();});
+  document.querySelectorAll('#htabs span').forEach(function(t){t.addEventListener('click',function(){document.querySelectorAll('#htabs span').forEach(function(x){x.classList.toggle('on',x===t)});hsp.querySelectorAll('.body').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-b')===t.getAttribute('data-t'))});});});
+  hsp.querySelectorAll('.ch').forEach(function(g){g.querySelectorAll('span').forEach(function(t){t.addEventListener('click',function(){g.querySelectorAll('span').forEach(function(x){x.classList.toggle('on',x===t)});});});});
+  document.getElementById('taxtg').addEventListener('click',function(){var c=document.getElementById('taxcard');c.hidden=!c.hidden;this.classList.toggle('on',!c.hidden);});
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape')setHist(false); if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='h'){e.preventDefault();setHist(true);} });
   // 사용자 메뉴 + 자산 모달 (F16)
   var umenu=document.getElementById('umenu'), userbtn=document.getElementById('userbtn'), asm=document.getElementById('assetmodal'), ash=document.getElementById('ash'), aspos=null;
   userbtn.addEventListener('click',function(e){e.stopPropagation();umenu.hidden=!umenu.hidden;pop.hidden=true;});

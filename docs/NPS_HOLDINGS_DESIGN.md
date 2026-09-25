@@ -1,6 +1,6 @@
 # 국민연금 해외투자 현황 (F13) — 모달과 갱신 푸시 설계
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-24 / 상태: **[확정 2026-09-24]** — 버튼 이름·위치, 캐시, 매핑, 알림 기본값, 토론 투입은 사용자 결정으로 확정(11장). 외부 사실은 [확인함]/[확인 필요]로 표기 / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F13·11.3, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.8, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 10장, [`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md) 3.2, 화면 설계 아티팩트 v16 "국민연금 해외투자 현황 모달"
 

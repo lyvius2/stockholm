@@ -1,6 +1,6 @@
 # 보유주식 평가금액 패널 (F18)
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-25 / 상태: **[확정 2026-09-25]** — 버튼 위치·팝업 방식(왼쪽 위 슬라이딩, 폭 40%, ✕)은 사용자 결정. 토스 API 필드 대응은 [확인 필요] / 관련: [`PROJECT.md`](../PROJECT.md) F2·F18·11.3, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 5장(`PortfolioSnapshot`), [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.1, 화면 설계 아티팩트 "보유주식 평가금액 패널"
 
@@ -30,7 +30,7 @@
 
 ## 3. 동작
 
-- 열기: 버튼·⌘E. 닫기: ✕·같은 버튼·Esc. 다른 팝업(종목 검색·사용자 메뉴)을 열면 닫힌다. 서랍·모달과는 독립이며 z-order는 서랍 위, 주문 모달 아래.
+- 열기: 버튼·⌘E. 닫기: ✕·같은 버튼·Esc. 종목 검색 팝오버·사용자 메뉴는 **패널 위에 뜨고 패널은 닫히지 않는다** [확정 2026-09-25, 이전 "열면 닫힌다"를 대체]. z-order: 메인 < 평가금액·거래내역 패널 < 검색·사용자 메뉴 < 모달. 서랍과는 독립.
 - **실시간**: 보유 종목의 체결 스트림과 환율로 평가금액·손익이 틱 단위로 바뀐다(2번 영역과 같은 초당 4회 묶음). 끊기면 "지연" 칩.
 - 종목을 바꿔도 패널은 유지된다(계좌 단위 정보라 종목과 무관) [확정 2026-09-25].
 - 값 갱신 주기: 시세는 스트림, 예수금·매수 가능은 체결·입출금 이벤트 시 재조회 + 60초 폴링(ACCOUNT 그룹 초당 1회 한도 안).

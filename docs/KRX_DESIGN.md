@@ -1,6 +1,6 @@
 # KRX Open API 어댑터 규격 — 국내 일별 시세·종목 기본정보·지수·ETF
 
-> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+> 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
 작성: 2026-09-25 / 상태: **[확인함]** — 8개 API의 엔드포인트·요청·응답 필드는 KRX가 배포한 개발 명세서(docx, `docs/external/krx/`, 저장소 밖)로 확인. 갱신 시각·호출 한도·값 형식은 [확인 필요] / 관련: [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.3, [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md) 3.3·3.6, [`PROJECT.md`](../PROJECT.md) F5·F10·F15
 

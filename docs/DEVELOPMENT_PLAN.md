@@ -1,6 +1,6 @@
 # 개발 계획 — 단계별 착수 순서와 완료 기준
 
-작성: 2026-09-25 / 상태: **[확정 2026-09-25, 단계 구성은 PROJECT.md 12장]** — 각 단계의 세부 순서·완료 기준·읽을 문서는 이 문서가 기준. 진행 상태는 [HANDOFF.md](HANDOFF.md) / 관련: [PROJECT.md](../PROJECT.md) 12장, [CLAUDE.md](../CLAUDE.md), [README.md](README.md)(문서 지도)
+작성: 2026-09-25 / 상태: **[확정 2026-09-25, 단계 구성은 PROJECT.md 12장]** — 각 단계의 세부 순서·완료 기준·읽을 문서는 이 문서가 기준. 진행 상태는 [HANDOFF.md](HANDOFF.md) / 관련: [PROJECT.md](../PROJECT.md) 12장, [CLAUDE.md](../CLAUDE.md), [INDEX.md](INDEX.md)(문서 지도)
 
 ## 1. 원칙
 
@@ -49,19 +49,19 @@
 
 ## 4. 2단계 — 토스 연동과 수동 매매 (목표 4~6주) → 첫 사용 가능 버전
 
-**목표**: F1 매수·매도, F3 차트, F4 종목 검색·관심종목, F11 급등락, F14 주문 관리, F16 자산 조회, F18 평가금액, F19 시작 종목. 승인 기반 소액 실주문 1회 검증.
-**읽을 문서**: [EXTERNAL_APIS.md](EXTERNAL_APIS.md) 1.1·1.2, PROJECT 8.1·F1·F3·F4·F11·11.3, [ORDER_MANAGEMENT_DESIGN.md](ORDER_MANAGEMENT_DESIGN.md), [PORTFOLIO_PANEL_DESIGN.md](PORTFOLIO_PANEL_DESIGN.md), [ASSET_DESIGN.md](ASSET_DESIGN.md), [FIRST_RUN_DESIGN.md](FIRST_RUN_DESIGN.md) 6장, [KRX_DESIGN.md](KRX_DESIGN.md), [DB_SCHEMA.md](DB_SCHEMA.md) 6·7장.
+**목표**: F1 매수·매도, F3 차트, F4 종목 검색·관심종목, F11 급등락, F14 주문 관리, F16 자산 조회, F18 평가금액, F19 시작 종목, F20 거래내역(손익·체결·매매). 승인 기반 소액 실주문 1회 검증.
+**읽을 문서**: [EXTERNAL_APIS.md](EXTERNAL_APIS.md) 1.1·1.2, PROJECT 8.1·F1·F3·F4·F11·11.3, [ORDER_MANAGEMENT_DESIGN.md](ORDER_MANAGEMENT_DESIGN.md), [PORTFOLIO_PANEL_DESIGN.md](PORTFOLIO_PANEL_DESIGN.md), [TRADE_HISTORY_DESIGN.md](TRADE_HISTORY_DESIGN.md), [ASSET_DESIGN.md](ASSET_DESIGN.md), [FIRST_RUN_DESIGN.md](FIRST_RUN_DESIGN.md) 6장, [KRX_DESIGN.md](KRX_DESIGN.md), [DB_SCHEMA.md](DB_SCHEMA.md) 6·7장.
 
 착수 순서:
 
 1. **토스 학습 테스트**(읽기 전용): 토큰 발급, 계좌 목록, 보유·예수금·매수 가능 금액(평가금액·원화 환산·D+1/D+2 필드 확인), 종목 정보·경고, 캔들(1분·일), 현재가 다건, 랭킹, 시장 달력, 환율, WebSocket(trade·orderbook·`personal:order`). 응답을 픽스처로 저장, WireMock에 적재. **주문 엔드포인트는 학습 테스트에서도 부르지 않는다.**
 2. `core` 주문·보유 TDD: `OrderIntent`·`OrderKind`·`TimeInForce`·`OrderOrigin`·`OrderTrigger`, `BrokerOrder`(정정 체인·`canAmend/canCancel/remaining`), `OrderStatus` 매핑·`UNKNOWN`, `Lot`·`Position`·`ProfitLoss`, `PortfolioSnapshot`·`DepositBalance`, `StartStockResolver`(⑴⑵⑶, 2초 상한, fake 포트). 수동 주문 가드레일(`MarketOrderScope`, 고액 확인, 반대 방향 미체결 409 처리).
-3. V2 마이그레이션: `candle`, `broker_order`, `lot`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref`.
+3. V2 마이그레이션: `candle`, `broker_order`, `lot`, `lot_disposal`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref`.
 4. 토스 어댑터: `TradingPort`(주문·정정·취소·조회, `clientOrderId` 멱등·10분 규칙·타임아웃 시 조회 후 결정), `MarketDataPort`, `MarketCalendarPort`, `RealtimeFeedPort`(재연결·`OPEN` 재동기·LOSSY 보정), 그룹별 rate limiter, 403(IP)·429 도메인 예외. 종목 마스터 동기화(토스 + KRX + DART 기업개황 → `stock_master`), `stock_warning` 짧은 TTL.
-5. 데몬 서비스: 분봉 집계(1분→3·5·10·30·60·주·월·년), 이동평균·거래량 평균, 로컬 WebSocket(초당 4회 묶음), 주문 서비스(모달 → 가드레일 → 주문 → `personal:order` → `broker_order`·`lot` projection), 정정·취소(체인, 한도 초과 확인 창은 6단계 전까지 항상 통과), 주문 내역 커서 적재, F18 계산(`BigDecimal`), F19 시작 종목·`lastViewedStock` 디바운스, 급등락 재정렬(1d 랭킹 100 → 현재가 다건).
+5. 데몬 서비스: 분봉 집계(1분→3·5·10·30·60·주·월·년), 이동평균·거래량 평균, 로컬 WebSocket(초당 4회 묶음), 주문 서비스(모달 → 가드레일 → 주문 → `personal:order` → `broker_order`·`lot` projection), 정정·취소(체인, 한도 초과 확인 창은 6단계 전까지 항상 통과), 주문 내역 커서 적재, lot 선입선출 매칭(`lot_disposal`)과 실현손익·환차손익 계산(F20 손익 탭), F18 계산(`BigDecimal`), F19 시작 종목·`lastViewedStock` 디바운스, 급등락 재정렬(1d 랭킹 100 → 현재가 다건).
 6. `CredentialVerifier` 토스·KRX·Massive·DART·네이버·공공데이터포털·Slack 실제 검증 호출로 교체(형식 검사 → 실호출).
 7. 금융결제원: 학습 테스트(테스트베드/운영 확인) → `IdentityPort`·`AssetPort` 어댑터(동의 브라우저·`127.0.0.1` 콜백·토큰 Keychain) → 자산 모달. 조회 결과는 저장하지 않는다.
-8. 화면: 네 영역(차트 두 모드·기간 탭, 가격·호가·상태 칩·ⓘ 버튼 자리, 3번 영역 세 탭·주문 모달·정정 모달·취소 확인, 토론 영역은 자리만), 서랍(관심종목·급등락, 좌우 배타 규칙), 종목 검색 팝오버(초성), 사용자 드롭다운, 평가금액 패널, 조회 제한 모드 배너, 사유 토스트, 설정 저장·복원(비율·토글·서랍 폭).
+8. 화면: 네 영역(차트 두 모드·기간 탭, 가격·호가·상태 칩·ⓘ 버튼 자리, 3번 영역 세 탭·주문 모달·정정 모달·취소 확인, 토론 영역은 자리만), 서랍(관심종목·급등락, 좌우 배타 규칙), 종목 검색 팝오버(초성), 사용자 드롭다운, 평가금액 패널, 거래내역 패널(세 탭·기간 단위, F18과 40:60), 조회 제한 모드 배너, 사유 토스트, 설정 저장·복원(비율·토글·서랍 폭).
 9. **실주문 검증(사용자 지시 시에만)**: 사용자가 지정한 종목·1주·최소 금액으로 지정가 매수 → 정정 → 취소 → 소량 매도. 각 단계의 `personal:order` 이벤트와 projection 일치 확인. 이 절차를 문서로 남긴다.
 
 **완료 기준**
