@@ -126,7 +126,7 @@ Flyway 마이그레이션으로 다음 표를 둔다. 이벤트 로그(동기화
 | `pension_holdings_snapshot` | `id`, `dataset_id`, `content_hash`, `fetched_at`, `row_count`, `total_valuation`, `total_currency` | 13F는 USD, 연간은 KRW. 같은 dataset의 해시가 바뀌면 새 행 |
 | `pension_holding` | `snapshot_id`, `rank`, `company_name`, `company_key`(정규화), `cusip`(null 가능), `shares`(null 가능, BigDecimal), `valuation`(BigDecimal), `currency`, `weight_ratio`(null 가능), `stake_ratio`(null 가능) | 억원 → 원으로 환산해 `Money(KRW)`. 비율은 `Percent`(0.0362) |
 | `pension_holdings_change` | `id`, `prev_snapshot_id`(null 가능), `new_snapshot_id`, `kind`(NEW_FILING/AMENDED/NEW_DATASET/CONTENT_CHANGED), `detected_at`, `summary_json` | 알림의 원천 |
-| `pension_holdings_change_ack` | `change_id`, `user_id`, `acked_at` | 사용자별 확인 |
+| ~~`pension_holdings_change_ack`~~ | → 범용 `notification(user_id, kind=DATA_UPDATED, dedupe_key=change_id, acked_at)`으로 흡수 [확정 2026-09-25, `docs/DB_SCHEMA.md` 7장] | 사용자별 확인 |
 | `pension_symbol_alias` | `company_key` 또는 `cusip`, `symbol_market`, `symbol_code`, `source`(ISIN_MATCH/NAME_MATCH/USER), `updated_at` | 종목 매핑(8장) |
 
 크기: 13F 분기 600~700행 × 48분기 + 연간 3천 행 × 8년 ≈ 6만 행. 무시할 수준.

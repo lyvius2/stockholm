@@ -125,7 +125,7 @@ public enum ReportPeriod { ANNUAL, QUARTERLY }
 
 | 표 | 열 | 비고 |
 |---|---|---|
-| `financial_statement` | `id, symbol_market, symbol_code, basis, period_kind, fiscal_year, fiscal_quarter, receipt_no, supersedes_id, first_seen_at, figures_json` | 접수번호 단위 버전 |
+| `financial_statement` | `statement_id, market, code, basis, period_kind, fiscal_year, fiscal_quarter, filing_ref, supersedes_id, first_seen_at, figures_json` | 접수번호 단위 버전. 원본은 `financial_fact`(DART·EDGAR 공용) [확정 2026-09-25, `docs/DB_SCHEMA.md` 9장]. 배당 표의 키는 `market + code`, US용 `ex_date`·`declaration_date`·`distribution_type`·통화 추가 |
 | `dividend_payment` | `symbol, payment_date, record_date, per_share, yield_at_payment, receipt_no, first_seen_at` | 결정 공시 단위, 최신순 표의 원천 |
 | `dividend_yield_weekly` | `symbol, week_ending, trailing_dps, close, trailing_yield` | 1년 추이 그래프·평균 수익률 계산 |
 | `dividend_upcoming` | `symbol, record_date, ex_date, payment_date, per_share, receipt_no, first_seen_at` | 결정 공시 기준 |

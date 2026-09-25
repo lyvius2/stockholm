@@ -101,7 +101,7 @@
 | `us_disclosure` | `accession_no(PK), cik, form, items, filing_date, report_date, accepted_at, primary_document, size, supersedes_accession, first_seen_at, indexed_at` | 공시 감시 결과. F15 공시 탭·가드레일 이벤트 원천 |
 | `us_financial_fact` | `cik, tag, unit, end_date, start_date, frame, fy, fp, form, accession_no, filed, val` | company facts 정규화. `(cik, tag, unit, end_date, frame, accession_no)` 유일 |
 
-F15의 `financial_statement`(`docs/STOCK_INFO_DESIGN.md` 6장)는 위 표에서 계산한 결과를 접수번호 단위 버전으로 담는다.
+F15의 `financial_statement`(`docs/STOCK_INFO_DESIGN.md` 6장)는 위 표에서 계산한 결과를 접수번호 단위 버전으로 담는다. `us_financial_fact`는 DART 원본과 합쳐 `financial_fact(source=EDGAR, entity_key=cik, …, filing_ref=accession_no)` 한 표로 둔다 [확정 2026-09-25, `docs/DB_SCHEMA.md` 9장].
 
 ## 8. 오류와 fail-safe
 

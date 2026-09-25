@@ -36,7 +36,7 @@ Robert C. Martin의 『Clean Code』를 기준으로 하고, 구조 개선은 Ma
 ### 이름
 
 - 의도를 드러내는 이름을 쓴다. `d`, `list1`, `data`, `info`, `manager`, `processor` 같은 이름은 쓰지 않는다. 이름에 주석이 필요하면 이름이 틀린 것이다.
-- 도메인 용어를 일관되게 쓴다. 한 개념에 한 단어(`fetch`/`get`/`retrieve`를 섞지 않는다). 이 프로젝트의 용어: `Lot`(매수 건), `Exposure`(노출액), `Guardrail`, `Lease`, `Persona`, `Debate`, `Verdict`(토론 결론), `ExecutionStage`(모의/승인/자동), `BuyOrigin`(MANUAL/AI_RECOMMENDED/AUTO_BUY).
+- 도메인 용어를 일관되게 쓴다. 한 개념에 한 단어(`fetch`/`get`/`retrieve`를 섞지 않는다). 이 프로젝트의 용어: `Lot`(매수 건), `Exposure`(노출액), `Guardrail`, `Lease`, `Persona`, `Debate`, `Verdict`(토론 결론), `ExecutionStage`(모의/승인/자동), `BuyOrigin`(lot의 출처: MANUAL/AI_RECOMMENDED/AUTO_BUY), `OrderOrigin`(주문의 출처: 위 셋 + AUTO_SELL).
 - 클래스는 명사, 메서드는 동사. boolean은 `is`/`has`/`can`으로 시작한다.
 - 검색 가능한 이름을 쓴다. 매직 넘버는 이름 있는 상수로 뺀다. 특히 한도·기간·비율(`1000만원`, `7일`, `90%`, `50%`)은 반드시 한곳에 정의된 상수·설정으로만 참조한다.
 - 인코딩을 넣지 않는다. 헝가리안 표기, `I` 접두어, `Impl` 접미어를 피한다(어댑터는 `TossTradingAdapter`처럼 무엇인지로 이름 짓는다).
@@ -237,6 +237,7 @@ npm --prefix desktop run lint                        # TS 린트
 - `docs/KEY_MANAGEMENT.md` — 키 분류(공유/개인), 최초 구동 마법사, 변경 규칙, 다른 디바이스로의 키 전달. 인증·설정·비밀값 관련 작업 전에 읽는다.
 - `docs/LLM_ROUTING.md` — 목적별 다중 LLM 라우팅(목적 분류, 폴백·실패 정책, 개인정보 등급, 예산). LLM 호출 코드 작업 전에 읽는다. **제공자·모델 이름을 `engine.llm` 밖의 코드에 쓰지 않는다.**
 - `docs/RAG_DESIGN.md` — RAG 설계(Lucene 하이브리드, 기준 시점 원칙, 코퍼스 구분). 지식 검색·수집 작업 전에 읽는다.
+- `docs/DB_SCHEMA.md` — 표 정의(성격 ①이벤트 로그·②projection·③캐시·④상태), 형식 자리표시자, FK 정책(논리는 전부, 물리는 보수적), 인덱스, Flyway 버전 계획, relay DB. 엔티티·마이그레이션 작업 전에 읽는다.
 - `docs/EXTERNAL_APIS.md` — 외부 API 카탈로그(엔드포인트, 호출 제한, 제약). 어댑터 작업 전에 읽는다. 단, 구현 기준은 항상 각 API의 공식 문서다.
 - `PROJECT.md` — 프로젝트 기준 문서. 결정이 바뀌면 코드보다 먼저 갱신한다.
 - `docs/` — 보조 문서. 설계 결정의 배경이 길어지면 여기에 ADR로 남기고 PROJECT.md에서 참조한다.

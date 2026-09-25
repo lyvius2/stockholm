@@ -14,6 +14,12 @@
 - **EDGAR 어댑터 규격 추가(2026-09-24)**: `docs/EDGAR_DESIGN.md` — data.sec.gov(submissions·companyfacts·frames) 실측 형식, 감시 알고리즘, 분기 값은 `frame`으로 고르는 규칙, 서식→조치 표, 저장·오류·테스트. `www.sec.gov`(티커 파일·Archives·Atom)는 연락처 UA로 재확인 필요.
 - **F13 근거 자료 확정(2026-09-24)**: 국민연금 보유는 토론 개요·빠른 토론 수치 블록·미러피시 시드·F5 2단 입력에 들어간다(`PROJECT.md` F5·F13, `docs/DEBATE_DESIGN.md` 3.2, `docs/RAG_DESIGN.md` 4.3).
 
+- **2026-09-25 세션 마감 시점**: 결정 일괄(F1 예외·9묶음·F17·가족 전제·F15 보류·F14 Slack 켬·F13 3단계·테마·10장 [제안] 확정), F16 자산 조회(`docs/ASSET_DESIGN.md`)·F18 보유주식 평가금액 패널(`docs/PORTFOLIO_PANEL_DESIGN.md`)·DART(`docs/DART_DESIGN.md`)·KRX(`docs/KRX_DESIGN.md`) 설계 문서 추가, 화면 설계서 v30(Version 33: 두 줄 상단 바·연기금 모달 860·F16·F18·얇은 테마 스크롤바)까지 반영. `figma-plugin/` v3.7 `eval`(F18) 항목은 크래시 수정 후 **사용자 재실행·로그 확인 대기**. 이번 세션 변경은 사용자가 `ab788c8`(스크롤바)까지 커밋함. 남은 미커밋은 이 HANDOFF 갱신뿐.
+
+- **F19 최초 구동 마법사·시작 종목 설계 추가(2026-09-25, [확정])**: `docs/FIRST_RUN_DESIGN.md`(네 단계 화면, `SetupState` 상태 기계, 키별 읽기 전용 검증 표, 조회 제한 모드, `StartStockResolver` ⑴직전 종목→⑵평가금액 최대 보유→⑶기본 종목 삼성전자 005930/엔비디아 NVDA(설정 기본 시장), `lastViewedStock` 디바운스 저장, 테스트), `PROJECT.md` F19·5장, `docs/KEY_MANAGEMENT.md` 3장 머리말. 화면 설계서 v31(Version 34)에 마법사 목업(단계 클릭 전환)·시작 종목 표. `figma-plugin/` v3.8 `firstrun` 항목(실행은 사용자). **확정(2026-09-25)**: 토스 키 "나중에" 허용 + 조회 제한 모드(D17·KEY_MANAGEMENT 반영), 로그인 모달은 매 실행·로그아웃 뒤 메인 위에 뜨며 유일하게 바깥을 흐림(화면 설계서 v32 Version 35 목업, 플러그인 프레임). TOTP 포함(RFC 6238 직접 구현, QR은 데몬 생성, ZXing 후보)·평가금액 기준·기본 종목 두 상수도 확정(2026-09-25). 남은 확인: 토스 보유 조회 평가금액 필드명, ZXing 의존성 채택. 1단계 리포 골격의 Flyway V1에 `installation`·`credential_meta`가 들어간다.
+
+- **DB 스키마 설계 추가(2026-09-25, [확정])**: `docs/DB_SCHEMA.md` — 표 93개(engine 81 + relay 12)를 성격 네 가지(이벤트 로그·projection·캐시·상태)로 분류, mermaid 관계도 8장, 형식 자리표시자(`${decimal}`=TEXT, `${instant}`=ISO-8601), 물리 FK 기준(부모 안정·CASCADE 타당·적재 순서 보장·같은 DataSource)과 미적용 목록, 인덱스, Flyway 버전 계획(V1~V8, relay는 별도 파일·이력), 테스트. **결정 완료(2026-09-25)**: BigDecimal TEXT 저장, relay TOTP는 클라이언트 검증(PROJECT 5장), 보존 기간(PROJECT 6장) 승인. 정합성 항목(seq 단위, `OrderOrigin`, 승인·제외·메모 이벤트, `LOCAL` 범위, ack→notification, 재무 표 통합, 이벤트 이름 통일)은 CORE_DOMAIN·NPS·DART·STOCK_INFO·EDGAR·FIRST_RUN에 반영 완료. 남은 것: 메일박스 30일 [제안], 정정 주문 clientOrderId 승계 [확인 필요].
+
 ## 다음 작업: 12장 1단계 "리포 골격"
 
 `PROJECT.md` 12장 1단계 순서대로. 착수 전에 `CLAUDE.md`의 절대 규칙과 `docs/CORE_DOMAIN.md`를 읽는다.
@@ -33,6 +39,8 @@
 ### A. 사용자 결정 (설계·코드에 영향)
 
 **2026-09-25 대부분 결정됨.** 결정 내용은 `PROJECT.md` 13장·각 설계 문서에 반영. 남은 것:
+0. ~~F19 최초 구동 마법사 결정~~ 모두 결정됨(2026-09-25). 구현 때 확인: 토스 보유 조회 평가금액 필드, QR 생성 의존성(ZXing).
+0-1. ~~DB 스키마 결정~~ 승인됨(2026-09-25). 구현 때 확인: 정정 주문 clientOrderId 승계(학습 테스트), relay 메일박스 30일.
 1. **F15 ETF 구성종목의 국내 데이터 제공자**(구현 보류 해제 조건).
 2. **F17 매매 통계 · F2 기간별 손익 화면 설계**(승인됨, 화면 설계서에 목업 필요).
 3. 토스 명세 기반 UI/UX 추가안 9묶음의 세부(승인됨, 화면 설계서로 옮길 때 항목별 반영).

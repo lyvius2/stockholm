@@ -418,6 +418,44 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 .rules div{display:grid;grid-template-columns:auto 1fr;gap:10px}
 .rules b{color:var(--accent);font-weight:600;white-space:nowrap}
 .q{border-left:3px solid var(--warn);padding:8px 12px;background:var(--panel);font-size:13px;margin-top:8px}
+/* 최초 구동 마법사 (F19) */
+.wiz{display:grid;grid-template-columns:190px 1fr;gap:16px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:16px;margin:12px 0}
+.wiz .steps{display:grid;gap:6px;align-content:start}
+.wiz .step{display:flex;gap:8px;align-items:center;padding:8px 10px;border-radius:6px;color:var(--ink2);cursor:pointer;font-size:13px}
+.wiz .step .n{width:22px;height:22px;border-radius:50%;background:var(--panel2);color:var(--ink3);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.wiz .step.on{background:var(--accent-soft);color:var(--accent)} .wiz .step.on .n,.wiz .step.done .n{background:var(--accent);color:#fff}
+.wiz .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 18px;font-size:13px;gap:10px;align-content:start;min-height:300px}
+.wiz .card h4{margin:0;font-size:16px}
+.wiz .card p{margin:0;color:var(--ink2)}
+.wiz .f{display:grid;grid-template-columns:140px 1fr;gap:8px 12px;align-items:center}
+.wiz .in{border:1px solid var(--line);border-radius:5px;padding:6px 8px;background:var(--bg);color:var(--ink3);font-family:ui-monospace,monospace;font-size:12px}
+.wiz .krow{display:grid;grid-template-columns:150px 1fr auto 170px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)}
+.wiz .krow.g{grid-template-columns:1fr;color:var(--ink3);font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding-top:10px;border-bottom:0}
+.wiz .ch{font-size:11px;border-radius:10px;padding:2px 8px;background:var(--panel2);color:var(--ink2);white-space:nowrap}
+.wiz .ch.ok{background:var(--accent-soft);color:var(--accent)} .wiz .ch.no,.wiz .ch.req{background:var(--warn-soft);color:var(--warn)}
+.wiz .btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.wiz .b{border-radius:5px;padding:8px 14px;font-weight:700;cursor:pointer;border:1px solid var(--line);color:var(--ink2)}
+.wiz .b.p{background:var(--accent);color:#fff;border-color:var(--accent)} .wiz .b.dis{opacity:.45;cursor:default}
+.wiz .qr{width:84px;height:84px;background:repeating-conic-gradient(var(--ink) 0 25%,var(--panel) 0 50%) 0 0/14px 14px;border:4px solid var(--panel);outline:1px solid var(--line)}
+.wiz .banner{background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:8px 10px}
+.wiz .ok-t{display:grid;grid-template-columns:150px 1fr 70px 90px;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)}
+.wiz .ok-t.h{color:var(--ink3);font-size:11px}
+.wiz [data-wstep]{display:none} .wiz [data-wstep].on{display:grid}
+/* 로그인 모달: 유일하게 바깥을 흐림 */
+.app.locked>*:not(.loginm){filter:blur(6px);pointer-events:none;user-select:none}
+.app.locked::after{content:'';position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 40%,transparent);z-index:29}
+.loginm{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:360px;background:var(--panel);border-radius:10px;z-index:30;font-size:13px;padding:22px 24px;gap:12px;
+  box-shadow:0 0 0 2px var(--accent),0 0 22px 2px color-mix(in srgb,var(--accent) 40%,transparent),0 20px 50px rgba(0,0,0,.3)}
+.app.locked .loginm{display:grid}
+.loginm .brand{font-weight:800;font-size:20px;letter-spacing:-.01em} .loginm .brand small{font-weight:400;color:var(--ink3);font-size:11px;margin-left:8px}
+.loginm .users{display:flex;gap:6px;flex-wrap:wrap}
+.loginm .u{border:1px solid var(--line);border-radius:14px;padding:4px 10px;color:var(--ink2);cursor:pointer} .loginm .u.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.loginm .lf{display:grid;gap:8px} .loginm .lf label{color:var(--ink2);font-size:12px}
+.loginm .in{border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--bg);color:var(--ink3);font-family:ui-monospace,monospace;font-size:13px}
+.loginm .go{background:var(--accent);color:#fff;border-radius:6px;padding:10px;text-align:center;font-weight:700;cursor:pointer}
+.loginm .links{display:flex;justify-content:space-between;color:var(--accent);font-size:12px}
+.loginm .foot{color:var(--ink3);font-size:11px;display:flex;gap:6px;align-items:center}
+.loginm .foot i{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
 .q ol{margin:6px 0 0;padding-left:20px}
 @media (max-width:600px){
   .stage{height:auto;display:block} .stage .grid{flex:none}
@@ -433,12 +471,23 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 </style>
 
 <div class="wrap">
-<p class="eyebrow">Stockholm · 화면 설계 초안 v30 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
+<p class="eyebrow">Stockholm · 화면 설계 초안 v34 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
 <h1>메인 화면 레이아웃</h1>
 <p class="lede">스케치의 네 영역 — 차트 · 가격 · 매수/매도 정보 · 토론 창(미러피시) — 을 그대로 배치한 초안입니다. 기본 비율은 좌우 6:4, 왼쪽 열의 차트:주문 7:3, 오른쪽 열의 가격:토론 4:6이며, 세 구분선을 드래그해 바꿀 수 있습니다(더블클릭으로 복원). 아래 목업의 각 영역을 클릭하면 해당 영역의 설명이 강조됩니다. 목업 안의 숫자와 종목은 모두 예시 값입니다.</p>
 
 <!-- ===================== 메인 목업 ===================== -->
 <div class="app" id="app">
+  <div class="loginm" id="loginm" role="dialog" aria-label="로그인">
+    <div class="brand">Stockholm<small>로그인</small></div>
+    <div class="users"><span class="u on">admin</span><span class="u">지혜</span><span class="u">민준</span><span class="u" style="border-style:dashed;color:var(--ink3)">+ 구성원 등록</span></div>
+    <div class="lf">
+      <label>비밀번호</label><div class="in">●●●●●●●●●●●●●●</div>
+      <label>TOTP 6자리</label><div class="in" style="letter-spacing:.25em">4 8 2 _ _ _</div>
+    </div>
+    <div class="go" id="loginGo">로그인</div>
+    <div class="links"><span>복구 코드로 로그인</span><span>도움말</span></div>
+    <div class="foot"><i></i>데몬 연결됨 · 0.1 · 마지막 로그인 admin 09/25 08:12 · 바깥은 흐려지고 Esc로 닫히지 않습니다</div>
+  </div>
   <div class="topbar">
     <div class="tb-row">
       <span class="brand">Stockholm</span>
@@ -1085,8 +1134,8 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 <h2>그 밖의 화면</h2>
 <p class="lede">메인 화면 외에 필요한 화면입니다. 모두 상단 바 왼쪽의 메뉴에서 열리고, 메인 위에 패널로 겹치거나 전체 화면으로 전환됩니다.</p>
 <div class="screens">
-  <div class="scr"><b>최초 구동 마법사</b><span>admin 생성 → 공유 키 입력·검증 → 본인 토스 키 → LLM 프리셋 → 구성원 코드 발급. 끝내기 전엔 다른 화면 없음.</span></div>
-  <div class="scr"><b>로그인 · 구성원 등록</b><span>비밀번호 + TOTP. 구성원은 등록 코드로 첫 로그인 후 본인 토스 키 입력.</span></div>
+  <div class="scr"><b>최초 구동 마법사 (F19)</b><span>① admin 비밀번호+TOTP → ② 공유 키 검증·저장(LLM 1개+DART 필수, 프리셋) → ③ 토스 키 안내(지금 등록 / 나중에 → 조회 제한 모드) → ④ 연결 확인 → 메인. 끝내기 전엔 다른 화면 없음. 로그인 직후 시작 종목 규칙(직전 종목 → 평가금액 최대 보유 → 기본 종목 삼성전자/엔비디아). 아래 목업.</span></div>
+  <div class="scr"><b>로그인 · 구성원 등록</b><span>메인 위 로그인 모달(사용자 선택 → 비밀번호 → TOTP). 유일하게 바깥을 흐림 [확정 2026-09-25]. 구성원은 등록 코드로 첫 로그인 후 본인 토스 키 안내(나중에 가능).</span></div>
   <div class="scr"><b>손익 · 매매 통계 (F2·F17)</b><span>기간별 실현·평가 손익, 종목별·출처별 분해, "AI 추천을 따랐을 때" 성과 비교. 매매 통계: 승률 · 평균 손익 · 평균 보유 기간 · 종목별 매매 횟수 · 최대 손실(기간·시장·출처별). 화면 설계는 후속 [확정 2026-09-25].</span></div>
   <div class="scr"><b>주문 내역</b><span>기간·종목·상태로 거른 전체 주문(체결·취소·거부·정정됨). 정정 체인은 한 묶음으로. 토스 종료 주문 조회(커서, 100건/페이지)를 로컬 캐시에 쌓아 보여 줌. F2 손익의 원천.</span></div>
   <div class="scr"><b>추천</b><span>오늘의 유력 종목 목록. 사유·반대 논거·확신도·유효기간. 누르면 메인 화면이 그 종목으로 바뀜.</span></div>
@@ -1098,6 +1147,164 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div class="scr"><b>알림 · 승인 센터</b><span>가드레일 발동, 승인 요청(만료 시간 표시), 토론 완료, 데이터 갱신(국민연금 해외투자 현황). 승인은 여기서 step-up 인증 후.</span></div>
 </div>
 
+<!-- ===================== 최초 구동 마법사 (F19) ===================== -->
+<h2>최초 구동 마법사 · 시작 종목 <span class="tag">F19</span> <span class="tag ok">확정 2026-09-25</span></h2>
+<p class="lede">설치 후 처음 실행하면 메인 대신 이 마법사가 뜹니다. admin 비밀번호 → 공유 API 키 → 토스증권 키 안내 → 연결 확인, 네 단계입니다. 왼쪽 단계를 눌러 화면을 넘겨 보세요. 끝내기 전에는 다른 화면으로 갈 수 없고, 중간에 꺼도 끝낸 단계부터 이어집니다. 그 아래는 로그인 직후 네 영역에 어떤 종목을 띄울지 정하는 규칙입니다.</p>
+<div class="wiz" id="wiz">
+  <div class="steps">
+    <div class="step on" data-w="1"><span class="n">1</span>admin 비밀번호</div>
+    <div class="step" data-w="2"><span class="n">2</span>공유 API 키</div>
+    <div class="step" data-w="3"><span class="n">3</span>토스증권 키</div>
+    <div class="step" data-w="4"><span class="n">4</span>연결 확인</div>
+    <div style="margin-top:14px;font-size:11px;color:var(--ink3);padding:0 10px">Stockholm 0.1 · 이 Mac이 첫 설치입니다. 다른 디바이스에 이미 설치했다면 <span style="color:var(--accent)">기존 설치에 연결</span></div>
+  </div>
+  <div class="card on" data-wstep="1">
+    <h4>admin 계정 만들기</h4>
+    <p>처음 설정하는 사람이 이 설치의 admin이 됩니다. 구성원 초대와 공유 키 관리는 admin만 할 수 있습니다.</p>
+    <div class="f">
+      <label>표시 이름</label><div class="in">admin</div>
+      <label>비밀번호</label><div class="in">●●●●●●●●●●●●●● <span style="color:var(--accent);float:right">강함</span></div>
+      <label>비밀번호 확인</label><div class="in">●●●●●●●●●●●●●● <span style="color:var(--accent);float:right">일치</span></div>
+      <label>TOTP 등록</label><div style="display:flex;gap:12px;align-items:center"><div class="qr"></div><div style="color:var(--ink2);font-size:12px">인증 앱으로 QR을 읽고 6자리를 넣으세요<br><div class="in" style="margin-top:6px;width:160px;letter-spacing:.2em;white-space:nowrap">4 8 2 _ _ _</div></div></div>
+      <label>복구 코드</label><div style="color:var(--ink2);font-size:12px">8개를 한 번만 보여 줍니다 · <span class="ch">저장했습니다</span></div>
+    </div>
+    <div class="btns"><span class="b p dis">다음</span></div>
+  </div>
+  <div class="card" data-wstep="2">
+    <h4>공유 API 키 등록</h4>
+    <p>가족이 함께 쓰는 키입니다. 값은 검증에 성공한 것만 Keychain에 저장되고, 저장된 뒤에는 admin도 다시 볼 수 없습니다(끝 4자리만).</p>
+    <div>
+      <div class="krow g">LLM · 1개 이상 필수</div>
+      <div class="krow"><span>Claude</span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch ok">검증됨 ···k2Qa · 12:04</span></div>
+      <div class="krow"><span>OpenAI</span><div class="in">sk-●●●●●●●●●●●●●●●●</div><span class="b" style="padding:4px 10px">검증</span><span class="ch no">실패 · 키가 틀렸거나 권한 없음</span></div>
+      <div class="krow"><span>DeepSeek</span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch">미등록</span></div>
+      <div class="krow"><span>Ollama 주소</span><div class="in">http://127.0.0.1:11434</div><span class="b" style="padding:4px 10px">검증</span><span class="ch ok">검증됨 · 모델 3개</span></div>
+      <div class="krow g">공시 · 필수</div>
+      <div class="krow"><span>DART 인증키 <span class="ch req">필수</span></span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch ok">검증됨 ···7f31 · 12:05</span></div>
+      <div class="krow g">선택 · 나중에 설정에서 추가 가능</div>
+      <div class="krow"><span>KRX Open API</span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch">미등록</span></div>
+      <div class="krow"><span>Massive</span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch ok">검증됨 ···9Lm0</span></div>
+      <div class="krow"><span>네이버 검색</span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch">미등록</span></div>
+      <div class="krow"><span>공공데이터포털</span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch">미등록</span></div>
+      <div class="krow"><span>SEC 연락처 이메일</span><div class="in">admin@example.com</div><span class="b" style="padding:4px 10px">확인</span><span class="ch ok">형식 확인</span></div>
+      <div class="krow"><span>Slack 봇 토큰</span><div class="in"></div><span class="b" style="padding:4px 10px">검증</span><span class="ch">미등록</span></div>
+      <div class="krow"><span>금융결제원 앱 자격</span><div class="in"></div><span class="b" style="padding:4px 10px">확인</span><span class="ch">미등록</span></div>
+    </div>
+    <div class="f" style="grid-template-columns:140px 1fr"><label>LLM 프리셋</label><div><span class="ch ok">균형(기본)</span> <span class="ch">품질 우선</span> <span class="ch">비용 최소</span> <span class="ch">로컬 전용</span> <span style="color:var(--ink3);font-size:11px">· 등록된 제공자(Claude·Ollama)만으로 경로를 짭니다</span></div></div>
+    <div class="btns"><span class="b">이전</span><span class="b p">다음</span></div>
+  </div>
+  <div class="card" data-wstep="3">
+    <h4>거래를 시작하려면 토스증권 Open API 인증키가 필요합니다</h4>
+    <p>시세·차트·계좌·주문은 모두 이 키로 합니다. 키는 본인 계좌에만 쓰이고 admin을 포함해 누구도 값을 다시 볼 수 없습니다. admin의 키는 급등락·스크리닝 같은 공용 시세 수집에도 쓰입니다.</p>
+    <div class="banner">토스증권 앱 › Open API에서 client_id와 client_secret을 발급받고, 이 Mac의 공인 IP <b>203.0.113.42</b>를 허용 IP에 등록하세요. 등록하지 않으면 403으로 막힙니다.</div>
+    <div class="f">
+      <label>client_id</label><div class="in">●●●●●●●●●●●●●●●●●●●●</div>
+      <label>client_secret</label><div class="in">●●●●●●●●●●●●●●●●●●●●●●●●●●●●</div>
+      <label></label><div><span class="b" style="padding:5px 12px">검증</span> <span class="ch ok">계좌 목록 조회 정상 · 주문 API는 호출하지 않음</span></div>
+      <label>사용할 계좌</label><div><span class="ch ok">● 종합매매 ···1234 (KRW · USD)</span> <span class="ch">○ 종합매매 ···5678</span></div>
+    </div>
+    <p><b>API 인증키를 등록하시겠습니까?</b> "나중에"를 고르면 메인 화면은 열리지만 시세·차트·계좌·주문이 꺼진 <b>조회 제한 모드</b>입니다. 매수·매도 버튼을 누르면 이 안내가 다시 뜹니다.</p>
+    <div class="btns"><span class="b">이전</span><span class="b">나중에</span><span class="b p">지금 등록하고 다음</span></div>
+  </div>
+  <div class="card" data-wstep="4">
+    <h4>연결 확인</h4>
+    <p>등록한 키를 한 번 더 실제로 불러 봅니다. 모두 읽기 전용 호출이며 주문은 내지 않습니다.</p>
+    <div>
+      <div class="ok-t h"><span>항목</span><span>상태</span><span>응답</span><span>확인 시각</span></div>
+      <div class="ok-t"><span>토스증권</span><span><span class="ch ok">정상</span> 종합매매 ···1234 · 매수 가능 금액 조회 정상</span><span>412ms</span><span>12:08:31</span></div>
+      <div class="ok-t"><span>Claude</span><span><span class="ch ok">정상</span></span><span>620ms</span><span>12:08:31</span></div>
+      <div class="ok-t"><span>Ollama</span><span><span class="ch ok">정상</span> bge-m3 · qwen · llama</span><span>18ms</span><span>12:08:31</span></div>
+      <div class="ok-t"><span>DART</span><span><span class="ch ok">정상</span></span><span>230ms</span><span>12:08:32</span></div>
+      <div class="ok-t"><span>Massive</span><span><span class="ch no">실패</span> 429 호출 한도 · 선택 항목이라 진행 가능</span><span>—</span><span>12:08:32</span></div>
+      <div class="ok-t"><span>KRX · 네이버 · Slack · 공공데이터포털</span><span><span class="ch">미등록</span> 설정 › 키 관리에서 추가</span><span>—</span><span>—</span></div>
+    </div>
+    <p>"시작"을 누르면 종목 마스터를 처음 내려받고(수십 초, 진행 표시), 시작 종목을 정한 뒤 메인 화면이 열립니다. 이 표는 설정 › 키 관리 › 연결 상태에서 언제든 다시 볼 수 있습니다.</p>
+    <div class="btns"><span class="b">이전</span><span class="b p">Stockholm 시작</span></div>
+  </div>
+</div>
+<div class="notes">
+  <div class="note">
+    <h3>로그인 모달 — 유일하게 바깥을 흐림 <span class="tag ok">확정 2026-09-25</span></h3>
+    <p>마법사가 끝난 설치에서는 켤 때마다, 그리고 로그아웃 뒤에 메인 위에 뜹니다. <a href="#app" id="showlogin" style="color:var(--accent)">위 목업에서 보기</a>(모달의 "로그인"을 누르면 걷힙니다).</p>
+    <ul>
+      <li>사용자 선택(최대 4, 마지막 로그인 사용자 기본) → 비밀번호 → TOTP 6자리. 5회 실패 시 15분 잠금. 링크: 구성원 등록(등록 코드) · 복구 코드.</li>
+      <li>바깥은 로그인 전 <b>빈 메인</b>을 6px 흐림 + 옅은 덮개. 클릭·키 입력 막힘, Esc로 닫히지 않음. 주문·정정·연기금·자산 모달은 흐리지 않습니다(F1 규칙 그대로).</li>
+      <li><b>흐림은 연출이지 보안 수단이 아닙니다.</b> 로그아웃 때 화면 상태를 먼저 비우고 모달을 띄웁니다. 흐려진 배경에 직전 사용자의 숫자가 남으면 안 됩니다(테스트).</li>
+      <li>로그인이 끝나면 흐림이 걷히며 시작 종목 결정 결과로 네 영역이 채워집니다. 2초를 넘기면 먼저 걷고 빈 영역에 진행 표시.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>상태 기계와 저장</h3>
+    <p>설치(데몬 하나)에 <code>SetupState</code> 하나. 화면은 이 값만 보고 어느 단계를 띄울지 정합니다.</p>
+    <ul>
+      <li>NOT_STARTED → ADMIN_CREATED → SHARED_KEYS_DONE → TOSS_DECIDED → COMPLETE. 전이는 데몬만 합니다(<code>POST /setup/…</code>).</li>
+      <li><b>COMPLETE 전에는 <code>/setup/*</code>와 헬스 외 모든 로컬 API가 403</b>. 로그인·주문·시세·토론 어느 것도 열리지 않습니다.</li>
+      <li>중간에 꺼도 저장된 키는 남고 같은 단계에서 이어집니다. 입력 중이던 값은 사라집니다.</li>
+      <li>키 값은 Keychain(<code>stockholm/shared/…</code>, <code>stockholm/user/{userId}/…</code>)에만, DB에는 종류·끝 4자리·검증 시각·상태만.</li>
+      <li>마법사 중에는 세션이 없으므로 로컬 토큰 + ① 뒤 만든 짧은 마법사 세션으로만 보호합니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>키 검증 — 읽기 전용 한 번</h3>
+    <p>붙여넣기만으로는 아무것도 나가지 않고 "검증"을 눌러야 호출합니다. 성공한 값만 저장하고 실패한 값은 입력 칸에 남깁니다.</p>
+    <ul>
+      <li>토스: 토큰 발급 → 계좌 목록(ACCOUNT 그룹). <b>주문 엔드포인트는 절대 부르지 않습니다</b>(테스트에서 호출 0회 검증).</li>
+      <li>LLM: 모델 목록 또는 최소 토큰 응답. Ollama: <code>/api/tags</code>(모델 0개면 "검증됨, 모델 없음").</li>
+      <li>DART: 기업개황 1건. KRX: 직전 영업일 일별 시세 1행. Massive: 종목 개요 1건. 네이버: 뉴스 1건. Slack: <code>auth.test</code>.</li>
+      <li>SEC 이메일·금융결제원 앱 자격은 형식 검사만(토큰은 사용자 동의 뒤에만 나옴).</li>
+      <li>실패 사유는 고칠 수 있는 말로: 401·403 "키가 틀렸거나 허용 IP가 아닙니다", 429 "잠시 뒤 다시", 연결 실패 "네트워크·주소 확인".</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>조회 제한 모드 (토스 키 없음)</h3>
+    <p>③에서 "나중에"를 고른 경우. 원안(KEY_MANAGEMENT "본인 토스 키 필수")의 완화이며 결정이 필요합니다.</p>
+    <ul>
+      <li>닫을 수 없는 상단 배너 "토스증권 키가 등록되지 않아 시세·계좌·주문이 꺼져 있습니다 [지금 등록]".</li>
+      <li>1 차트·2 가격·급등락 서랍은 빈 상태. 3번 영역 버튼은 누르면 ③ 카드가 모달로. 4 토론은 동작(시세 수치만 "—").</li>
+      <li>자동화는 켤 수 없음. 시작 종목은 기본 종목.</li>
+      <li>구성원이 "나중에"를 고르면 본인 계좌·주문만 꺼지고 공용 시세(admin 키)는 계속 옵니다. admin이 건너뛰면 모두에게 시세가 없습니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>시작 종목과 직전 종목</h3>
+    <p>로그인 직후 네 영역에 띄울 종목을 데몬이 정합니다. 위에서부터 처음 성립하는 후보를 쓰고, 후보마다 2초 안에 답이 없으면 다음으로 갑니다.</p>
+    <ul>
+      <li><b>직전에 보던 종목</b>: 사용자 설정 <code>lastViewedStock</code>. 네 영역 전환 때 2초 디바운스로 저장, 동기화되어 다른 디바이스에서도 이어 봅니다. 서랍·모달의 미리 보기는 세지 않습니다.</li>
+      <li><b>보유 중 평가금액(현재가 × 수량, 원화 환산) 최대</b> [확정]: 토스 보유 조회의 평가금액·원화 환산값을 그대로, 없으면 수량 × 마지막 현재가 × 현재 환율. 동률이면 매입 원가.</li>
+      <li><b>기본 종목</b> [확정]: 코드 상수 국내 삼성전자 005930 · 미국 엔비디아 NVDA. 설정 "기본 시장"(기본값 국내)으로 고릅니다. 시가총액 1위 조회는 두지 않습니다.</li>
+      <li>첫 진입에만 사유 토스트("보유 중 평가금액이 가장 큰 종목을 열었습니다"). 기본 종목이면 토스트 없음.</li>
+    </ul>
+  </div>
+</div>
+<table class="flow">
+  <tr><th>순서</th><th>후보</th><th>조건</th><th>실패·없음</th></tr>
+  <tr><td>⑴</td><td>직전에 보던 종목</td><td>값이 있고 종목 마스터에 있으며 상장폐지 아님</td><td>⑵</td></tr>
+  <tr><td>⑵</td><td>보유 중 평가금액(현재가 × 수량) 최대</td><td>본인 토스 키 · 보유 조회 성공 · 보유 1개 이상 · 2초 안</td><td>⑶</td></tr>
+  <tr><td>⑶</td><td>기본 종목 · 국내 삼성전자 005930 / 미국 엔비디아 NVDA</td><td>항상 (설정 "기본 시장", 기본값 국내)</td><td>—</td></tr>
+</table>
+<div class="q">
+  <b>결정 대기 (F19)</b>
+  <ol>
+    <li>~~토스 키 "나중에" 허용 + 조회 제한 모드~~ → 허용으로 확정(2026-09-25). 로그인 모달의 바깥 흐림도 확정.</li>
+    <li>~~TOTP 포함~~ → 포함으로 확정(2026-09-25). RFC 6238, javax.crypto만으로 구현, 시드는 Keychain, QR은 데몬이 이미지로 생성(ZXing 후보 [제안]).</li>
+    <li>~~시작 종목 기준~~ → 평가금액(현재가 × 수량)으로 확정(2026-09-25).</li>
+    <li>~~시가총액 1위~~ → 두지 않음. 기본 종목 국내 삼성전자 005930 · 미국 엔비디아 NVDA로 확정(2026-09-25). 남은 확인: 토스 보유 조회의 평가금액·원화 환산 필드명.</li>
+  </ol>
+</div>
+
+<script>
+(function(){
+  var wiz=document.getElementById('wiz'); if(!wiz) return;
+  wiz.querySelectorAll('.step').forEach(function(s){ s.addEventListener('click',function(){
+    var n=+s.getAttribute('data-w');
+    wiz.querySelectorAll('.step').forEach(function(x){ var k=+x.getAttribute('data-w'); x.classList.toggle('on',k===n); x.classList.toggle('done',k<n); });
+    wiz.querySelectorAll('[data-wstep]').forEach(function(c){ c.classList.toggle('on',+c.getAttribute('data-wstep')===n); });
+  }); });
+  var app=document.getElementById('app'), sl=document.getElementById('showlogin'), go=document.getElementById('loginGo');
+  if(sl&&app){ sl.addEventListener('click',function(e){ e.preventDefault(); app.classList.add('locked'); app.scrollIntoView({behavior:'smooth',block:'start'}); }); }
+  if(go&&app){ go.addEventListener('click',function(){ app.classList.remove('locked'); }); }
+})();
+</script>
 <!-- ===================== 종목 정보 서랍 (F15) ===================== -->
 <h2>종목 정보 서랍 · 재무제표 · 배당 · 산업군 · 관련 종목 · 공시 <span class="tag">F15</span> <span class="tag warn">제안</span></h2>
 <p class="lede">2번 영역(가격)의 "ⓘ 정보" 버튼을 누르면 오른쪽에서 종목 정보 서랍이 나옵니다. 순서는 |Main|종목 정보|급등락|이고, 열릴 때 왼쪽 서랍은 자동으로 닫힙니다. 위 목업에서 눌러 보세요. 숫자는 모두 예시 값입니다.</p>
@@ -1280,6 +1487,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
     <li>남은 외부 확인: 13F 정보표 XML 파일명(접수별 index.json), 토스 미국 종목 마스터의 ISIN·영문 회사명 제공 여부, 공공데이터포털 일일 트래픽 한도 수치(캐시로 대응하되 확인).</li>
     <li>F15 결정됨(2026-09-25): 탭·항목 승인, 마지막 탭 기억, 배당은 정보만, ETF 구성종목은 구현 보류(국내 데이터 제공자 확보 시 해제). 미국 배당 캘린더는 Massive로 해결.</li>
     <li>F1 예외·F16 자산 조회·F17 매매 통계 결정됨(2026-09-25). F17·F2 화면 목업은 후속.</li>
+    <li>F19 최초 구동 마법사·시작 종목: 모두 확정(2026-09-25) — 토스 키 "나중에"·조회 제한 모드, 로그인 모달 바깥 흐림, TOTP 포함, 시작 종목 = 직전 종목 → 평가금액 최대 보유 → 삼성전자/엔비디아. 남은 확인: 토스 보유 조회 평가금액 필드명, ZXing 의존성.</li>
     <li>F18 보유주식 평가금액: 토스 API에서 예수금 D+1/D+2와 담보비율을 어떤 필드로 주는지 [확인 필요](신용 미사용이면 담보비율은 0.00% 고정 표시 또는 숨김). 종목 변경 시 유지·금액 숨김 기본 꺼짐은 결정됨(2026-09-25).</li>
     <li>F14 결정됨(2026-09-24): 3번 영역 탭·정정 모달 승인 · 자동 주문도 사람이 정정 가능(수동 취급, 한도 초과 시 확인 창 한 번, 자동매매 한도의 유일한 예외) · 정정 주문의 clientOrderId는 새로 발급 · 정정 가능 수량은 잔량까지. 남은 것: 정정 API의 quantity가 "새 잔량"인지 "새 총 주문 수량"인지(화면은 잔량 입력, 어댑터가 변환), 체결 알림 기본값(제안: 앱 안 켬·Slack 끔).</li>
   </ol>

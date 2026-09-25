@@ -174,7 +174,8 @@ public record Candle(Symbol symbol, Duration interval, Instant openTime, Money o
 ## 5. 보유와 손익 (portfolio) [확정]
 
 ```java
-public enum BuyOrigin { MANUAL, AI_RECOMMENDED, AUTO_BUY }
+public enum BuyOrigin { MANUAL, AI_RECOMMENDED, AUTO_BUY }                 // lot(매수 건)의 출처
+public enum OrderOrigin { MANUAL, AI_RECOMMENDED, AUTO_BUY, AUTO_SELL }   // 주문의 출처. 매도 주문은 AUTO_SELL. 사람의 정정은 원주문 값을 유지 [확정 2026-09-25]
 
 /** 매수 한 건. 부분 매도로 remaining이 줄어들 뿐, 매입 원가·환율·시각은 바뀌지 않는다. */
 public record Lot(LotId id, UserId userId, Symbol symbol, Quantity boughtQuantity, Quantity remainingQuantity,
@@ -328,15 +329,19 @@ public sealed interface DomainEvent permits
   OrderIntended, OrderSubmitted, OrderAmendRequested, OrderCancelRequested, OrderStatusChanged, OrderFilled, OrderResultUnknown,
   // guardrail / automation
   GuardrailEvaluated, AutomationSettingChanged, LimitsLowered, LimitRaiseIgnored, KillSwitchChanged, AutoSellPermissionChanged, SimulatedOrderRecorded,
+  AutoBuyExclusionChanged, ApprovalRequested, ApprovalDecided, ApprovalExpired,
   // debate
   DebateStarted, PersonaSpoke, UserIntervened, RoundEnded, VerdictReached, DebateResumed,
   // watchlist / settings
-  WatchlistChanged, PersonaDefinitionChanged, UserSettingChanged, LayoutRatioChanged, ChartModeChanged,
+  WatchlistChanged, PersonaDefinitionChanged, UserSettingChanged, LayoutRatioChanged, ChartModeChanged, JournalMemoChanged,
   // lease
   LeaseAcquired, LeaseRenewed, LeaseLost, LeaseForciblyTaken { }
 ```
 
-- `seq`는 **디바이스별 단조 증가.** 동기화는 `(deviceId, seq)` 커서로 빠진 구간만 가져온다.
+- `seq`는 **(사용자, 디바이스) 쌍마다 단조 증가** [확정 2026-09-25]. 한 디바이스를 가족이 나눠 쓰므로 사용자 간에 번호를 섞지 않는다. 동기화는 `(userId, deviceId, seq)` 커서로 빠진 구간만 가져온다.
+- 이벤트마다 **동기화 범위**가 종류로 정해진다(코드 한곳의 표): `LOCAL`(lot·주문·체결·가드레일 판정·모의 실행 — 잔고·체결은 동기화하지 않음) / `USER`(설정·관심종목·페르소나·토론·추천·리포트·학습·승인·제외 종목) / `FAMILY`(가족 메모, 금액을 지운 회고). 동기화 에이전트는 `LOCAL`을 내보내지 않는다 [확정 2026-09-25].
+- 수정형 이벤트의 충돌은 `occurredAt`이 늦은 쪽, 같으면 `deviceId` 문자열이 큰 쪽(LWW). 가드레일 한도만 더 보수적인 값.
+- 저장 형식·표·인덱스는 `docs/DB_SCHEMA.md`.
 - `payload`는 core 타입. 직렬화(JSON)는 `shared`가 담당하고 스키마는 `protocol/`에서 생성한다.
 - 동기화하지 않는 것(잔고·체결 원본·RAG 인덱스)은 이벤트가 아니라 `engine`의 캐시 테이블이다.
 - 주문 감사 로그는 `OrderIntended → GuardrailEvaluated → OrderSubmitted → OrderStatusChanged/Filled`의 연쇄 자체다. 별도 로그 문장을 만들지 않는다. 계좌번호·키는 이벤트에 들어가지 않는다(`DepositBalance`에는 금액만 있다).
@@ -467,7 +472,7 @@ public final class SecretMissing extends DomainException {}
 
 **DebateSession** — 이벤트 재생으로 같은 상태 복원. 재개 시 현재 페르소나 정의가 스냅샷과 다르면 새 정의로 `DebateResumed`에 기록.
 
-**EventStore(fake)** — seq는 디바이스별 단조 증가, `replay(afterSeq)`는 그 이후만.
+**EventStore(fake)** — seq는 (사용자, 디바이스)별 단조 증가(같은 디바이스의 두 사용자가 각자 1부터), `replay(afterSeq)`는 그 이후만, `LOCAL` 범위 이벤트는 동기화 출력에 없음.
 
 **AlwaysHeldLease** — 항상 보유. (실제 lease는 8단계.)
 

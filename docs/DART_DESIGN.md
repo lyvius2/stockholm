@@ -86,7 +86,7 @@
 |---|---|
 | `dart_corp` | `corp_code, stock_code, corp_name, corp_name_eng, corp_cls, induty_code, acc_mt, est_dt, updated_at` |
 | `kr_disclosure` | `rcept_no(PK), corp_code, stock_code, report_nm, flr_nm, rcept_dt, rm, category(악재/호재/재무/안내/미분류), supersedes_rcept_no, first_seen_at, indexed_at` |
-| `kr_financial_statement` | `corp_code, bsns_year, reprt_code, fs_div, rcept_no, supersedes_id, first_seen_at, figures_json` |
+| ~~`kr_financial_statement`~~ | → `financial_fact(source=DART, entity_key=corp_code, tag, unit, start_date, end_date, fy, fp, filing_ref=rcept_no, value, first_seen_at)` 원본 + `financial_statement`(F15 공용 표현, 접수번호 단위 버전)로 통합 [확정 2026-09-25, `docs/DB_SCHEMA.md` 9장] |
 | `dividend_payment`·`dividend_yield_weekly` | `docs/STOCK_INFO_DESIGN.md` 6장 |
 | `auto_buy_exclusion` | `symbol, reason(공시 유형), rcept_no, since, until` |
 
