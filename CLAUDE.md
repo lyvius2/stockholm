@@ -17,7 +17,7 @@
 
 1. **테스트·개발 중 실제 주문 API를 호출하지 않는다.** 주문 경로의 테스트는 항상 fake/stub `TradingPort`를 쓴다. 실제 API 검증은 사용자가 명시적으로 지시한 경우에만, 사용자가 지정한 최소 금액으로 한다.
 2. **비밀값을 코드, 설정 파일, 로그, 테스트 픽스처, 커밋에 넣지 않는다.** API 키·토큰·개인키는 Keychain(`SecretStorePort`) 또는 환경 변수로만 다룬다. `.env`류는 `.gitignore`에 둔다. **키 값은 쓰기 전용이다 — 저장된 키 값을 돌려주는 API·화면·로그를 만들지 않는다**(admin에게도). 공유 키 변경은 admin + step-up, 주문·계좌 호출은 반드시 해당 사용자 본인의 토스 키로만 한다.
-3. **가드레일을 우회하는 경로를 만들지 않는다.** 모든 자동 주문은 `core` 패키지의 가드레일 검사를 통과해야 하며, "임시로 끄는" 플래그나 백도어를 두지 않는다. 한도 상수는 설정으로 낮출 수만 있다. 사람이 자동 주문의 미체결을 직접 정정하는 것은 수동 주문이며, 그 결과가 한도를 넘으면 건별 확인 창을 거친다(PROJECT.md 10.1의 유일한 예외). 이것 말고는 예외를 두지 않는다.
+3. **가드레일을 우회하는 경로를 만들지 않는다.** 모든 자동 주문은 `core.guardrail`의 검사(`EvaluateGuardrailUseCase`)를 통과해야 하며, "임시로 끄는" 플래그나 백도어를 두지 않는다. 한도 상수는 설정으로 낮출 수만 있다. 사람이 자동 주문의 미체결을 직접 정정하는 것은 수동 주문이며, 그 결과가 한도를 넘으면 건별 확인 창을 거친다(PROJECT.md 10.1의 유일한 예외). 이것 말고는 예외를 두지 않는다.
 4. **LLM 출력을 주문 파라미터로 직접 쓰지 않는다.** 구조화 → 스키마 검증 → 가드레일 → (단계에 따라) 승인을 거친다.
 5. **금액은 `BigDecimal` + 통화 코드.** `double`/`float`로 금액·수량·환율을 다루지 않는다. 반올림 규칙(`RoundingMode`)을 명시한다.
 6. **주문은 토스증권 어댑터에서만.** 다른 증권사 어댑터에 주문 기능을 구현하지 않는다.
@@ -26,8 +26,11 @@
 
 ## 기술 기준
 
-- **OpenJDK 21 (LTS).** 루트 패키지는 `banghak.stockholm`. record, sealed 타입, 패턴 매칭, 가상 스레드를 적극적으로 쓴다. preview 기능은 쓰지 않는다.
-- Gradle toolchain으로 JDK 21을 고정한다.
+- **Kotlin 2.x, GraalVM for JDK 25 (LTS) 타깃, Spring Boot 4.x.** 기본 실행은 JIT(Graal 컴파일러)이고 네이티브 이미지는 relay 단독 빌드에서만 검토(PROJECT 11.2). 루트 패키지는 `banghak.stock`. data class·value class·sealed interface·when 패턴 매칭·가상 스레드를 적극적으로 쓴다. **코루틴은 쓰지 않는다**(비동기·병렬은 가상 스레드, 동시 실행 수는 `Semaphore` 빈). JDK preview 기능은 쓰지 않는다.
+- Gradle toolchain으로 GraalVM JDK 25를 고정한다(1단계 첫날 Kotlin·Gradle 짝 버전 확인, 안 맞으면 21로 임시 후퇴 후 보고). 데몬 로컬 API 포트는 `127.0.0.1:2609`.
+- **Hexagonal Architecture, 계층별 패키지.** `core`(= `domain` + `usecase`(port.in) + `port`(port.out), 프레임워크 무관) 안쪽에, `engine`/`relay`(= `application` usecase 구현 + `adapter/in`·`adapter/out` + `config`)가 바깥. 의존은 `adapter → application → core.usecase/port → core.domain` 방향으로만. 도메인별 패키지 분할은 하지 않는다(2026-09-26 취소). 상세 `docs/DIRECTORY_STRUCTURE.md`, 스택은 `docs/TECH_STACK.md`.
+- 영속성은 JPA 기본, **Join·Bulk INSERT/UPDATE만 jOOQ**(코드 생성 없음). 리포지터리 메서드 이름이 16자를 넘으면 JPQL `@Query`.
+- 외부 HTTP는 **Retrofit2**(OkHttp) 인터페이스를 **엔드포인트 그룹별 빈**으로 두고(FeignClient 방식), 호출마다 Resilience4j 서킷 브레이커와 **fallback 메서드를 반드시** 붙인다. 응답 원문·헤더를 로그에 남기지 않는다(OkHttp 인터셉터에서 마스킹). 돈이 걸린 경로의 fallback은 "주문하지 않음", 조회의 fallback은 "마지막 캐시 + 지연 표시".
 
 ## 코딩 규칙 — Clean Code 기반
 
@@ -84,8 +87,8 @@ Robert C. Martin의 『Clean Code』를 기준으로 하고, 구조 개선은 Ma
 
 **문서화 주석 (Javadoc · KDoc · TSDoc)**
 
-- 대상은 **공개 API만**: `core.port`의 포트 인터페이스, `core`의 공개 타입(값 객체·도메인 이벤트·예외), 패키지 사이에서 협력하는 공개 타입, `protocol/`에서 생성되는 타입. `private`·패키지 전용·테스트 코드에는 쓰지 않는다.
-- Java는 Javadoc, Kotlin은 KDoc, TypeScript는 TSDoc 규약을 그대로 따른다. 첫 문장은 한 줄 요약이고 마침표로 끝낸다. `@param`·`@return`·`@throws`는 모두 쓰거나 아예 쓰지 않는다(일부만 쓰지 않는다). 코드 조각은 `{@code ...}`로, 다른 타입은 `{@link ...}`로 적는다.
+- 대상은 **공개 API만**: `core.usecase`·`core.port`의 인터페이스, `core.domain`의 공개 타입(값 객체·도메인 이벤트·예외), 패키지 사이에서 협력하는 공개 타입, `protocol/`에서 생성되는 타입. `private`·패키지 전용·테스트 코드에는 쓰지 않는다.
+- Kotlin은 KDoc, TypeScript는 TSDoc 규약을 그대로 따른다(Java 코드가 생기면 Javadoc). 첫 문장은 한 줄 요약이고 마침표로 끝낸다. `@param`·`@return`·`@throws`는 모두 쓰거나 아예 쓰지 않는다(일부만 쓰지 않는다). 코드 조각은 `{@code ...}`로, 다른 타입은 `{@link ...}`로 적는다.
 - 문체는 위와 같이 개조식·한국어·쉬운 말. 예:
 
 ```java
@@ -120,13 +123,13 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 
 - 신문 기사처럼: 위에 고수준 개념, 아래로 갈수록 세부. 호출하는 함수가 호출되는 함수 위에 온다.
 - 관련된 코드는 가까이 둔다. 변수는 사용하는 곳 가까이 선언한다.
-- 형식은 도구가 정한다: Java는 Spotless(google-java-format), TypeScript는 ESLint + Prettier. 형식 논쟁을 하지 않는다.
+- 형식은 도구가 정한다: Kotlin은 Spotless + ktfmt(kotlinlang 스타일), TypeScript는 ESLint + Prettier. 형식 논쟁을 하지 않는다.
 
 ### 객체와 자료 구조
 
 - 객체는 동작을 드러내고 데이터를 숨긴다. 자료 구조(DTO, record)는 데이터를 드러내고 동작이 없다. 둘을 섞은 잡종을 만들지 않는다.
 - 디미터 법칙: `a.getB().getC().doX()` 같은 기차 충돌을 만들지 않는다.
-- 값 객체를 적극적으로 쓴다. `Money`, `Quantity`, `StockCode`, `UserId`, `DeviceId`를 원시 타입 대신 쓴다. 값 객체는 불변이며 생성 시 검증한다. Java `record`를 기본으로 한다.
+- 값 객체를 적극적으로 쓴다. `Money`, `Quantity`, `StockCode`, `UserId`, `DeviceId`를 원시 타입 대신 쓴다. 값 객체는 불변이며 생성 시 검증한다. Kotlin `data class`(여러 필드) 또는 `value class`(단일 값)를 기본으로 하고, `init` 블록에서 검증한다.
 - 도메인 객체는 항상 유효한 상태다. setter로 조립하지 않는다.
 
 ### 오류 처리
@@ -139,7 +142,7 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 
 ### 경계
 
-- 외부 세계(증권사, 금융결제원, DART, LLM, 미러피시, Slack, 시계, 난수, 파일 시스템)는 모두 **포트 인터페이스** 뒤에 둔다. 포트는 `core.port` 패키지에, 어댑터는 `engine`/`relay` 패키지에 있다.
+- 외부 세계(증권사, 금융결제원, DART, LLM, 미러피시, Slack, 시계, 난수, 파일 시스템)는 모두 **포트 인터페이스** 뒤에 둔다. 포트는 `core.port`(out)·`core.usecase`(in)에, 어댑터는 `engine`/`relay`의 `adapter.out.<external>`·`adapter.in.<방식>`에 있다.
 - 서드파티 타입을 도메인에 노출하지 않는다. 어댑터에서 도메인 타입으로 변환한다.
 - 문서가 불확실한 외부 API는 **학습 테스트**로 동작을 확인하고 그 테스트를 남긴다.
 - **시간은 `Clock`을 주입받아 쓴다.** `Instant.now()`, `LocalDate.now()`를 직접 호출하지 않는다. 저장은 UTC `Instant`, 장 시간 계산은 `Asia/Seoul`과 `America/New_York`을 명시한다. 7일 경과, 장 시간, 만료 같은 로직은 고정 시계로 테스트한다.
@@ -149,7 +152,7 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 - 테스트 코드는 프로덕션 코드와 같은 품질로 쓴다. 지저분한 테스트는 없는 것보다 나쁘다.
 - F.I.R.S.T: 빠르고, 독립적이고, 반복 가능하고, 자가 검증하고, 적시에 쓴다.
 - 테스트 하나는 개념 하나를 검증한다. given-when-then 구조. 테스트 이름은 행위를 문장으로 쓴다(한글 메서드명 또는 `@DisplayName` 허용).
-- **`core`의 가드레일·노출액·한도·lease·이벤트 로그 로직은 테스트를 먼저 쓴다(TDD).** 이 영역의 경계값(정확히 1000만원, 정확히 168시간, 정확히 90%, 정확히 50%)은 빠짐없이 테스트한다.
+- **`core`의 가드레일·노출액·FIFO·한도·lease·이벤트 로그 로직은 테스트를 먼저 쓴다(TDD).** 이 영역의 경계값(정확히 1000만원, 정확히 168시간, 정확히 90%, 정확히 50%)은 빠짐없이 테스트한다.
 - 단위 테스트는 Spring 컨텍스트를 띄우지 않는다. 포트는 손으로 만든 fake를 우선하고 mock은 상호작용 검증이 본질일 때만 쓴다.
 - 통합 테스트는 어댑터와 영속성에 한정한다. 외부 API는 WireMock 등으로 대체한다.
 - 도구: JUnit 5, AssertJ / Vitest, Testing Library.
@@ -165,10 +168,10 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 ### 시스템
 
 - 생성과 사용을 분리한다. 객체 조립은 Spring 설정(`@Configuration`)이 하고, 도메인 코드는 `new`로 협력자를 만들지 않는다.
-- **Java는 단일 Spring Boot 프로젝트(`backend/`)다. 모듈 경계는 Gradle 모듈이 아니라 패키지와 테스트로 지킨다.** 경계가 컴파일러로 강제되지 않으므로 아래 규칙을 더 엄격히 따른다.
-  - `core`는 프레임워크를 모른다. Spring, JPA, Jackson 애너테이션, HTTP 클라이언트를 import하지 않는다. JPA 엔티티는 `engine`/`relay`의 영속성 패키지에 따로 두고 도메인 객체와 변환한다.
-  - `engine`과 `relay`는 서로를 참조하지 않는다. 둘 다 `core`와 `shared`만 참조한다.
-  - `engine`·`relay`의 모든 빈은 해당 프로필(`@Profile`)에서만 로드된다. 프로필 없는 빈은 `shared`에만 둔다.
+- **백엔드는 단일 Spring Boot 프로젝트(`backend/`, Kotlin)다. 모듈 경계는 Gradle 모듈이 아니라 패키지와 테스트로 지킨다.** 경계가 컴파일러로 강제되지 않으므로 아래 규칙을 더 엄격히 따른다.
+  - `core`는 프레임워크를 모른다. Spring, JPA, Jackson 애너테이션, HTTP 클라이언트를 import하지 않는다. JPA 엔티티는 `engine`/`relay`의 `adapter.out.persistence`에 따로 두고 도메인 객체와 변환한다.
+  - 진입 어댑터(controller·ws·scheduler)는 `core.usecase`만 부르고, `application`이 그것을 구현한다. `application`끼리는 usecase와 이벤트로 협력한다.
+  - `engine`과 `relay`는 서로를 참조하지 않는다. 둘 다 `core`와 `shared`만 참조한다. `engine`·`relay`의 모든 빈은 해당 프로필(`@Profile`)에서만 로드되고, 프로필 없는 빈은 `shared`에만 둔다.
   - 이 규칙들은 Spring Modulith 검증 테스트와 ArchUnit 테스트로 강제한다. **이 테스트를 끄거나 예외를 추가해서 빌드를 통과시키지 않는다.** 경계를 바꿔야 하면 사용자와 먼저 합의한다.
 - 횡단 관심사(트랜잭션, 감사 로그, 인증)는 도메인 로직에 섞지 않는다.
 - 필요해지기 전에 만들지 않는다(YAGNI). 단, PROJECT.md가 미리 요구하는 구조(이벤트 로그 저장, 포트 추상화, `userId` 범위)는 처음부터 지킨다.
@@ -195,7 +198,7 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 ## TypeScript / React (`desktop/`)
 
 - `strict` 모드. `any` 금지(불가피하면 `unknown` + 좁히기). non-null 단언(`!`)을 피한다.
-- 서버·데몬과 주고받는 타입은 `protocol/`에서 생성된 것만 쓴다. 손으로 중복 정의하지 않는다.
+- 서버·데몬과 주고받는 타입은 `protocol/`에서 생성된 것(quicktype, Kotlin·TS 동시 생성)만 쓴다. 손으로 중복 정의하지 않는다.
 - 컴포넌트는 작게, 표현과 데이터 접근을 분리한다. 데이터 접근은 로컬/원격 모드를 추상화한 계층 하나를 통해서만 한다.
 - 금액은 문자열(decimal)로 받고 표시용 포맷만 한다. **프론트엔드에서 금액을 `number`로 계산하지 않는다.** 계산은 데몬이 한다.
 - Electron: `contextIsolation` 켬, `nodeIntegration` 끔, preload로 최소한의 API만 노출. 렌더러에 비밀값을 넘기지 않는다.
@@ -212,7 +215,7 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 
 - 브랜치: `main`은 항상 빌드·테스트 통과 상태. 작업은 `feat/…`, `fix/…`, `refactor/…`, `docs/…`, `chore/…` 브랜치에서 한다.
 - 커밋 메시지: Conventional Commits. 제목은 한국어 허용, 50자 안팎, 본문에는 무엇보다 **왜**를 쓴다.
-  - 예: `feat(core): 자동 매수 노출액 계산에 7일 경과 lot 제외 규칙 추가`
+  - 예: `feat(guardrail): 자동 매수 노출액 계산에 7일 경과 lot 제외 규칙 추가`
 - 커밋과 푸시는 사용자가 요청할 때만 한다. force push, 히스토리 재작성은 하지 않는다.
 
 ## 명령어
@@ -221,7 +224,7 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 
 ```bash
 cd backend && ./gradlew build                        # 빌드 + 전체 테스트(경계 검증 포함)
-cd backend && ./gradlew test --tests 'banghak.stockholm.core.*'   # core 단위 테스트만
+cd backend && ./gradlew test --tests 'banghak.stock.core.*'   # core 단위 테스트만
 cd backend && ./gradlew bootRun --args='--spring.profiles.active=engine'   # 클라이언트 데몬 실행
 cd backend && ./gradlew spotlessApply                # Java 포맷
 npm --prefix desktop run dev                         # Electron 개발 실행
@@ -234,11 +237,13 @@ npm --prefix desktop run lint                        # TS 린트
 - [`docs/INDEX.md`](docs/INDEX.md) — **문서 지도.** 읽는 순서, 주제별·기능별·단계별 색인, 문서 규약. 어떤 문서를 봐야 할지 모르면 여기부터.
 - [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) — 단계별 착수 순서·읽을 문서·완료 기준. 작업을 고를 때 HANDOFF와 함께 본다.
 - [`docs/HANDOFF.md`](docs/HANDOFF.md) — 세션 인수인계: 지금 상태, 다음 작업, 사용자 결정 대기, 외부 확인 필요. **세션을 시작할 때 먼저 읽고, 작업이 끝나면 갱신한다.**
-- [`docs/CORE_DOMAIN.md`](docs/CORE_DOMAIN.md) — `core` 도메인 모델(값 객체, 주문·lot·노출액, 가드레일 규칙 목록, 이벤트 타입, 포트 시그니처, 예외 분류, 필수 테스트). `core` 코드 작업 전에 읽는다.
+- [`docs/CORE_DOMAIN.md`](docs/CORE_DOMAIN.md) — `core` 도메인 모델(값 객체, 주문·lot·노출액, 가드레일 규칙 목록, 이벤트 타입, 포트 시그니처, 예외 분류, 필수 테스트). 예시는 Java 문법이지만 구현은 Kotlin. `core` 코드 작업 전에 읽는다.
 - [`docs/DEBATE_DESIGN.md`](docs/DEBATE_DESIGN.md) — 토론 세 테마, 개요·전망, DebateSession 저장·재개, RAG(파인튜닝 없음). 토론 엔진 작업 전에 읽는다.
 - [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md) — 키 분류(공유/개인), 최초 구동 마법사, 변경 규칙, 다른 디바이스로의 키 전달. 인증·설정·비밀값 관련 작업 전에 읽는다.
 - [`docs/LLM_ROUTING.md`](docs/LLM_ROUTING.md) — 목적별 다중 LLM 라우팅(목적 분류, 폴백·실패 정책, 개인정보 등급, 예산). LLM 호출 코드 작업 전에 읽는다. **제공자·모델 이름을 `engine.llm` 밖의 코드에 쓰지 않는다.**
 - [`docs/RAG_DESIGN.md`](docs/RAG_DESIGN.md) — RAG 설계(Lucene 하이브리드, 기준 시점 원칙, 코퍼스 구분). 지식 검색·수집 작업 전에 읽는다.
+- [`docs/TECH_STACK.md`](docs/TECH_STACK.md) — 라이브러리·버전·라이선스 선택과 쓰지 않기로 한 것. 새 의존성을 더할 때 여기에 이유를 적는다.
+- [`docs/DIRECTORY_STRUCTURE.md`](docs/DIRECTORY_STRUCTURE.md) — 패키지·폴더 트리와 기능 → 위치 대응. 새 클래스·파일을 어디에 둘지 정할 때 읽는다.
 - [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md) — 표 정의(성격 ①이벤트 로그·②projection·③캐시·④상태), 형식 자리표시자, FK 정책(논리는 전부, 물리는 보수적), 인덱스, Flyway 버전 계획, relay DB. 엔티티·마이그레이션 작업 전에 읽는다.
 - [`docs/EXTERNAL_APIS.md`](docs/EXTERNAL_APIS.md) — 외부 API 카탈로그(엔드포인트, 호출 제한, 제약). 어댑터 작업 전에 읽는다. 단, 구현 기준은 항상 각 API의 공식 문서다.
 - [`PROJECT.md`](PROJECT.md) — 프로젝트 기준 문서. 결정이 바뀌면 코드보다 먼저 갱신한다.

@@ -27,7 +27,7 @@
 | 연기금 | `pension_dataset` `pension_holdings_snapshot` `pension_holding` `pension_holdings_change` `pension_symbol_alias` `pension_check_log` | ③ | 설치 공용 | 3 |
 | 토론·추천·리포트 | `debate_session` `debate_participant` `debate_utterance` `debate_intervention` `debate_material` `debate_verdict` `stock_outlook_digest` `industry_digest` `related_symbol` `recommendation` `market_report` | ②③ | 사용자 / 공용 | 4 |
 | 학습 | `prediction_outcome` `persona_weight` `persona_weight_history` `retrospective` `llm_usage` `llm_route` `llm_route_history` `llm_budget` `llm_price` | ②④ | 사용자 / 설치 | 4~5 |
-| relay (별도 DB) | `relay_member` `relay_device` `relay_device_request` `relay_session` `relay_challenge` `relay_registration_code` `relay_mailbox` `relay_mailbox_delivery` `relay_lease` `relay_nonce` `relay_notify_route` `relay_audit_log` | ④ | 서버 | 7~8 |
+| relay (별도 DB) | `relay_member` `relay_device` `relay_device_request` `relay_session` `relay_challenge` `relay_registration_code` `relay_stream_cursor` `relay_lease` `relay_nonce` `relay_notify_route` `relay_audit_log` | ④ | 서버 | 7~8 |
 
 SQLite 예약어와 겹치는 `user`, `session`은 `app_user`, `user_session`으로 쓴다.
 
@@ -99,7 +99,7 @@ backend/src/main/resources/db/
 | `financial_statement.supersedes_id` 등 버전 체인 | 백필 순서가 보장되지 않는다 |
 | `pension_symbol_alias`, `symbol_alias` | 사용자 편집분이 마스터보다 오래 산다 |
 | `notification.user_id`, `audit_log.user_id` | 사용자 삭제 뒤에도 기록은 남긴다 |
-| relay `relay_mailbox` ↔ `relay_device` | 디바이스 폐기 뒤 남은 암호문은 만료 정리 작업이 지운다 |
+| relay `relay_stream_cursor` ↔ `relay_device` | 디바이스 폐기 뒤 커서는 정리 작업이 지운다(스트림의 남은 메시지는 보존 정책으로 소멸) |
 
 물리 FK를 **두는** 곳: `recovery_code`, `user_session`, `credential_meta(user)`, `user_setting`, `watchlist_*`, `persona_definition`, `automation_setting`, `guardrail_limits`, `auto_sell_permission`, `kill_switch`, `lot(user)`, `debate_*` 자식 → `debate_session`, `knowledge_symbol` → `knowledge_document`(네이버 일괄 삭제가 CASCADE로 끝남), `pension_holding` → `pension_holdings_snapshot`, `pension_holdings_change` → 스냅샷, `debate_verdict` → `debate_session`, relay의 `relay_device`·`relay_session` → `relay_member`. SQLite에서는 연결마다 `PRAGMA foreign_keys=ON`이 없으면 FK가 무시되므로 DataSource 초기화 SQL에 넣고 통합 테스트로 확인한다.
 
@@ -289,6 +289,7 @@ erDiagram
 - `event_log` 유일 키 `(user_id, device_id, seq)`. `seq`는 **(사용자, 디바이스) 쌍마다** 단조 증가한다. 한 디바이스를 가족이 나눠 쓰므로 사용자 간에 번호를 섞지 않아야 `replay(userId, deviceId, afterSeq)`가 사용자 범위를 벗어나지 않는다. `event_no`는 로컬 삽입 순서(projection 재생과 디버깅용)이고 동기화에는 쓰지 않는다.
 - `sync_scope`는 이벤트 종류에서 결정된다(코드 표, 한곳). `LOCAL`: lot·주문·가드레일 판정·체결(잔고·체결은 동기화 안 함) / `USER`: 설정·관심종목·페르소나·토론·추천·리포트·학습 / `FAMILY`: 가족 메모, 금액 제거된 회고. 동기화 에이전트는 `LOCAL`을 내보내지 않는다.
 - **LWW 기준**: 같은 항목의 수정형 이벤트는 `occurred_at`이 늦은 쪽, 같으면 `device_id` 문자열이 큰 쪽. 가드레일 한도는 예외로 더 보수적인 값(`GuardrailLimits.lowerTo`). 이 규칙은 projection 재생기에 있고 DB는 모른다.
+- **CDC(Debezium 등)는 쓰지 않는다** [2026-09-25 검토]. `event_log`가 곧 **트랜잭션 아웃박스**다: 도메인 변경은 같은 SQLite 트랜잭션 안에서 "이벤트 추가 + projection 갱신"으로 커밋되고, 동기화 에이전트는 커밋된 `event_log`를 `(user_id, device_id, seq)` 커서로 읽어 암호화해 내보낸다. DB 로그를 뒤져 변경을 복원하는 CDC는 (1) SQLite에 binlog·논리 복제가 없어 트리거 기반으로 만들어야 하고, (2) 우리는 변경을 원천에서 이미 이벤트로 만들며, (3) relay MySQL은 업무 표의 복제본이 아니라 **암호문 메일박스**라(D4) 표 단위 복제 자체가 없기 때문에 필요 없다. 원격 화면의 조회는 서버 DB가 아니라 QUERY/SNAPSHOT을 클라이언트로 중계해 답한다.
 - `payload_json` 스키마는 `protocol/`에서 생성한다. `type` 이름은 CORE_DOMAIN 9장의 sealed 목록 그대로이며, FIRST_RUN의 `SETTING_CHANGED` 표기는 `UserSettingChanged`로 통일한다(문서 수정 대상).
 - `user_setting`은 키-값 projection(`lastViewedStock`, `defaultMarket`, `layoutRatios`, `chartMode`, `chartPeriod.simple`, `chartPeriod.detailed`, `theme`, `drawerWidth.*`, `stockInfoLastTab`, `portfolioPanel.*`, `notify.*`, `llm.allowPersonal.{provider}`, `translationGlossary` …). 키 목록과 기본값은 코드 한곳(`UserSettingKey`)에 둔다.
 - `watchlist_*`와 `persona_definition`은 `WatchlistChanged`·`PersonaDefinitionChanged`의 projection. 페르소나는 **사용자별**이며 이전 버전을 지우지 않는다(토론 스냅샷과 F10 집계가 참조).
@@ -1226,8 +1227,7 @@ erDiagram
   relay_member ||--o{ relay_session : opens
   relay_device ||--o{ relay_session : binds
   relay_device ||--o{ relay_device_request : "approves"
-  relay_member ||--o{ relay_mailbox : "addressed (no FK)"
-  relay_mailbox ||--o{ relay_mailbox_delivery : "per device"
+  relay_device ||--o{ relay_stream_cursor : "stream position"
   relay_member ||--o| relay_lease : holds
   relay_member ||--o| relay_notify_route : "Slack DM"
 
@@ -1290,23 +1290,12 @@ erDiagram
     string used_at
     string used_by_user_id
   }
-  relay_mailbox {
-    string envelope_id PK
-    string kind "SYNC|COMMAND|EVENT|KEY"
-    string user_id
-    string from_device_id
-    string to_device_id "NULL = 사용자의 모든 디바이스"
-    string issued_at
-    string expires_at
-    int body_bytes
-    blob ciphertext
-    string stored_at
-  }
-  relay_mailbox_delivery {
-    string envelope_id PK
+  relay_stream_cursor {
+    string user_id PK
     string device_id PK
-    string delivered_at
-    string acked_at
+    string stream PK "SYNC|CMD|EVT|NOTIFY"
+    int last_seq
+    string updated_at
   }
   relay_lease {
     string user_id PK
@@ -1340,7 +1329,13 @@ erDiagram
   }
 ```
 
-- relay는 **업무 데이터가 없다.** `relay_mailbox.ciphertext`는 서버가 열 수 없고, 봉투 메타(라우팅)만 평문이다. 보관 정책: `expires_at` 지나면 삭제, 모든 대상 디바이스가 `acked_at`이면 즉시 삭제, 상한 30일 [제안]. `to_device_id`가 NULL이면 사용자의 폐기되지 않은 모든 디바이스에 `relay_mailbox_delivery` 행을 만든다.
+- relay는 **업무 데이터가 없다.** 암호문 봉투는 브로커 스트림에만 있고 서버는 봉투 메타(라우팅)만 읽는다. 보존은 스트림 정책(SYNC 30일 · CMD 만료까지 · EVT/NOTIFY 24시간), 모든 대상 디바이스가 ack하면 삭제 대상. `toDevice`가 없으면 사용자의 폐기되지 않은 모든 디바이스 consumer가 받는다.
+- **relay에 메시지 브로커를 둔다** [사용자 결정 2026-09-25, 제품 선택은 제안]. 동기화·명령·이벤트의 store-and-forward를 DB 표가 아니라 **내구성 있는 스트림**이 맡는다. 제안은 **NATS JetStream**(Apache-2.0, 단일 바이너리, 디바이스별 durable consumer + ack, 보존 기간·크기 제한, 재생), 대안은 **Valkey Streams**(BSD, 소비자 그룹). Pub/Sub만 있는 방식(Redis Pub/Sub, 순수 MQTT QoS0)은 오프라인 구독자에게 유실되므로 제외.
+  - 구조: 클라이언트는 여전히 relay의 WebSocket(TLS) 하나로만 접속하고(인증·nonce·step-up은 relay), relay가 안에서 브로커에 발행·구독한다. 브로커는 외부에 노출하지 않는다.
+  - 주제(subject): `sync.{userId}.{toDeviceId|all}` · `cmd.{userId}.{deviceId}` · `evt.{userId}` · `lease.{userId}` · `notify.{userId}`. 스트림 `SYNC`(보존 30일, 암호문), `CMD`(만료 `expiresAt`까지), `EVT`(24시간), `NOTIFY`(24시간). consumer는 `(userId, deviceId)`마다 durable, ack 뒤 삭제 대상.
+  - **DB 표 변화**: `relay_mailbox`·`relay_mailbox_delivery`는 **스트림이 대체**한다(삭제). 대신 `relay_stream_cursor(user_id, device_id, stream, last_seq, updated_at)`를 두어 재접속 시 이어받는 위치를 relay가 기억하고, 브로커 재설치 때 대조한다. 회원·디바이스·세션·lease·nonce·감사는 그대로 DB.
+  - 브로커도 봉투(라우팅 메타데이터)만 읽고 본문은 암호문이다(D4 유지). 브로커 저장소는 relay와 같은 호스트의 디스크, 백업 대상.
+  - 브로커가 죽으면 relay는 "동기화 지연"만 알리고 클라이언트는 단독 모드로 계속 동작한다(D2·D5). 브로커 없이 relay만 뜬 상태에서는 인증·lease·NOTIFY 직접 발송만 된다.
 - `relay_member`는 클라이언트 등록부의 **사본**이며 `user_id`를 그대로 쓴다(서버를 나중에 붙여도 이어짐). 4명 제한은 서비스가 검사한다. 원격 로그인에 필요한 비밀번호 해시는 등록 시 클라이언트가 보낸다. TOTP를 서버에서도 검증하려면 시드가 서버에 있어야 하는데 이는 D4(서버에 비밀 없음)와 긴장 관계다 → 12장 결정 6.
 - Slack 봇 토큰은 relay DB에 넣지 않는다. 환경 변수 또는 서버 비밀 저장소.
 - `relay_lease.generation`은 engine의 `lease.generation`과 같은 펜싱 번호. 강제 인수는 `generation+1`이며 옛 값으로 온 갱신은 거부한다.
@@ -1359,7 +1354,7 @@ erDiagram
 | 8 | 재무 표 통합: `financial_fact`(원본) + `financial_statement`(표현) | 채택 · 반영 완료 2026-09-25 | DART_DESIGN 9장, STOCK_INFO 6장, EDGAR 7장 |
 | 9 | 보존 기간: 이벤트·감사·주문·lot·토론 영구 / 1분봉 90일 / 커뮤니티 원문 90일 / 뉴스 색인 2년 / `llm_usage` 2년 / `notification` 180일 / `audit_log` 영구 | **확정 2026-09-25** | 각 문서 |
 | 10 | `SETTING_CHANGED` → `UserSettingChanged` 이름 통일 | 채택 · 반영 완료 2026-09-25 | FIRST_RUN_DESIGN 6.1 |
-| 11 | relay 메일박스 보관 상한 30일 | [제안] | PROJECT 6장 |
+| 11 | relay 메시지 브로커(NATS JetStream 제안, 대안 Valkey Streams), SYNC 스트림 보존 30일 | 브로커 도입은 사용자 결정 · **제품 선택은 relay 서버(7단계) 착수 전까지 보류** [2026-09-25] | PROJECT 6·7장, TECH_STACK |
 | 12 | 토스 정정·취소 주문의 `clientOrderId` 승계 여부 | [확인 필요, 학습 테스트] | ORDER_MANAGEMENT 2장 |
 
 1·6·9는 2026-09-25 사용자 승인. 3~5·7·8·10은 같은 날 관련 문서에 반영했다(`CORE_DOMAIN` 4·9장, `NPS_HOLDINGS_DESIGN` 6장, `DART_DESIGN` 9장, `STOCK_INFO_DESIGN` 6장, `EDGAR_DESIGN` 7장, `FIRST_RUN_DESIGN` 7장, [`PROJECT.md`](../PROJECT.md) 5·6장).

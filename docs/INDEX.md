@@ -26,7 +26,8 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 4. [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) — 지금 단계에서 무엇을 어떤 순서로 하는지.
 5. [CORE_DOMAIN.md](CORE_DOMAIN.md) — 값 객체·이벤트·포트·가드레일. 코드를 쓰기 전 필수.
 6. [DB_SCHEMA.md](DB_SCHEMA.md) — 표와 형식 규칙.
-7. 나머지는 맡은 기능의 문서만(3장 표).
+7. [DIRECTORY_STRUCTURE.md](DIRECTORY_STRUCTURE.md) — 어디에 무엇을 두는지. [TECH_STACK.md](TECH_STACK.md) — 무엇으로 만드는지.
+8. 나머지는 맡은 기능의 문서만(3장 표).
 
 **세션을 시작할 때**: HANDOFF → DEVELOPMENT_PLAN의 현재 단계 → 그 단계의 "읽을 문서". **끝낼 때**: HANDOFF 갱신.
 
@@ -35,6 +36,8 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 | 문서 | 다루는 것 | 상태 | 언제 읽는가 |
 |---|---|---|---|
 | [CORE_DOMAIN.md](CORE_DOMAIN.md) | 값 객체(`Money`·`Quantity`·`Symbol`…), 주문·lot·노출액, 가드레일 규칙, 이벤트 타입, 포트 시그니처, 예외, 필수 테스트 | 확정 | `core` 코드 작업 전 |
+| [TECH_STACK.md](TECH_STACK.md) | 런타임·빌드·백엔드·데스크톱·프로토콜·외부 서비스별 선택과 버전·라이선스, 쓰지 않기로 한 것 | 제안 2026-09-25 | 1단계 착수 전, 의존성 추가 때 |
+| [DIRECTORY_STRUCTURE.md](DIRECTORY_STRUCTURE.md) | 저장소·backend 패키지·desktop feature·protocol·scripts 트리, 기능 → 위치 대응, 1단계에서 채우는 범위 | 제안 2026-09-25 | 1단계 착수 전 |
 | [DB_SCHEMA.md](DB_SCHEMA.md) | 표 93개(성격 ①②③④), 형식 자리표시자, FK 정책, 인덱스, Flyway 버전, relay DB | 확정 2026-09-25 | 엔티티·마이그레이션 작업 전 |
 | [KEY_MANAGEMENT.md](KEY_MANAGEMENT.md) | 키 분류(공유/개인), 변경 규칙, Keychain 저장, 다른 디바이스로 전달 | 확정 | 인증·설정·비밀값 작업 전 |
 | [FIRST_RUN_DESIGN.md](FIRST_RUN_DESIGN.md) | 최초 구동 마법사 4단계, `SetupState`, 키 검증 호출, 조회 제한 모드, 로그인 모달, 시작 종목 규칙(F19) | 확정 2026-09-25 | 1~2단계 |
@@ -89,7 +92,7 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 
 | 단계 | 읽을 문서 |
 |---|---|
-| 1 리포 골격 | CLAUDE, CORE_DOMAIN, DB_SCHEMA 3·4·5장, FIRST_RUN, KEY_MANAGEMENT, ACCOUNT_SETTINGS 3.2 |
+| 1 리포 골격 | CLAUDE, DIRECTORY_STRUCTURE, TECH_STACK, CORE_DOMAIN, DB_SCHEMA 3·4·5장, FIRST_RUN, KEY_MANAGEMENT, ACCOUNT_SETTINGS 3.2 |
 | 2 토스·F1~F4·F14·F16·F18·F19·F20·F21 | EXTERNAL_APIS 1.1·1.2, ORDER_MANAGEMENT, PORTFOLIO_PANEL, TRADE_HISTORY, ASSET, ACCOUNT_SETTINGS, FIRST_RUN, KRX |
 | 3 수집·RAG·F12·F13·F15 | RAG, DART, EDGAR, KRX, NPS, STOCK_INFO, EXTERNAL_APIS 2·3장 |
 | 4 토론·추천·리포트 | LLM_ROUTING, LLM_ROUTE_SETTINGS, DEBATE, MIROFISH 실험 |

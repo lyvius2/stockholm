@@ -174,7 +174,7 @@ public record KnowledgeQuery(
 ## 10. 패키지 배치
 
 ```
-banghak.stockholm
+banghak.stock
 ├─ core/port/            KnowledgePort, EmbeddingPort, KnowledgeQuery, KnowledgeHit, DocType, Scope
 ├─ engine/knowledge/
 │  ├─ ingest/            정규화, 중복 제거, 종목 연결, 청킹

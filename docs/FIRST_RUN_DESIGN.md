@@ -53,7 +53,7 @@ NOT_STARTED ─①→ ADMIN_CREATED ─②→ SHARED_KEYS_DONE ─③→ TOSS_DE
 **TOTP 구현** [확정 2026-09-25, 포함]. TOTP는 RFC 6238(HMAC-SHA1 + 30초 시간 카운터, 6자리)이라 Google Authenticator·Microsoft Authenticator·1Password·Apple 암호 앱 어느 것이든 쓸 수 있다.
 - 코드 생성·검증은 `javax.crypto`만으로 100줄 안에 구현한다. 외부 라이브러리 없음, GraalVM 네이티브에 문제 없음. `engine.auth`에 두고 `Clock`을 주입받아 고정 시계로 테스트한다. 허용 오차는 앞뒤 1구간(±30초), 같은 코드는 한 번만 받는다(재사용 거부).
 - 시드(base32 20바이트)는 Keychain `stockholm/user/{userId}/totp-seed`에만 둔다. QR(`otpauth://totp/Stockholm:{이름}?secret=…&issuer=Stockholm`)은 **데몬이 이미지로 만들어** 보내고, 렌더러는 시드 문자열을 받지 않는다. "수동 키 보기"를 눌러야 시드를 한 번 보여 주며 등록이 끝나면 다시 볼 수 없다.
-- QR 이미지 생성은 ZXing core(Apache-2.0, 순수 Java, 리플렉션 없음) 후보. 새 의존성이므로 1단계 착수 때 확정한다 [제안]. 대안은 QR 인코더를 직접 쓰는 것(약 300줄).
+- QR 이미지 생성은 **ZXing core**(Apache-2.0, 순수 Java, 리플렉션 없음) [확정 2026-09-26].
 - 복구 코드 8개는 Argon2id 해시로 저장하고 1회용. 휴대폰 분실 시 복구 코드로 로그인 → TOTP 재등록.
 - 로그인 화면(3.6)과 step-up(주문 승인·가드레일 변경·lease 강제 인수·키 변경)이 같은 검증 함수를 쓴다.
 
@@ -70,6 +70,7 @@ NOT_STARTED ─①→ ADMIN_CREATED ─②→ SHARED_KEYS_DONE ─③→ TOSS_DE
 | 공공 | 공공데이터포털 서비스 키 · SEC EDGAR 연락처 이메일(키 아님, User-Agent용) · FRED API 키(F23 해외 지수 종가·F9 거시) | 선택 |
 | 알림 | Slack 봇 토큰 | 선택 |
 | 금융결제원 | 앱 자격 client id/secret | 선택 |
+| 캐시 서버 | Valkey/Redis 접속 주소(+ 비밀번호, 선택). 연결에 성공하면 캐시로 쓰고, 없거나 실패하면 로컬 메모리 캐시 | 선택 |
 
 - "다음" 버튼은 **LLM 1개 이상 + DART가 검증됨일 때만** 활성. 선택 항목은 비워 두고 넘어가면 설정 > 키 관리에서 admin이 나중에 넣는다.
 - 검증 방법은 5장 표. 실패한 값은 저장하지 않고 입력 칸에 그대로 남긴다(다시 고칠 수 있게). 성공하면 입력 칸은 비워지고 상태 칩만 남는다(값은 되돌려 주지 않음).
@@ -142,6 +143,7 @@ NOT_STARTED ─①→ ADMIN_CREATED ─②→ SHARED_KEYS_DONE ─③→ TOSS_DE
 | 네이버 검색 | 뉴스 검색 `query=삼성전자&display=1` | 200 | 검증 시각 |
 | 공공데이터포털 | 국민연금 해외주식 데이터셋 목록 1건(`perPage=1`) | 200 | 검증 시각 |
 | FRED | `series/observations`로 `SP500` 최근 1건 | 200 | 검증 시각 |
+| 캐시 서버(Valkey/Redis) | `PING` | `PONG` | 주소·검증 시각. 실패해도 저장은 허용하되 "로컬 캐시 사용 중" 표시 |
 | SEC 연락처 이메일 | 형식 검사만(외부 호출 없음) | 이메일 형식 | 값 자체(비밀 아님, 공유 설정) |
 | Slack | `auth.test` | `ok=true` | 워크스페이스 이름·검증 시각 |
 | 금융결제원 앱 자격 | 형식 검사만(토큰은 사용자 동의 뒤에만 나옴) | 비어 있지 않음 | 검증 시각 없음, "형식 확인" 칩 |
@@ -216,7 +218,7 @@ Electron 기동 → 데몬 기동 대기 → GET /setup/state
 2. ~~TOTP를 ①에 포함할지~~ → **포함으로 확정(2026-09-25)**. 매 로그인과 step-up에 TOTP. 구현 가능성은 3.1의 "TOTP 구현" 참조.
 3. ~~"가장 많은 자산이 투입된" 기준~~ → **평가금액(현재가 × 수량)으로 확정(2026-09-25)**.
 4. ~~시가총액 1위~~ → **두지 않는다. 기본 종목은 국내 삼성전자 `005930` · 미국 엔비디아 `NVDA`로 확정(2026-09-25)**, 설정 "기본 시장"으로 선택.
-5. 남은 것: 토스 보유 조회의 평가금액·원화 환산 필드명 [확인 필요, 학습 테스트].
+5. ~~보유 조회 평가금액 필드~~ → `holdings.items[].marketValue.amount`(거래 통화, 2026-09-26 확인). 미국 종목은 `exchange-rate`로 원화 환산해 비교.
 
 ## 10. 테스트
 

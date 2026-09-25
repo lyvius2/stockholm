@@ -34,13 +34,21 @@
 
 - **F23 상단 바 지수 티커 설계 추가(2026-09-25, [제안])**: [MARKET_INDEX_TICKER_DESIGN.md](MARKET_INDEX_TICKER_DESIGN.md) — 1행 Stockholm 오른쪽 지수 3개(KR 장 KOSPI·KOSDAQ·NIKKEI 225 / US 장 DJIA·NASDAQ·S&P 500), `이름 | 지수 | ▲ 등락 (+%)` 포맷, 5분 갱신·왼쪽→오른쪽 슬라이딩(아래→위는 화면이 어색해 변경), 세트 선택 규칙(장 밖 종가 칩), 출처 확인(2026-09-25 openapi.json): 토스 시장 지표는 KOSPI·KOSDAQ·국채만 → 미국 장중은 토스 ETF 프록시(SPY·QQQ·DIA), 종가는 FRED/Massive Basic, Nikkei는 FRED 전일 종가 — **무료 구성으로 확정(2026-09-25)**, 유료 지수 API 안 씀. FRED 키는 공유 키(선택) — **확보됨(2026-09-25)**, EXTERNAL_APIS 2.5에 엔드포인트·시리즈·이용 조건 기록, `market_index_quote` 캐시(DB_SCHEMA 6장·V2). PROJECT F23·11.3, EXTERNAL_APIS 1.1, INDEX, DEVELOPMENT_PLAN 2단계. 화면 설계서 v42(Version 47) 목업(8초마다 좌→우 슬라이딩, 6번째마다 세트 전환). `figma-plugin/` v3.17 `ticker` 항목(네 헤더 1행). 결정 대기: 장 밖 규칙, 해외 지수 출처, 클릭 없음.
 
+- **디렉터리 구조 설계(2026-09-25, [제안])**: [DIRECTORY_STRUCTURE.md](DIRECTORY_STRUCTURE.md) — 루트, `backend/`(core 16 패키지·port 19개, engine 어댑터·서비스·persistence·localapi, relay 뼈대, shared, resources, test 배치·학습 테스트), `desktop/`(main·preload·renderer layout·features 19개·data 한 겹·generated), `protocol/`, `scripts/`, 기능 F1~F23 → 위치 표, 1단계에서 채우는 범위. PROJECT 11.1·CLAUDE 문서 절·INDEX·DEVELOPMENT_PLAN 1단계 연결. 결정 대기: 단일 모듈 유지, protocol 생성 도구.
+
+- **기술 스택 정리(2026-09-25, [제안])**: [TECH_STACK.md](TECH_STACK.md) — 런타임·빌드(JDK 21·Gradle 9·Node 22·jlink·electron-builder), 백엔드(Spring Boot 최신·Modulith·ArchUnit·MVC+가상 스레드·JDK HttpClient·Jackson·JPA/Hibernate·xerial SQLite·Flyway·Lucene+Nori·Ollama bge-m3·Spring AI·Argon2·TOTP 직접·ZXing·Keychain `security` CLI·Rome·jsoup·JUnit5/AssertJ/WireMock/Testcontainers), 데스크톱(Electron·Vite·React 19·TS strict·TanStack Query+Zustand·Lightweight Charts·CSS 토큰·ESLint/Prettier·Vitest), protocol 생성 도구, 외부 서비스 접근 방식, 쓰지 않기로 한 것(WebFlux·Security 전체·Lombok·MapStruct·Redux·Tailwind·SDK들). 결정 대기: Boot 3.5 vs 4.x, MySQL 드라이버, 생성 도구, ZXing, Playwright.
+
+- **relay 메시지 브로커 도입(2026-09-25, 사용자 결정)**: store-and-forward를 DB 메일박스 대신 내구 스트림이 담당. 제품은 **NATS JetStream 제안**(대안 Valkey Streams) — **선택은 relay 서버(7단계) 착수 전까지 보류**. `relay_mailbox`·`relay_mailbox_delivery` 삭제 → `relay_stream_cursor`. DB_SCHEMA 11장, TECH_STACK 6·7·8장, PROJECT 6장, DIRECTORY_STRUCTURE `relay/messaging`. Redis Pub/Sub·CDC는 부적합으로 기록.
+
+- **백엔드 스펙 확정(2026-09-26, 사용자 결정)**: Spring Boot 4.x · **Kotlin**(코루틴 금지, 가상 스레드 + `Semaphore` 빈) · JPA + jOOQ(코드 생성 없음, Join·Bulk만, 리포지터리 메서드 16자 초과 시 JPQL) · `RestClient` HTTP 인터페이스를 엔드포인트별 빈으로(Feign 방식) · Resilience4j(fallback 필수) · 로컬 API 포트 2609 · 캐시는 등록된 Valkey/Redis 연결 성공 시 사용, 아니면 로컬(Caffeine) · **Hexagonal, 루트 `banghak.stock`** — 도메인별 패키지 분할은 **같은 날 취소** → 계층별 `core(domain·usecase·port)` / `engine`·`relay`(application·adapter·config) / `shared`. 반영: CLAUDE.md 기술 기준·경계·형식·TDD 문구, PROJECT D3·11.1(트리·경계 규칙·스택 줄), DIRECTORY_STRUCTURE 개정(계층 골격, usecase/port 위치, 기능→위치 표), TECH_STACK 0장(확정 스펙)·행 갱신, CORE_DOMAIN 머리말(Java 예시 → Kotlin 구현), FIRST_RUN ②·검증 표에 캐시 서버, ACCOUNT 5.2 공유 설정, DEVELOPMENT_PLAN 1단계, 패키지명 일괄 치환. **2026-09-26 결정**: 공용 값 객체는 `core/domain/{money,market,identity}` 한곳, `research` 유지, 테스트 JUnit 5 + AssertJ, 캐시 대상 제안 채택, relay 포트는 연기. ktfmt kotlinlang 스타일·protocol 생성 quicktype도 확정. **같은 날 추가 결정: GraalVM for JDK 25 LTS(JVM 모드, 21에서 상향, 첫날 Kotlin·Gradle·jlink 확인; 배포판 Community 제안 — GFTC 재배포 조건 때문) · 외부 HTTP는 Retrofit2 + OkHttp(RestClient HTTP 인터페이스 대체, 토스 WebSocket도 OkHttp)**. 백엔드 스펙 결정 사항은 모두 닫힘(relay 포트·브로커 제품만 7단계로 연기).
+
 ## 다음 작업: 12장 1단계 "리포 골격"
 
 세부 순서와 완료 기준은 [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) 3장. 아래는 요약.
 
 [`PROJECT.md`](../PROJECT.md) 12장 1단계 순서대로. 착수 전에 [`CLAUDE.md`](../CLAUDE.md)의 절대 규칙과 [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md)를 읽는다.
 
-1. `backend/` 단일 Spring Boot 프로젝트(Gradle Kotlin DSL, JDK 21 toolchain, 루트 패키지 `banghak.stockholm`, 프로필 `engine`/`relay`), Spotless(google-java-format).
+1. `backend/` 단일 Spring Boot 4.x 프로젝트(Kotlin, Gradle Kotlin DSL, JDK 25 toolchain, 루트 패키지 `banghak.stock`, 프로필 `engine`/`relay`), Spotless(google-java-format).
 2. 경계 검증 테스트: Spring Modulith 모듈 검증 + ArchUnit(`core`는 프레임워크 import 금지, `engine`↔`relay` 상호 참조 금지, 프로필별 컨텍스트 기동 3종 + `relay`만 켰을 때 주문·증권사·LLM 빈 부재).
 3. `core` 값 객체부터 TDD: `Money`, `Quantity`(국내 정수·미국 소수 6자리), `StockCode`, `ClientOrderId`(36자·10분), `AutoBuyExposure`(168시간 경계값). 한도 상수는 `core`에 한곳.
 4. 데몬 기동: `127.0.0.1` 바인딩, 로컬 토큰 파일, 헬스 엔드포인트. SQLite(WAL) + Flyway V1.
@@ -50,37 +58,40 @@
 
 끝나면 [`CLAUDE.md`](../CLAUDE.md)의 "명령어" 절을 실제 명령으로 갱신한다.
 
-## 미결 항목 (2026-09-25 정리)
+## 미결 항목 (2026-09-26 정리)
 
-### A. 사용자 결정 (설계·코드에 영향)
+### A. 사용자 결정 — **2026-09-26 A1~A10 제안대로 확정**
 
-**2026-09-25 대부분 결정됨.** 결정 내용은 [`PROJECT.md`](../PROJECT.md) 13장·각 설계 문서에 반영. 남은 것:
-0. ~~F19 최초 구동 마법사 결정~~ 모두 결정됨(2026-09-25). 구현 때 확인: 토스 보유 조회 평가금액 필드, QR 생성 의존성(ZXing).
-0-1. ~~DB 스키마 결정~~ 승인됨(2026-09-25). 구현 때 확인: 정정 주문 clientOrderId 승계(학습 테스트), relay 메일박스 30일.
-1. **F15 ETF 구성종목의 국내 데이터 제공자**(구현 보류 해제 조건).
-2. **F17 매매 통계 · F2 기간별 손익 화면 설계**(승인됨, 화면 설계서에 목업 필요).
-3. 토스 명세 기반 UI/UX 추가안 9묶음의 세부(승인됨, 화면 설계서로 옮길 때 항목별 반영).
-4. F18 평가금액 패널: 토스 API의 예수금 D+1/D+2·담보비율 필드 [확인 필요](유지·숨김 기본값은 결정됨).
+- 확정: F21(표시 이름 로그인·이메일 선택·admin 이관·패스키 자리만), F22(카테고리 5개·구성원 읽기 전용·고급 범위), F23(장 밖 규칙·클릭 없음), ZXing, Playwright는 2단계 끝. 각 설계 문서 결정 절에 반영.
+- 시점이 오면 하는 것: A11 F17·F2 화면 목업(5단계 착수 전), A12 F15 ETF 구성종목 국내 제공자(나타나면), A13 토스 UI/UX 9묶음 세부(2단계 화면 작업 때).
 
-### B. 외부 확인 — **2026-09-25 결정: 구현 때 학습 테스트·문의로 확인한다.** 금융결제원은 전체 자산 조회로 확정(F16, [`docs/ASSET_DESIGN.md`](ASSET_DESIGN.md)).
+### B. 7단계(relay) 전까지 연기
 
-1. **토스**: 디바이스별 client 발급 가능 여부, 밖의 Mac IP 허용 해법, 공용 시세 수집에 admin 키를 쓰는 것이 약관상 문제 없는지, 종목 정보에 업종·GICS·ISIN·영문명이 있는지(F15 산업군·F13 매핑), 정정 API `quantity`가 새 잔량인지 새 총 주문 수량인지, `PENDING_CANCEL` 중 재연결 시 최종 상태 확정 방법.
-2. **금융결제원**: 키 종류(테스트베드/운영), 자산 조회 범위.
-3. **미러피시** 사전 실험([`docs/MIROFISH_EXPERIMENT_GUIDE.md`](MIROFISH_EXPERIMENT_GUIDE.md)): 품질·비용·API 형태, 관리형 설치 전제 (a)~(e), 중간 발언 노출, 시드 문서 여론 절 활용.
-4. **네이버 검색 API**: 기존 키 유예 종료(2027-06-30) 전 API HUB 이관·유료화 재확인.
-5. **공공데이터포털(국민연금)**: `perPage` 상한, 일일 트래픽 한도, `Authorization` 헤더 접두, `uddi:df8671d8…_20201006`의 기준 시점.
-6. **SEC EDGAR**: 접수별 정보표·문서 파일명(`index.json`), `www.sec.gov` 계열(티커 파일·Archives·Atom) 연락처 UA로 재확인, submissions `ETag` 지원, 6-K 분류 방법, 2022년 이전 13F `value` 단위 전환 시점.
-7. **Massive**: 약관의 뉴스 저장·표시 조건과 재배포 범위, 관련 종목 엔드포인트 경로.
-8. **StockTwits**(4번 결정에 따라): 엔터프라이즈 개인 자격 문의 결과.
-9. **Reddit**: 없음(링크아웃 확정). Data API 신청은 원문이 꼭 필요할 때만.
+| # | 항목 |
+|---|---|
+| B1 | 메시지 브로커 제품: NATS JetStream(제안) vs Valkey Streams |
+| B2 | relay 포트·WebSocket 경로 |
+| B3 | MySQL 드라이버(GPL+FOSS exception) vs MariaDB Connector/J(LGPL) |
 
-### C. 구현 착수 시 학습 테스트로 확정 (키는 환경 변수·Keychain으로만)
+### C. 구현 단계 학습 테스트로 확인 (키는 환경 변수·Keychain)
 
-1. **KRX Open API**: 전송 방식(JSON POST/GET), 숫자의 쉼표 여부, `ISU_CD` 단축코드 여부, 전일 데이터가 열리는 시각, 호출 한도.
-2. **DART**: 엔드포인트명·파라미터 대조, 재무제표 계정 표준 매핑(제조·금융 샘플), 배당 결정 공시 필드.
-3. **EDGAR**: 분기 값 `frame` 선택 규칙, company facts 태그 대체 순서.
-4. **Massive**: 분당 5회 한도 동작, dividends `frequency` 코드, news `insights` 형식.
-5. **토스**: 캔들·주문·정정 학습 테스트는 사용자 지시와 최소 금액으로만(절대 규칙 1).
+1. **토스** — 2026-09-26 규격(v1.2.17) 확인으로 닫힘: 보유 평가금액 필드(거래 통화, 원화 환산은 환율로), 예수금 D+1/D+2·담보비율 없음(F18 수정), 매도 시 환율 없음(환율 캐시로), 실현손익 API 없음(우리 DB), ISIN·영문명 있음·업종 없음, 지수 등락은 캔들로 계산(EXTERNAL_APIS 1.1.1). **남은 것**: 정정 `quantity` 의미(잔량 vs 총량), 정정·취소 주문의 `clientOrderId` 승계, `market-indicators` 갱신 주기·지연, `PENDING_CANCEL` 중 재연결 시 상태 확정, 디바이스별 client 발급 가능 여부, `koreanMarketDetail` 세부 필드.
+2. **KRX**: 전송 방식·숫자 형식·`ISU_CD`·전일 데이터 열리는 시각·한도.
+3. **DART**: 엔드포인트·파라미터 대조, 재무 계정 매핑(제조·금융), 배당 결정 필드, 분기 배당 표현.
+4. **EDGAR**: 접수별 파일명(`index.json`), `frame` 선택 규칙, 태그 대체 순서, `www.sec.gov` UA 재확인, `ETag`, 6-K 분류, 2022년 이전 13F `value` 단위.
+5. **Massive**: 분당 5회 동작, dividends `frequency`, news `insights`, 관련 종목 경로, Indices Basic 포함 지수.
+6. **FRED**: 결측 `"."` 처리, 양도세용 결제일 기준환율 출처(없으면 체결일 근사).
+7. **공공데이터포털**: `perPage` 상한, 일일 한도, `Authorization` 접두, 데이터셋 기준 시점.
+8. **1단계 첫날**: JDK 25에서 Kotlin `jvmTarget`·Gradle·Spring AI·Modulith·Resilience4j 짝 버전 확인.
+
+### D. 외부 확인·문의 (약관·계약)
+
+1. 토스: 밖의 Mac IP 허용 해법, 공용 시세 수집에 admin 키 사용의 약관 적합성.
+2. 금융결제원: 키 종류(테스트베드/운영), 자산 조회 범위.
+3. 미러피시 사전 실험([MIROFISH_EXPERIMENT_GUIDE](MIROFISH_EXPERIMENT_GUIDE.md)).
+4. 네이버 검색 API: API HUB 이관·유예 종료(2027-06-30) 전 재확인.
+5. Massive 약관: 뉴스 저장·표시·재배포 범위.
+6. StockTwits 엔터프라이즈 개인 자격 문의 결과(사용자 발송).
 
 ## Figma 후속
 

@@ -2,11 +2,11 @@
 
 > 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
-> `backend/src/main/java/banghak/stockholm/core` 의 기준 문서. 프레임워크를 모르는 순수 Java 21 코드의 형태를 정한다.
+> `backend/src/main/java/banghak/stockholm/core` 의 기준 문서. 프레임워크를 모르는 순수 코드(원안 Java 21, 구현은 Kotlin·JDK 25)의 형태를 정한다.
 > 여기 적힌 타입 이름과 시그니처가 이후 `engine`·`localapi`·`desktop`·`protocol/` 의 공통 어휘다.
 > 표기: **[확정]** / **[제안]** / **[확인 필요]**. 근거 규칙은 [`CLAUDE.md`](../CLAUDE.md)(값 객체·BigDecimal·Clock 주입·포트 경계)와 [`PROJECT.md`](../PROJECT.md) 6·8·10장.
 
-- 최종 갱신: 2026-09-23
+- 최종 갱신: 2026-09-23 · **2026-09-26 주: 코드 예시는 Java 문법이지만 구현 언어는 Kotlin이다.** `record` → `data class`/`value class`, `sealed interface` 그대로, `Optional<T>` → `T?`, 패키지는 `banghak.stock.core.domain.<개념>`·`core.port`·`core.usecase` (docs/DIRECTORY_STRUCTURE.md).
 - 서버(relay)는 나중에 붙는다. 이 문서의 core는 **단독 모드에서 완결**되되, 이벤트 로그·userId 범위·lease 인터페이스 세 가지만 서버를 위해 미리 열어 둔다.
 
 ---
@@ -45,7 +45,7 @@ core/
 ## 3. 기본 값 객체 [확정]
 
 ```java
-package banghak.stockholm.core.money;
+package banghak.stock.core.money;
 
 public enum Currency { KRW(0), USD(2);          // 표시·저장 소수 자릿수
   public final int scale; Currency(int s){ scale = s; } }
@@ -80,7 +80,7 @@ public record Percent(BigDecimal ratio) {
 ```
 
 ```java
-package banghak.stockholm.core.market;
+package banghak.stock.core.market;
 
 public enum Market { KR(Currency.KRW, ZoneId.of("Asia/Seoul")), US(Currency.USD, ZoneId.of("America/New_York"));
   public final Currency currency; public final ZoneId zone; }
@@ -99,14 +99,14 @@ public record StockFlags(boolean investmentWarning, boolean investmentRisk, bool
 ```
 
 ```java
-package banghak.stockholm.core.identity;
+package banghak.stock.core.identity;
 public record UserId(String value) { /* "u_" 접두 + ULID */ }
 public record DeviceId(String value) { /* "d_" 접두 + ULID */ }
 public enum Role { ADMIN, MEMBER }
 ```
 
 ```java
-package banghak.stockholm.core.trading;
+package banghak.stock.core.trading;
 
 /** 수량. 국내는 정수(scale 0). 미국은 소수점 6자리까지(토스: 소수점 수량은 시장가 매도에만 허용, 보유·매도가능수량에는 소수점이 올 수 있음) → BigDecimal, 시장별 scale로 검증. [확정 사실 2026-09-23] */
 public record Quantity(BigDecimal value) {
@@ -404,7 +404,7 @@ public interface PensionHoldingsPort {                        // [제안] F13. �
 ```
 
 ```java
-package banghak.stockholm.core.lease;
+package banghak.stock.core.lease;
 public interface LeaseHolder {                         // 서버가 없을 때는 AlwaysHeldLease
   boolean holds(UserId u); Optional<Instant> expiresAt(UserId u);
 }

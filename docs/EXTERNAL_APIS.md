@@ -5,7 +5,7 @@
 작성: 2026-09-20
 관련: [`PROJECT.md`](../PROJECT.md) 8장(외부 연동 포트)
 
-Stockholm이 사용하는 외부 API를 **필수 / 권장 / 있으면 좋음**으로 나누어 정의한다. 각 API는 `core.port`의 포트 인터페이스 뒤에 어댑터로 붙인다. 표기: **[확인함]** 공식 문서로 확인(2026-09-20 기준) / **[확인 필요]** 착수 전 문서·약관 확인이 필요.
+Stockholm이 사용하는 외부 API를 **필수 / 권장 / 있으면 좋음**으로 나누어 정의한다. 각 API는 `core.port`의 포트 인터페이스 뒤에 `engine.adapter.out.<external>` 어댑터로 붙인다. 표기: **[확인함]** 공식 문서로 확인(2026-09-20 기준) / **[확인 필요]** 착수 전 문서·약관 확인이 필요.
 
 API 규격은 바뀐다. 어댑터를 구현할 때는 이 문서가 아니라 **공식 문서를 기준**으로 하고, 이 문서와 다르면 이 문서를 고친다.
 
@@ -57,6 +57,28 @@ API 규격은 바뀐다. 어댑터를 구현할 때는 이 문서가 아니라 *
 7. **모의투자 환경이 없다.** 우리의 "모의 실행" 단계와 fake `TradingPort`가 유일한 안전한 검증 수단이다.
 8. **호출 제한 대응.** 어댑터에 그룹별 rate limiter(토큰 버킷)를 내장하고, 09:00~09:10 피크 제한을 반영한다. 어뷰징 제한을 피하기 위해 자동 주문에 **분당 주문 수 상한**을 가드레일로 추가한다. [제안]
 9. **정정·취소는 새 주문을 만든다 (2026-09-24 확인, v1.2.17).** `modify`(KR 가격+수량 필수, US 가격만, `quantity` 주면 `400 us-modify-quantity-not-supported`)·`cancel` 응답의 `orderId`는 원주문과 다른 새 식별자. 원주문은 `REPLACED`/`CANCELED`, 거부는 `REPLACE_REJECTED`/`CANCEL_REJECTED` 별도 레코드 + 원주문 복귀. 이미 체결된 주문은 409. 상태 10종(`PENDING, PARTIAL_FILLED, PENDING_CANCEL, PENDING_REPLACE, FILLED, CANCELED, REJECTED, REPLACED, CANCEL_REJECTED, REPLACE_REJECTED`), 미지 코드 허용 필수. 목록은 `status=OPEN`(전량, 커서 무시)/`CLOSED`(커서·limit 최대 100), `ORDER_HISTORY` 그룹. 시간외 호가 유형으로 낸 주문은 목록·상세에 안 나온다. `personal:order`는 `accountSeq`로 구독, 세션 안 무손실, 재연결 시 `OPEN` 재동기, 수신 2초 이상 막히면 서버가 끊음. → [`docs/ORDER_MANAGEMENT_DESIGN.md`](ORDER_MANAGEMENT_DESIGN.md). [확인 필요: 부분 체결 뒤 정정 `quantity`의 기준, 새 주문의 `clientOrderId` 승계]
+
+
+#### 1.1.1 규격 확인 요약 (2026-09-26, `openapi.json` v1.2.17 · `asyncapi.json`) — 설계 미결에 직접 답하는 것만
+
+사본은 `docs/external/toss/`(gitignored)에 두고 구현 때 DTO를 이 규격과 대조한다. 엔드포인트는 33개(Auth 1 · Market Data 5 · Stock Info 8 · Market Info 3 · Ranking 1 · Market Indicators 3 · Account 1 · Asset 1 · Order History 2 · Order 3 · Conditional Order 3+2 · Order Info 3).
+
+| 설계 미결 | 확인 결과 | 설계 반영 |
+|---|---|---|
+| 보유 조회의 평가금액·원화 환산(F18·F19·F20) | `GET /holdings` → 항목마다 `quantity`·`lastPrice`·`averagePurchasePrice`·`marketValue{purchaseAmount, amount, amountAfterCost}`·`profitLoss{amount, amountAfterCost, rate, rateAfterCost}`·`dailyProfitLoss`·`cost{commission, tax}`, 모두 **거래 통화 기준**. 합계는 `krw`/`usd`로 따로. **항목별 원화 환산값은 없고** 합계 `rate`만 원화 환산 기준 | 미국 종목의 원화 환산은 우리가 `GET /exchange-rate`로 한다. F19 시작 종목 = `marketValue.amount × 환율` 최대 |
+| 예수금 D+1/D+2·담보비율(F18) | `GET /buying-power`는 `currency`·`cashBuyingPower`뿐. **D+1/D+2·담보비율 필드 없음** | F18에서 예수금 D+1/D+2 행 삭제 → "매수 가능(현금)" 통화별로, 담보비율 숨김 |
+| 매도 시 환율 필드(F20) | `GET /orders/{orderId}`의 `execution{filledQuantity, averageFilledPrice, filledAmount, commission, tax, filledAt, settlementDate}`, **환율 없음** | 매도 시 환율 = 체결 시각의 `exchange_rate` 캐시(`GET /exchange-rate`: `rate`·`midRate`·`validFrom/validUntil`). 별도 환율 API 불필요 |
+| 기간별 실현손익 API(F20) | **없음**(주문 목록·상세뿐) | 원천은 우리 DB `lot_disposal` 확정 |
+| 종목 정보의 ISIN·영문명·업종(F13·F15) | `GET /stocks` → `isinCode`·`englishName`·`market`(KOSPI/KOSDAQ/NYSE/NASDAQ/AMEX/KR_ETC/US_ETC)·`securityType`·`isCommonShare`·`status`(SCHEDULED/ACTIVE/DELISTED)·`listDate`·`delistDate`·`sharesOutstanding`·`leverageFactor`·`koreanMarketDetail`. **업종 필드 없음** | F13 CUSIP 매핑은 `isinCode`로 가능. 업종은 설계대로 DART(국내)·Massive SIC(미국) |
+| 시장 지표(F23) | `GET /market-indicators/prices?symbols=`(최대 200) → `symbol`·`timestamp`·`lastPrice`만. 등락은 `GET /market-indicators/{symbol}/candles`의 전일 종가로 계산. 심볼은 KOSPI·KOSDAQ·국채 | 티커의 등락폭·백분율은 우리가 계산(전일 종가 캐시) |
+| 캔들 | `interval` `1m`/`1d`, `count`≤200, `before`(inclusive ISO 8601), `adjusted` | 설계와 일치 |
+| 주문 목록 | `status` OPEN(전량)/CLOSED(`cursor`, `limit` 기본 20·최대 100), `from`/`to`(KST, `orderedAt` 기준), 헤더 `X-Tossinvest-Account: accountSeq` | 거래내역 적재 설계와 일치. 계좌는 헤더로 선택 |
+| 정정 본문 | `orderType`·`quantity`(KR 필수, 양의 정수)·`price`(LIMIT 필수)·`confirmHighValueOrder` | `quantity`가 잔량인지 총량인지는 설명이 잘려 학습 테스트로 확정 |
+| 수수료 | `GET /commissions` → `marketCountry`·`commissionRate`(소수 비율)·적용 기간 | 손익 계산의 수수료율 출처 |
+| WebSocket | `wss://openapi-ws.tossinvest.com/ws/v1`, `Authorization: Bearer` 헤더. 채널 `realtime-trade`·`realtime-orderbook`·`realtime-order`(`accountSeq`를 문자열로 `codes`에). 구독 배열은 **full-replace**(보내는 배열이 곧 전체 구독), 구독 ack 선착, 없는 심볼은 `stock-not-found` | 어댑터의 재구독은 전체 배열을 다시 보내는 방식 |
+| 랭킹 | `type` MARKET_TRADING_AMOUNT/VOLUME · TOP_GAINERS/LOSERS · TOSS_SECURITIES_TRADING_AMOUNT/VOLUME, `duration` realtime·1d·1w·1mo·3mo·6mo·1y, `excludeInvestmentCaution`, `count` | 설계와 일치 |
+
+공통: 금액·수량·비율은 모두 **문자열**(비율은 소수, 0.1077 = 10.77%), 시각은 ISO 8601 **KST**, enum은 "unknown 값을 허용하도록 구현"하라고 명시 → 어댑터는 모르는 enum을 `UNKNOWN`으로 받는다.
 
 ### 1.2 금융결제원 오픈API — 본인인증·자산 조회 [확인 필요]
 

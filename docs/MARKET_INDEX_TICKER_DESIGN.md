@@ -44,7 +44,7 @@ else                        → 가장 최근에 닫힌 시장의 세트 + "종�
 
 | 지수 | 장중(5분 갱신) | 종가·보완 | 확인 상태 |
 |---|---|---|---|
-| KOSPI · KOSDAQ | **토스 시장 지표 API** `market-indicators`(심볼 `KOSPI`·`KOSDAQ`, 응답 `value·change·changeRate·timestamp`, MARKET_DATA 그룹) | KRX Open API 지수 일별시세 | **확인됨 2026-09-25**(openapi.json). 갱신 주기·지연 여부는 학습 테스트 |
+| KOSPI · KOSDAQ | **토스 시장 지표 API** `market-indicators/prices`(심볼 `KOSPI`·`KOSDAQ`, 응답은 `lastPrice`·`timestamp`뿐 → 등락은 `market-indicators/{symbol}/candles`의 전일 종가로 우리가 계산, 2026-09-26 확인) | KRX Open API 지수 일별시세 | **확인됨 2026-09-25**(openapi.json). 갱신 주기·지연 여부는 학습 테스트 |
 | DJIA · NASDAQ · S&P 500 | **토스 미국 현재가 API로 ETF 프록시**: DIA(다우) · QQQ(나스닥 100) · SPY(S&P 500). 이미 쓰는 API라 추가 키·한도 없음. 화면에는 `S&P 500 (SPY)`처럼 프록시임을 표기하고 값은 ETF 가격, 등락률은 지수와 거의 같음 [제안] | **Massive Indices Basic**(무료, 분당 5회, 종가 EOD, 지수 종목 제한 — 포함 지수 확인 필요) 또는 **FRED**(`SP500`·`DJIA`·`NASDAQCOM`, 일별 종가, 무료 API 키, 1영업일 지연) | 토스에 지수 없음 확인됨. Massive Basic의 포함 지수는 [확인 필요]. 정확한 지수값이 장중에 꼭 필요하면 Massive Indices Starter($49/월, 15분 지연)가 유일한 유료 후보 |
 | NIKKEI 225 | 장중 출처 없음 → **전일 종가 + "종가" 칩**으로 표시 [제안]. (토스 미국 ETF EWJ는 MSCI Japan이라 Nikkei 프록시로 부적합) | **FRED `NIKKEI225`**(일별 종가, 무료 API 키, 1영업일 지연. 출처 Nikkei Industry Research Institute, 재배포 금지 → 개인 화면 표시만) | FRED 시리즈 확인됨(2026-09-25, 최근값 09/25 66,364.20) |
 
@@ -71,8 +71,8 @@ else                        → 가장 최근에 닫힌 시장의 세트 + "종�
 - 5분 스케줄이 실패 시 마지막 값을 유지하고 "지연"으로 바뀌는지, 값이 같으면 갱신 이벤트를 내지 않는지.
 - 화면: 값 변경 시 왼쪽→오른쪽 슬라이딩 1회(옛 값이 항목 폭 밖으로 새지 않음), 색 전환, `prefers-reduced-motion`이면 즉시, 좁은 창 축약.
 
-## 7. 결정 대기
+## 7. 결정 (2026-09-26 확정)
 
-1. 장 밖 표시 규칙(3장, 제안: 최근 닫힌 시장의 종가 + 개장 30분 전 전환).
+1. 장 밖 표시 규칙 = 최근 닫힌 시장의 종가 + "종가" 칩, 다음 장 개장 30분 전부터 그 시장 세트(3장).
 2. ~~해외 지수 출처~~ → **무료 구성으로 확정(2026-09-25)**: 미국 장중 ETF 프록시(SPY·QQQ·DIA), 종가 FRED(또는 Massive Basic), Nikkei FRED 전일 종가. 유료 안은 쓰지 않음.
-3. 클릭 동작 없음(제안).
+3. 티커 클릭 동작 없음.

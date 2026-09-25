@@ -19,8 +19,8 @@
 | 평가금액(큰 글씨) | 보유 현재가 × 수량 합. 전체는 원화 환산 합, 미국 탭은 `$` 병기 | 보유 API + 시세 스트림 + 환율 |
 | 평가손익 | ▲/▼ 금액 (+%), 색은 상승 빨강·하락 파랑. 기준은 매수금액(매입 원가 합) | 보유 API(매입가) |
 | 매수금액 | 미청산 lot의 매입 원가 합(수수료 포함 여부는 토스 필드대로, 툴팁에 명시) | 보유 API |
-| 담보비율(체결) | 신용·대출을 쓰지 않으면 `0.00%`. 토스가 필드를 주지 않으면 **숨김** [확인 필요] | 계좌 API |
-| 예수금(D+1) · 예수금(D+2) | 결제 예정 기준 원화 예수금 | 계좌·매수 가능 금액 API [확인 필요: 필드명] |
+| ~~담보비율(체결)~~ | 토스 API에 필드 없음 → **표시하지 않음** [확인 2026-09-26] | — |
+| ~~예수금(D+1) · 예수금(D+2)~~ | 토스 `buying-power`는 `cashBuyingPower`뿐 → **"매수 가능(현금)"으로 대체** [확인 2026-09-26] | — |
 | 외화 예수금 | USD 예수금 | 매수 가능 금액 API(통화별) |
 | 매수 가능 | 원화 매수 가능 금액(3번 영역과 같은 값) | 매수 가능 금액 API |
 | **오늘 내 주식은** | 버튼을 누르면 아래에 펼침: 오늘 평가손익 변동(전일 종가 대비), 오늘 실현손익, 체결·미체결 건수, 오른/내린 종목 수, 가장 많이 오른 종목, 자동 매수 노출/한도 | 체결 캐시(F14) · lot · 가드레일 노출액 |
@@ -45,7 +45,7 @@
 ## 5. 포트·데이터
 
 - 새 포트 없음. `TradingPort.snapshot(UserId, Market)`의 `PortfolioSnapshot`(positions·deposit·openOrders·todayFills)과 `MarketDataPort.exchangeRate`, `RealtimeFeedPort.subscribeTrades`.
-- `DepositBalance`에 `settlementD1`·`settlementD2`(원화)와 통화별 예수금이 필요하다 → `DepositBalance(Money available, Money total, Optional<Money> d1, Optional<Money> d2, Map<Currency, Money> byCurrency, Instant asOf)` [제안, 토스 필드 확인 후 확정].
+- `DepositBalance`는 토스 `buying-power`가 주는 **통화별 현금 매수 가능 금액**만 담는다: `DepositBalance(Map<Currency, Money> cashBuyingPower, Instant asOf)`. D+1/D+2·담보비율은 규격에 없어 두지 않는다 [확정 2026-09-26].
 - 담보비율은 신용을 쓰지 않으므로 도메인에 두지 않고 어댑터가 준 값을 표시만 한다.
 
 ## 6. 예외
@@ -64,5 +64,5 @@
 
 ## 8. 열린 항목
 
-1. 토스 API의 예수금 D+1/D+2·담보비율 필드명 [확인 필요]. 없으면 D+2만 표시하거나 담보비율 숨김.
+1. ~~예수금 D+1/D+2·담보비율 필드~~ → 규격에 없음(2026-09-26). 담보비율 삭제, 예수금은 "매수 가능(현금)" 통화별로 대체.
 2. ~~종목 변경 시 유지~~ · ~~금액 숨김 기본값~~ → 유지, 끔으로 결정(2026-09-25).

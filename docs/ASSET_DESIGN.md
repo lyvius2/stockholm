@@ -46,7 +46,7 @@
 ## 5. 포트와 저장
 
 ```java
-public interface AssetPort {                                   // core.port (기존)
+public interface AssetPort {                                   // core.port
   List<ExternalAsset> assets(UserId u);                        // 토큰 없으면 ConsentRequired 예외
 }
 public record ExternalAsset(String institution, String maskedAccount, AssetKind kind, Money balance, Instant asOf) {}

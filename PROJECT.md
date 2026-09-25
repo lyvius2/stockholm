@@ -24,7 +24,7 @@
 |---|---|---|
 | D1 | 클라이언트 = Electron(React+TypeScript) 셸 + **Java/Spring Boot 데몬** | 핵심 매매 로직을 주력 스택으로. Electron을 닫아도 엔진은 동작 |
 | D2 | 서버는 **optional**. 역할: 원격 컨트롤, 그 UI 제공, 클라이언트 간 동기화 중계, Slack 알림 | 클라이언트는 서버 없이 완결 |
-| D3 | Java 부분은 **단일 Spring Boot 프로젝트**(`backend/`). 클라이언트 데몬과 서버는 프로필(`engine` / `relay`)로 구분. 모듈 경계는 패키지 + Spring Modulith·ArchUnit 테스트로 강제 | 1인 유지보수. Mac mini에서는 한 JVM에 두 프로필을 함께 올림 |
+| D3 | 백엔드는 **Kotlin 단일 Spring Boot 4.x 프로젝트**(`backend/`, Hexagonal 계층별 패키지 [2026-09-26]). 클라이언트 데몬과 서버는 프로필(`engine` / `relay`)로 구분. 모듈 경계는 패키지 + Spring Modulith·ArchUnit 테스트로 강제 | 1인 유지보수. Mac mini에서는 한 JVM에 두 프로필을 함께 올림 |
 | D4 | 모든 업무 데이터는 클라이언트에 저장. 서버는 **암호문만** 중계·임시보관 | 서버가 뚫려도 키·매매 데이터 비노출 |
 | D5 | 각 클라이언트는 독립 동작(offline-first). 집 Mac이 꺼져도 밖의 Mac이 단독 동작 | 요구사항 |
 | D6 | 자동 실행 권한은 한 시점에 한 디바이스만(**lease**). 갱신 실패 시 자동 실행 자진 중단 | 이중 주문(split-brain) 방지 |
@@ -87,7 +87,7 @@
 
 **금액.** 전 구간 `BigDecimal` + 통화 코드. `double`/`float` 금지.
 
-**이벤트 로그.** 동기화 대상 데이터의 변경은 모두 추가 전용 이벤트: `(userId, deviceId, seq, occurredAt, type, payload)`. 화면용 테이블은 이벤트를 적용한 결과물(projection). 동기화는 디바이스별 수신 위치를 교환하고 빠진 구간만 전송. 서버는 미수신분을 암호문으로 보관 후 전달.
+**이벤트 로그.** 동기화 대상 데이터의 변경은 모두 추가 전용 이벤트(같은 트랜잭션에서 이벤트 추가 + projection 갱신 — 이 표가 트랜잭션 아웃박스이므로 별도 CDC 도구는 두지 않는다 [2026-09-25]): `(userId, deviceId, seq, occurredAt, type, payload)`. 화면용 테이블은 이벤트를 적용한 결과물(projection). 동기화는 디바이스별 수신 위치를 교환하고 빠진 구간만 전송. 서버는 미수신분을 암호문으로 보관 후 전달(relay의 **메시지 브로커** 내구 스트림이 담당, 제품은 NATS JetStream 제안 · 대안 Valkey Streams [사용자 결정 2026-09-25, 제품 미정]).
 
 | 구분 | 대상 |
 |---|---|
@@ -193,9 +193,9 @@
 | F18 | 보유주식 평가금액 패널 (2행 버튼 → 메인 왼쪽 위 슬라이딩 팝업, 폭 40%) [확정 2026-09-25] | 2 |
 | F19 | 최초 구동 마법사 (admin 비밀번호+TOTP → 공유 키 → 토스 키 안내 → 연결 확인) · 로그인 모달 · 시작 종목 규칙 [확정 2026-09-25] | 1~2 |
 | F20 | 거래내역 패널 (2행 📒 버튼 → 메인 오른쪽 위 슬라이딩, 폭 60%; 손익 · 체결내역 · 매매내역, 일별·월별·분기별·직접) [확정 2026-09-25] | 2 |
-| F21 | 계정·알림·회원 관리 (사용자 메뉴 → 회원정보 변경 · 알림 설정 · 회원 관리/공유 키 모달) [제안 2026-09-25] | 1~2 |
-| F22 | LLM 경로 설정 (admin 모달: 카테고리 5개 — 토론·리포트·요약·거래 판단·추천·번역 — 마다 주·대체 LLM, 등록 제공자만 선택, 프리셋, 고급에서 목적별) [제안 2026-09-25] | 4 |
-| F23 | 상단 바 지수 티커 (Stockholm 옆 지수 3개: KR 장 KOSPI·KOSDAQ·NIKKEI, US 장 DJIA·NASDAQ·S&P, 5분 갱신·좌→우 슬라이딩) [제안 2026-09-25] | 2 |
+| F21 | 계정·알림·회원 관리 (사용자 메뉴 → 회원정보 변경 · 알림 설정 · 회원 관리/공유 키 모달) [확정 2026-09-26] | 1~2 |
+| F22 | LLM 경로 설정 (admin 모달: 카테고리 5개 — 토론·리포트·요약·거래 판단·추천·번역 — 마다 주·대체 LLM, 등록 제공자만 선택, 프리셋, 고급에서 목적별) [확정 2026-09-26] | 4 |
+| F23 | 상단 바 지수 티커 (Stockholm 옆 지수 3개: KR 장 KOSPI·KOSDAQ·NIKKEI, US 장 DJIA·NASDAQ·S&P, 5분 갱신·좌→우 슬라이딩) [확정 2026-09-26] | 2 |
 
 **F1.** 3번 영역의 **매수 / 매도 버튼을 누르면 주문 모달**이 뜬다 [확정]. 바깥 화면은 흐리게 하지 않고 모달 테두리에만 발광 효과(매수 빨강 계열, 매도 파랑 계열 — 제목 색 동일). 기본 위치는 앱 정중앙, 제목 바를 끌어 이동할 수 있고 위치는 앱 실행 중 유지(메모리), 재시작 시 초기화. 모달 안에 현재가가 실시간으로 표시된다. 주문 버튼은 두 가지: **지정가 매수/매도**(사용자가 넣은 가격·수량으로 확인 창을 거쳐 주문) · **현재가 즉시 매수/매도**(확인 창 없이 그 순간의 현재가로 즉시 주문 — 시장가가 아니라 **현재가 지정가**로 내보내 급등락 시 예상 밖 체결을 막는다 [확정]). 가드레일 판정은 모달 안에 실시간 표시되고, 미통과 시 두 버튼 모두 잠긴다. 즉시 주문도 가드레일과 step-up 인증(원격·고액)을 우회하지 못한다. 조건 주문(OCO/OTO)은 별도 탭. 토론(F6)은 조언이지 수동 주문의 차단 장치가 아니다. **"지정가만" 원칙의 예외 [확정 2026-09-25]**: (a) **미국 소수점 보유분 매도**는 토스가 시장가 매도만 허용하므로 시장가로 낸다(모달에 "소수점 잔량 시장가 매도" 버튼, 정규장 시작~종료 1시간 전에만 활성). (b) **미국 금액(`orderAmount`) 매수**를 지원한다(시장가, 정규장 시작~종료 1시간 전, 모달에서 수량/금액 전환). (c) **유효 조건**을 모달에 노출한다: 국내 `DAY`·`OPG`(시가단일가), 미국 `DAY`·`CLS`(종가지정가, LIMIT만). 시장가는 이 두 경우 밖에서는 만들 수 없고 가드레일(`MarketOrderScope`)이 막는다. 자동 주문은 여전히 지정가만.
 
@@ -260,11 +260,11 @@
 
 **F20. 거래내역 패널** [확정 2026-09-25]. 상단 바 2행의 **📒 거래내역** 버튼(💰 보유주식 평가금액 오른쪽, ⌘H)을 누르면 F18과 같은 방식으로 **메인 영역 오른쪽 위에서 아래로 슬라이딩**하는 패널이 뜬다. 폭은 메인의 60%이며 F18(왼쪽 40%)과 **동시에 열려도 겹치지 않는다**. 탭은 **손익 · 체결내역 · 매매내역**, 기간은 **일별 · 월별 · 분기별 · 직접 지정**, 시장(전체/국내/미국)·매매구분·종목으로 거르고 미국 종목은 외화/원화를 토글한다. 이 패널이 F2 기간별 손익의 화면이고, F14의 "주문 내역" 별도 화면을 체결내역 탭이 대신한다(F17 매매 통계는 별도 화면, 바닥 줄에서 연다). 원천은 토스 종료 주문 조회 캐시(`broker_order`) + **lot 선입선출 매칭(`lot_disposal`)**이며, 토스 앱이 "잔고(선입선출)"를 쓰므로 FIFO를 [확정]으로 올린다. 원화 실현손익 = 매매손익(외화 손익 × 매도 시 환율) + 환차손익(매입원가 × 환율 차). **실현손익의 원천은 우리 DB**(매도 체결 때마다 `lot_disposal` 저장)이고 토스 실현손익 API는 있으면 대조용. **z-order는 메인 < 평가금액·거래내역 패널 < 종목 검색 팝오버·사용자 메뉴 < 모달**(팝오버를 열어도 패널은 닫히지 않음, F18도 같음). **묶음 날짜는 국내 KST · 미국 동부시간(ET)**이며 미국 종목이 있으면 화면에 ET 기준임을 알린다. 양도세 토글은 대상 금액(양도차익 − 250만원)과 예상 부과액(22%)만 간략히. CSV 내보내기는 두지 않는다. 본인 계좌만, 계좌번호 미표시, 동기화 안 함. 상세 [`docs/TRADE_HISTORY_DESIGN.md`](docs/TRADE_HISTORY_DESIGN.md).
 
-**F21. 계정·알림·회원 관리** [제안 2026-09-25]. 사용자 메뉴의 세 항목이 자산 모달과 같은 틀(폭 760)의 모달로 열린다. **회원정보 변경**(본인): 기본(표시 이름 = 로그인 이름, 별도 ID 없음 [제안] · 이메일 선택 · Slack 수신 계정) · 로그인 수단(비밀번호 변경, TOTP 재등록, 복구 코드 재발급, 패스키 자리) · 연결 키(본인 토스 키 교체·등록, 금융결제원 재동의·철회) · 보안·개인정보(개인 키 추가 암호화, 로그아웃 시 자동화 정지, 제공자별 개인 데이터 LLM 전송 허용). **알림 설정**(본인): 채널(앱 안·macOS·Slack DM) × 항목(체결, 가드레일, 승인 요청, 킬 스위치, 토론 완료, 데이터 갱신, 리포트, 키·IP 문제, 예산) 표, 야간 방해 금지(긴급만 통과), Slack 수량·금액 포함 여부(기본 끔). **회원 관리 · 공유 키**(admin, 여는 순간 step-up): 4명 등록부와 정지·토스 키 삭제·데이터 파기·등록 코드 발급·admin 이관[제안], 공유 키 목록의 교체·재검증·삭제와 공유 설정. 값은 누구에게도 다시 보이지 않고 모든 변경은 감사 로그. 상세 [`docs/ACCOUNT_SETTINGS_DESIGN.md`](docs/ACCOUNT_SETTINGS_DESIGN.md).
+**F21. 계정·알림·회원 관리** [확정 2026-09-26]. 사용자 메뉴의 세 항목이 자산 모달과 같은 틀(폭 760)의 모달로 열린다. **회원정보 변경**(본인): 기본(표시 이름 = 로그인 이름, 별도 ID 없음 · 이메일 선택 · Slack 수신 계정) · 로그인 수단(비밀번호 변경, TOTP 재등록, 복구 코드 재발급, 패스키 자리) · 연결 키(본인 토스 키 교체·등록, 금융결제원 재동의·철회) · 보안·개인정보(개인 키 추가 암호화, 로그아웃 시 자동화 정지, 제공자별 개인 데이터 LLM 전송 허용). **알림 설정**(본인): 채널(앱 안·macOS·Slack DM) × 항목(체결, 가드레일, 승인 요청, 킬 스위치, 토론 완료, 데이터 갱신, 리포트, 키·IP 문제, 예산) 표, 야간 방해 금지(긴급만 통과), Slack 수량·금액 포함 여부(기본 끔). **회원 관리 · 공유 키**(admin, 여는 순간 step-up): 4명 등록부와 정지·토스 키 삭제·데이터 파기·등록 코드 발급·admin 이관, 공유 키 목록의 교체·재검증·삭제와 공유 설정. 값은 누구에게도 다시 보이지 않고 모든 변경은 감사 로그. 상세 [`docs/ACCOUNT_SETTINGS_DESIGN.md`](docs/ACCOUNT_SETTINGS_DESIGN.md).
 
-**F22. LLM 경로 설정** [제안 2026-09-25, 단순화]. admin 전용 모달(폭 760, step-up). **카테고리 카드 다섯 장 — 토론 · 리포트·요약 · 거래 판단 · 추천 · 번역** — 마다 주 LLM(제공자 + 모델)과 대체 LLM(선택)을 고른다. 카테고리는 목적 `LlmPurpose` 여러 개를 덮으며(토론 = 페르소나 발언·사회자·개입 응답·결론 구조화, 리포트·요약 = 리포트·요약·회고, 거래 판단 = 자동 매도 판단·급등 재료 확인, 추천, 번역) 저장 시 목적별 경로로 펼쳐진다. **키가 등록·검증된 제공자만 고를 수 있고** 미등록은 회색. 프리셋(균형·품질·비용·로컬)은 다섯 카드를 한 번에 채운다. 거래 판단의 실패 시 정책(판단 보류·매수 안 함)은 코드 고정. "고급" 토글을 켜면 목적별·페르소나별 행, 구성원 허용 제공자, 디바이스 덮어쓰기, 모델 직접 입력이 나온다(기본 닫힘). 임베딩은 로컬 `bge-m3` 고정 표시. 개인 데이터가 드는 카테고리는 사용자별 전송 허용 스위치와 교차. 저장 검증·감사 로그·이력. 모델 이름은 이 화면과 설정에만 있다. 상세 [`docs/LLM_ROUTE_SETTINGS_DESIGN.md`](docs/LLM_ROUTE_SETTINGS_DESIGN.md).
+**F22. LLM 경로 설정** [확정 2026-09-26, 단순화]. admin 전용 모달(폭 760, step-up). **카테고리 카드 다섯 장 — 토론 · 리포트·요약 · 거래 판단 · 추천 · 번역** — 마다 주 LLM(제공자 + 모델)과 대체 LLM(선택)을 고른다. 카테고리는 목적 `LlmPurpose` 여러 개를 덮으며(토론 = 페르소나 발언·사회자·개입 응답·결론 구조화, 리포트·요약 = 리포트·요약·회고, 거래 판단 = 자동 매도 판단·급등 재료 확인, 추천, 번역) 저장 시 목적별 경로로 펼쳐진다. **키가 등록·검증된 제공자만 고를 수 있고** 미등록은 회색. 프리셋(균형·품질·비용·로컬)은 다섯 카드를 한 번에 채운다. 거래 판단의 실패 시 정책(판단 보류·매수 안 함)은 코드 고정. "고급" 토글을 켜면 목적별·페르소나별 행, 구성원 허용 제공자, 디바이스 덮어쓰기, 모델 직접 입력이 나온다(기본 닫힘). 임베딩은 로컬 `bge-m3` 고정 표시. 개인 데이터가 드는 카테고리는 사용자별 전송 허용 스위치와 교차. 저장 검증·감사 로그·이력. 모델 이름은 이 화면과 설정에만 있다. 상세 [`docs/LLM_ROUTE_SETTINGS_DESIGN.md`](docs/LLM_ROUTE_SETTINGS_DESIGN.md).
 
-**F23. 상단 바 지수 티커** [제안 2026-09-25, 위치·구성·포맷·5분·슬라이딩은 사용자 지정]. 1행 "Stockholm" 오른쪽에 지수 세 개를 `거래소 이름(영어) | 지수 | 등락폭` 형식으로 보인다. 등락폭은 상승이면 빨간 ▲와 수치·백분율, 하락이면 파란 ▼. **한국 정규장에는 KOSPI · KOSDAQ · NIKKEI 225, 미국 정규장에는 DJIA · NASDAQ · S&P 500**(`America/New_York`, 서머타임 자동). 두 장이 닫혀 있으면 최근 닫힌 시장의 종가 + "종가" 칩, 개장 30분 전부터 다음 시장 세트 [제안]. **5분마다 갱신**하고 값이 바뀐 항목은 **왼쪽에서 오른쪽으로 슬라이딩**(새 값이 왼쪽에서 들어오고 옛 값은 오른쪽으로 밀려 나감)하며 교체된다 [2026-09-25 아래→위에서 변경]. 출처 [확정 2026-09-25, 무료 구성]: KOSPI·KOSDAQ는 토스 시장 지표 API(규격 확인: 국내 지수·국채만 제공), 미국 지수는 장중에 토스 미국 ETF 현재가 프록시(DIA·QQQ·SPY, 화면에 프록시 표기)와 종가는 FRED, NIKKEI 225는 FRED 전일 종가(장중 값 없음, "종가" 칩). 유료 지수 API는 쓰지 않는다. 마지막 값은 `market_index_quote` 캐시. 정보 표시일 뿐 자동 주문의 입력이 아니다. 상세 [`docs/MARKET_INDEX_TICKER_DESIGN.md`](docs/MARKET_INDEX_TICKER_DESIGN.md).
+**F23. 상단 바 지수 티커** [확정 2026-09-26]. 1행 "Stockholm" 오른쪽에 지수 세 개를 `거래소 이름(영어) | 지수 | 등락폭` 형식으로 보인다. 등락폭은 상승이면 빨간 ▲와 수치·백분율, 하락이면 파란 ▼. **한국 정규장에는 KOSPI · KOSDAQ · NIKKEI 225, 미국 정규장에는 DJIA · NASDAQ · S&P 500**(`America/New_York`, 서머타임 자동). 두 장이 닫혀 있으면 최근 닫힌 시장의 종가 + "종가" 칩, 개장 30분 전부터 다음 시장 세트. **5분마다 갱신**하고 값이 바뀐 항목은 **왼쪽에서 오른쪽으로 슬라이딩**(새 값이 왼쪽에서 들어오고 옛 값은 오른쪽으로 밀려 나감)하며 교체된다 [2026-09-25 아래→위에서 변경]. 출처 [확정 2026-09-25, 무료 구성]: KOSPI·KOSDAQ는 토스 시장 지표 API(규격 확인: 국내 지수·국채만 제공), 미국 지수는 장중에 토스 미국 ETF 현재가 프록시(DIA·QQQ·SPY, 화면에 프록시 표기)와 종가는 FRED, NIKKEI 225는 FRED 전일 종가(장중 값 없음, "종가" 칩). 유료 지수 API는 쓰지 않는다. 마지막 값은 `market_index_quote` 캐시. 정보 표시일 뿐 자동 주문의 입력이 아니다. 상세 [`docs/MARKET_INDEX_TICKER_DESIGN.md`](docs/MARKET_INDEX_TICKER_DESIGN.md).
 
 ## 10. 자동화 규칙 (F7, F8) — 코드로 강제
 
@@ -318,34 +318,24 @@ LLM 출력은 주문 파라미터로 **직접 쓰지 않는다.** 반드시 구�
 
 ## 11. 리포 구조
 
-### 11.1 구조 [확정: Java는 단일 Spring Boot 프로젝트]
+### 11.1 구조 [확정: Kotlin 단일 Spring Boot 4.x 프로젝트, Hexagonal(계층별 패키지) — 2026-09-26 개정, 도메인별 분할은 취소]
 
 ```
 stockholm/
-├─ backend/                      # 단일 Spring Boot 프로젝트 (Gradle, Kotlin DSL)
-│  └─ src/main/java/banghak/stockholm/   # 루트 패키지 banghak.stockholm
-│     ├─ core/                   # 순수 도메인 — 프레임워크 import 금지
-│     │  ├─ money/  trading/  automation/  guardrail/  eventlog/  lease/
-│     │  └─ port/                # 모든 외부 세계의 인터페이스 (TradingPort, LlmPort, Clock …)
-│     ├─ engine/                 # @Profile("engine") — 클라이언트 데몬
-│     │  ├─ broker/              # 토스 어댑터(주문·시세·계좌), 타 증권사 정보 어댑터
-│     │  ├─ asset/               # 금융결제원 본인인증·자산 조회
-│     │  ├─ research/            # DART, 뉴스 수집, Lucene RAG
-│     │  ├─ debate/              # 페르소나 토론, 미러피시 어댑터
-│     │  ├─ recommend/  report/  learning/
-│     │  ├─ automation/          # 자동 매수·매도 실행기, 스케줄러
-│     │  ├─ sync/                # 동기화 에이전트, lease 클라이언트
-│     │  ├─ notify/              # Slack 직접 발송
-│     │  ├─ secret/              # Keychain 접근
-│     │  └─ localapi/            # 127.0.0.1 REST·WebSocket, 로컬 토큰
-│     ├─ relay/                  # @Profile("relay") — optional 서버
-│     │  ├─ member/  auth/  device/
-│     │  ├─ routing/             # Command/Event 중계
-│     │  ├─ mailbox/             # 암호문 store-and-forward
-│     │  ├─ lease/  slack/
-│     │  └─ web/                 # 원격 웹 UI 정적 서빙
-│     ├─ shared/                 # 프로토콜 타입(생성물), 암호 유틸, 공통 설정
-│     └─ StockholmApplication.java
+├─ backend/                      # 단일 Spring Boot 4.x 프로젝트 (Gradle Kotlin DSL, Kotlin)
+│  └─ src/main/kotlin/banghak/stock/      # 루트 패키지 banghak.stock
+│     ├─ core/                   # 안쪽 — 프레임워크 import 금지
+│     │  ├─ domain/              #   money/ market/ identity/ trading/ portfolio/ guardrail/ automation/ eventlog/ lease/ debate/ knowledge/ pension/ recommend/ report/ learning/ account/ notification/ llm/
+│     │  ├─ usecase/             #   port.in — 진입 어댑터가 부르는 usecase 인터페이스
+│     │  └─ port/                #   port.out — 외부 세계 인터페이스 (TradingPort, LlmPort, SecretStorePort …)
+│     ├─ engine/                 # @Profile("engine") — 클라이언트 데몬 (바깥)
+│     │  ├─ application/         #   usecase 구현(service): account/ market/ trading/ portfolio/ guardrail/ automation/ research/ debate/ recommend/ report/ learning/ llm/ notify/ sync/
+│     │  ├─ adapter/in/          #   web(controller·dto) ws scheduler
+│     │  ├─ adapter/out/         #   toss(주문은 TossOrderClient 하나뿐) krx dart edgar naver rss massive odcloud fred ecos kftc slack macos llm lucene mirofish keychain persistence(JPA·jOOQ·projection)
+│     │  └─ config/              #   Retrofit 인터페이스 빈(엔드포인트별), Resilience4j, Semaphore, 조립
+│     ├─ relay/                  # @Profile("relay") — optional 서버, 같은 골격 (application/ adapter/ config/)
+│     ├─ shared/                 # 프로필 없는 공용: config(가상 스레드·Semaphore·OkHttp/Retrofit·Resilience4j·캐시·Jackson·포트 2609), web(로컬 토큰·세션·step-up), protocol(생성물), crypto, time, util
+│     └─ StockholmApplication.kt
 ├─ desktop/                      # Electron + React + TypeScript (로컬/원격 겸용 UI, 웹 타깃 빌드 포함)
 ├─ protocol/                     # JSON Schema — backend와 desktop이 각각 타입 생성
 ├─ docs/
@@ -353,18 +343,21 @@ stockholm/
 └─ PROJECT.md
 ```
 
-**클라이언트 우선 개발 시 손대는 곳:** `backend/…/core` → `backend/…/engine` → `desktop/`. `relay/`는 7단계 전까지 열지 않는다.
+파일 단위 트리(어댑터·usecase·테스트 배치, 기능 → 위치 대응)는 [`docs/DIRECTORY_STRUCTURE.md`](docs/DIRECTORY_STRUCTURE.md).
+
+**클라이언트 우선 개발 시 손대는 곳:** `shared` → `core` → `engine` → `desktop/`. `relay/`는 7단계 전까지 열지 않는다.
 
 **경계 규칙 (멀티모듈 대신 테스트로 강제).**
-- `core`는 Spring, JPA, Jackson, HTTP 클라이언트 등 어떤 프레임워크도 import하지 않는다.
-- `engine`과 `relay`는 서로를 참조하지 않는다. 둘 다 `core`와 `shared`만 참조한다. (`relay`는 `core` 중 lease·eventlog 봉투 정도만 쓴다.)
-- `engine` 하위 패키지끼리는 공개 API(패키지 최상위 타입)로만 협력한다.
+- `core`는 Spring, JPA, Jackson, HTTP 클라이언트 등 어떤 프레임워크도 import하지 않는다. 의존 방향은 `adapter → application → core.usecase/port → core.domain`뿐이다.
+- 진입 어댑터는 `core.usecase`만 부른다. `application`끼리는 usecase와 이벤트로 협력한다.
+- `engine`과 `relay`는 서로를 참조하지 않는다. 둘 다 `core`와 `shared`만 참조한다.
+- 모든 자동 주문은 `EvaluateGuardrailUseCase`를 거친다. 주문 API 호출은 `engine.adapter.out.toss.TossOrderClient`에만 있다. 외부 HTTP 호출에는 Resilience4j 서킷 브레이커와 fallback이 반드시 있다.
 - 위 규칙은 **Spring Modulith의 모듈 검증 테스트와 ArchUnit 테스트**로 빌드에서 강제한다.
 - 프로필별 컨텍스트 테스트: `engine`만, `relay`만, 둘 다 켠 세 경우 모두 기동되는지, 그리고 **`relay`만 켰을 때 주문·증권사·LLM 관련 빈이 하나도 로드되지 않는지** 검증한다.
 
 **실행 형태.** 같은 산출물을 프로필로 구분한다: 클라이언트 `engine` / 서버 단독 `relay` / Mac mini 겸용 `engine,relay`.
 
-기술 스택: **OpenJDK 21 (LTS)**, 루트 패키지 `banghak.stockholm`, Spring Boot 최신 안정판, Spring Modulith, Gradle(Kotlin DSL), SQLite, Flyway, Lucene, Spring AI / Electron, React, TypeScript, electron-builder. 대상은 Apple Silicon(arm64) 우선.
+기술 스택 [2026-09-26 확정]: **Kotlin 2.x · GraalVM for JDK 25 LTS(JVM 모드, 배포판은 Community 제안) · Spring Boot 4.x**, 루트 패키지 `banghak.stock`, Spring Modulith, Gradle(Kotlin DSL), JPA + jOOQ(코드 생성 없음, Join·Bulk만), Retrofit2(OkHttp) 인터페이스를 엔드포인트별 빈으로 + Resilience4j(fallback 필수), 가상 스레드 + `Semaphore`(코루틴 없음), 로컬 API `127.0.0.1:2609`, 캐시 Caffeine 또는 등록된 Valkey/Redis, SQLite, Flyway, Lucene, Spring AI / Electron, React, TypeScript, electron-builder. 대상은 Apple Silicon(arm64) 우선. 항목별 선택·버전·라이선스·쓰지 않기로 한 것은 [`docs/TECH_STACK.md`](docs/TECH_STACK.md) [제안 2026-09-25].
 
 ### 11.2 빌드·패키징과 GraalVM 네이티브 이미지 방침 [제안]
 
