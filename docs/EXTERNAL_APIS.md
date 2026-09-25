@@ -29,7 +29,7 @@ API 규격은 바뀐다. 어댑터를 구현할 때는 이 문서가 아니라 *
 | 종목 | `GET /api/v1/stocks`, `/stocks/{symbol}/warnings` | F4 종목 마스터, **F7 제외 필터(투자경고·위험·VI·정리매매 등)** |
 | 시장 정보 | `GET /api/v1/exchange-rate`, `/market-calendar/*` | 해외 노출액 원화 환산, **KR/US 세션·휴장일 계산** |
 | 랭킹 | `GET /api/v1/rankings` (거래대금·거래량·등락률) | **F7 급등 종목 탐지의 1차 입력**, F5 스크리닝 |
-| 시장 지표 | `GET /api/v1/market-indicators/*` (지수, 국채) | F9 시장 리포트 |
+| 시장 지표 | `GET /api/v1/market-indicators/*` (지수, 국채) — **2026-09-25 openapi.json 확인: 심볼은 `KOSPI`·`KOSDAQ`와 국채 `KR_BOND_2Y~30Y`뿐, 해외 지수 없음.** 응답 `symbol·timestamp·value·change·changeRate`, MARKET_DATA 한도 그룹. 투자자별 매매대금(개인·외국인·기관)도 여기 | F9 시장 리포트, **F23 지수 티커의 KOSPI·KOSDAQ**. 해외 지수는 `docs/MARKET_INDEX_TICKER_DESIGN.md` 4장의 대체 출처 |
 | 수급 | STOCK_TRADING_TREND 그룹 | F5 스크리닝, 토론 자료 |
 | 계좌·자산 | `GET /api/v1/accounts`, `/holdings` | 잔고·보유 조회, F2 손익 |
 | 주문 | `POST /api/v1/orders`, `…/{orderId}/modify`, `…/{orderId}/cancel` | F1, F7, F8 |

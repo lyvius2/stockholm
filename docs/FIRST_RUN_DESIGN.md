@@ -67,7 +67,7 @@ NOT_STARTED ─①→ ADMIN_CREATED ─②→ SHARED_KEYS_DONE ─③→ TOSS_DE
 | 공시 | DART 인증키 | **필수** |
 | 시장 데이터 | KRX Open API 인증키 · Massive 키 | 선택 |
 | 뉴스·커뮤니티 | 네이버 검색 client id/secret | 선택 |
-| 공공 | 공공데이터포털 서비스 키 · SEC EDGAR 연락처 이메일(키 아님, User-Agent용) | 선택 |
+| 공공 | 공공데이터포털 서비스 키 · SEC EDGAR 연락처 이메일(키 아님, User-Agent용) · FRED API 키(F23 해외 지수 종가·F9 거시) | 선택 |
 | 알림 | Slack 봇 토큰 | 선택 |
 | 금융결제원 | 앱 자격 client id/secret | 선택 |
 
@@ -141,6 +141,7 @@ NOT_STARTED ─①→ ADMIN_CREATED ─②→ SHARED_KEYS_DONE ─③→ TOSS_DE
 | Massive | 종목 개요 1건(AAPL) | 200 | 검증 시각·등급(응답 헤더에 있으면) |
 | 네이버 검색 | 뉴스 검색 `query=삼성전자&display=1` | 200 | 검증 시각 |
 | 공공데이터포털 | 국민연금 해외주식 데이터셋 목록 1건(`perPage=1`) | 200 | 검증 시각 |
+| FRED | `series/observations`로 `SP500` 최근 1건 | 200 | 검증 시각 |
 | SEC 연락처 이메일 | 형식 검사만(외부 호출 없음) | 이메일 형식 | 값 자체(비밀 아님, 공유 설정) |
 | Slack | `auth.test` | `ok=true` | 워크스페이스 이름·검증 시각 |
 | 금융결제원 앱 자격 | 형식 검사만(토큰은 사용자 동의 뒤에만 나옴) | 비어 있지 않음 | 검증 시각 없음, "형식 확인" 칩 |

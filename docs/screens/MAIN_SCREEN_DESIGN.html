@@ -43,6 +43,16 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 .topbar{display:flex;flex-direction:column;gap:5px;padding:7px 14px;background:var(--panel);border-bottom:1px solid var(--line);font-size:13px}
 .topbar .tb-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .brand{font-weight:700;letter-spacing:-.02em;color:var(--accent)}
+/* 상단 바 지수 티커 (F23): Stockholm 오른쪽, 5분 갱신, 값이 바뀌면 왼쪽→오른쪽 슬라이딩(옛 값은 오른쪽으로 밀려 나가고 새 값이 왼쪽에서 들어옴) */
+.idx{display:flex;gap:10px;align-items:center;font-size:10.5px;font-variant-numeric:tabular-nums;min-width:0;flex:0 1 auto}
+.idx .it{display:inline-flex;gap:4px;align-items:center;height:16px;overflow:hidden;position:relative;white-space:nowrap}
+@media (max-width:1100px){.idx .chg .abs{display:none}}
+.idx .nm{color:var(--ink3);letter-spacing:.03em} .idx .bar{color:var(--line)}
+.idx .v{color:var(--ink);font-weight:600} .idx .chg{font-weight:600} .idx .chg.up{color:var(--up)} .idx .chg.down{color:var(--down)} .idx .chg.flat{color:var(--ink3)}
+.idx .roll{display:inline-flex;gap:4px;align-items:center;transition:transform .35s ease,opacity .35s ease}
+.idx .roll{position:relative} .idx .roll.out{position:absolute;left:0;top:0;transform:translateX(100%);opacity:0} .idx .roll.in{transform:translateX(-100%);opacity:0;transition:none}
+.idx .st{font-size:9px;border-radius:8px;padding:0 6px;background:var(--panel2);color:var(--ink3)} .idx .st.late{background:var(--warn-soft);color:var(--warn)}
+@media (prefers-reduced-motion:reduce){.idx .roll{transition:none}}
 .topbar .sp{flex:1}
 .mk{display:flex;gap:6px;align-items:center}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
@@ -290,6 +300,35 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 .modal.asset{--mcol:var(--accent);width:760px;max-width:calc(100% - 24px)}
 .modal.asset .mh .sp{flex:1} .modal.asset .mh .sub{color:var(--ink2);font-size:11px}
 .modal.asset .chk{border:1px solid var(--line);border-radius:3px;padding:1px 8px;font-size:11px;color:var(--ink2);cursor:pointer;background:var(--panel)}
+/* 계정·알림·회원 관리 모달 (F21) */
+.acc .mb{grid-template-columns:150px minmax(0,1fr);display:grid;gap:10px 14px;overflow:auto;min-height:0}
+.modal.acc{max-height:calc(100% - 24px);display:grid;grid-template-rows:auto minmax(0,1fr)}
+/* LLM 경로 설정 모달 (F22) */
+.modal.llm{width:760px}
+.llm .card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:6px;background:var(--panel)}
+.llm .ch2{display:flex;gap:8px;align-items:center;font-size:12px} .llm .ch2 b{font-size:13px} .llm .ch2 .sp{flex:1}
+.llm .adv{display:grid;gap:4px;border-top:1px dashed var(--line);padding-top:6px} .llm .adv .f{font-size:11px}
+.llm .prov{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px}
+.llm .pc{border:1px solid var(--line);border-radius:12px;padding:2px 10px;color:var(--ink2)} .llm .pc.ok{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)} .llm .pc.off{color:var(--ink3);border-style:dashed}
+.llm table{width:100%;border-collapse:collapse;font-size:11px} .llm th{color:var(--ink3);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line);white-space:nowrap} .llm td{padding:4px 6px;border-bottom:1px dashed var(--line);vertical-align:middle;white-space:normal} .llm .sel,.llm td:nth-child(6){white-space:nowrap} .llm .hint{white-space:normal;overflow-wrap:anywhere}
+.llm .sel{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:5px;padding:2px 6px;background:var(--bg);color:var(--ink);font-family:ui-monospace,monospace;font-size:10px;cursor:pointer} .llm .sel .p{color:var(--accent);font-weight:600} .llm .sel.empty{color:var(--ink3);border-style:dashed} .llm .sel.dis{opacity:.45;cursor:default}
+.llm .pol{font-size:10px;color:var(--warn)} .llm .pol.n{color:var(--ink3)}
+.llm .lsub td{padding-left:26px;background:var(--panel2);font-size:10px}
+.llm .lock{color:var(--warn)}
+.llm table{table-layout:fixed} .llm td:first-child,.llm th:first-child,.llm td.wrap{white-space:normal}
+.acc .vt{display:grid;gap:4px;align-content:start;border-right:1px solid var(--line);padding-right:10px}
+.acc .vt span{padding:6px 10px;border-radius:6px;cursor:pointer;color:var(--ink2)} .acc .vt span.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.acc .sec{display:grid;gap:8px;align-content:start;grid-template-columns:minmax(0,1fr);min-width:0}
+.acc h5{margin:4px 0 0;font-size:12px;color:var(--ink3);letter-spacing:.04em;text-transform:uppercase}
+.acc .f{display:grid;grid-template-columns:130px 1fr auto;gap:6px 10px;align-items:center;font-size:12px}
+.acc .f label{color:var(--ink2)} .acc .in{border:1px solid var(--line);border-radius:5px;padding:5px 8px;background:var(--bg);color:var(--ink3);font-family:ui-monospace,monospace;font-size:11px}
+.acc .b{border:1px solid var(--line);border-radius:5px;padding:4px 10px;font-size:11px;color:var(--ink2);cursor:pointer;white-space:nowrap} .acc .b.p{background:var(--accent);color:#fff;border-color:var(--accent)} .acc .b.dis{opacity:.45}
+.acc .sw{width:30px;height:16px;border-radius:8px;background:var(--panel2);position:relative;display:inline-block;vertical-align:middle;cursor:pointer} .acc .sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--ink3)} .acc .sw.on{background:var(--accent)} .acc .sw.on::after{left:16px;background:#fff}
+.acc table{width:100%;border-collapse:collapse;font-size:11px} .acc th{color:var(--ink3);font-weight:500;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)} .acc td{padding:5px 6px;border-bottom:1px dashed var(--line);vertical-align:middle}
+.acc td.c,.acc th.c{text-align:center}
+.acc .hint{font-size:11px;color:var(--ink3);border:0;padding:0;background:none;box-shadow:none} .acc .warnbox{background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:6px 10px;font-size:11px}
+.acc .tabs{display:flex;gap:2px;border:1px solid var(--line);border-radius:6px;padding:2px;font-size:12px} .acc .tabs span{padding:3px 12px;border-radius:4px;cursor:pointer;color:var(--ink2);font-weight:600} .acc .tabs span.on{background:var(--accent);color:#fff}
+.acc .stepup{position:absolute;inset:0;background:color-mix(in srgb,var(--panel) 88%,transparent);display:grid;place-items:center;border-radius:8px;z-index:2}
 .tif{display:flex;gap:4px;align-items:center;font-size:10px}
 .tif b{color:var(--ink3);font-weight:500;margin-right:2px}
 .tif span{padding:1px 7px;border-radius:9px;border:1px solid var(--line);color:var(--ink2);cursor:pointer}
@@ -492,7 +531,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 </style>
 
 <div class="wrap">
-<p class="eyebrow">Stockholm · 화면 설계 초안 v36 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
+<p class="eyebrow">Stockholm · 화면 설계 초안 v42 · 2026-09-25 · <a href="#" id="resetRatios" style="color:var(--accent);text-decoration:none;text-transform:none;letter-spacing:0">목업 비율·설정 초기화</a></p>
 <h1>메인 화면 레이아웃</h1>
 <p class="lede">스케치의 네 영역 — 차트 · 가격 · 매수/매도 정보 · 토론 창(미러피시) — 을 그대로 배치한 초안입니다. 기본 비율은 좌우 6:4, 왼쪽 열의 차트:주문 7:3, 오른쪽 열의 가격:토론 4:6이며, 세 구분선을 드래그해 바꿀 수 있습니다(더블클릭으로 복원). 아래 목업의 각 영역을 클릭하면 해당 영역의 설명이 강조됩니다. 목업 안의 숫자와 종목은 모두 예시 값입니다.</p>
 
@@ -512,6 +551,11 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div class="topbar">
     <div class="tb-row">
       <span class="brand">Stockholm</span>
+      <span class="idx" id="idx" title="5분마다 갱신 · 토스 시장 지표 · 마지막 갱신 15:00 KST">
+        <span class="it" data-i="0"><span class="roll"><span class="nm">KOSPI</span><span class="bar">|</span><span class="v">3,412.85</span><span class="bar">|</span><span class="chg up">▲ 12.30 (+0.36%)</span></span></span>
+        <span class="it" data-i="1"><span class="roll"><span class="nm">KOSDAQ</span><span class="bar">|</span><span class="v">1,024.17</span><span class="bar">|</span><span class="chg down">▼ 4.02 (−0.39%)</span></span></span>
+        <span class="it" data-i="2"><span class="roll"><span class="nm">NIKKEI 225</span><span class="bar">|</span><span class="v">42,118.60</span><span class="bar">|</span><span class="chg up">▲ 318.20 (+0.76%)</span></span></span>
+      </span>
       <span class="sp"></span>
       <button class="wlbtn" id="wlbtn" type="button" title="관심종목 열기 (⌘L)">☰ 관심종목</button>
       <button class="wlbtn" id="npsbtn" type="button" title="연기금종목 · 국민연금 해외투자 현황 (⌘N)">🏛️ 연기금종목<i class="bdg" aria-hidden="true"></i></button>
@@ -945,7 +989,154 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   </div>
 
   <div class="pop umenu" id="umenu" hidden role="menu">
-    <ul><li id="umAsset"><span>💰 자산 조회</span><span>금융결제원</span></li><li><span>👤 회원정보 변경</span></li><li><span>🔔 알림 설정</span></li><li class="sep"><span>👥 회원 관리 · 공유 키</span><span>admin</span></li><li><span>⏏ 로그아웃</span></li></ul>
+    <ul><li id="umAsset"><span>💰 자산 조회</span><span>금융결제원</span></li><li id="umProfile"><span>👤 회원정보 변경</span></li><li id="umNotify"><span>🔔 알림 설정</span></li><li class="sep" id="umAdmin"><span>👥 회원 관리 · 공유 키</span><span>admin</span></li><li><span>⏏ 로그아웃</span></li></ul>
+  </div>
+  <div class="modal asset acc" id="pimodal" hidden role="dialog" aria-label="회원정보 변경">
+    <div class="mh" id="pih"><b>👤 회원정보 · admin</b><span class="sub">항목마다 따로 저장 · 비밀번호·TOTP·키 교체는 재확인 필요</span><span class="sp"></span><span class="x" id="pix">✕</span></div>
+    <div class="mb">
+      <div class="vt" id="pitabs"><span class="on" data-t="basic">기본</span><span data-t="login">로그인 수단</span><span data-t="keys">연결(키)</span><span data-t="privacy">보안·개인정보</span></div>
+      <div class="sec" data-s="basic">
+        <div class="f"><label>표시 이름</label><div class="in">admin</div><span class="b">저장</span></div>
+        <div class="f"><label>역할</label><div class="hint">admin · 바꿀 수 없음</div><span></span></div>
+        <div class="f"><label>이메일 (선택)</label><div class="in">flywalter@example.com</div><span class="b">저장</span></div>
+        <div class="f"><label>Slack 수신 계정</label><div class="in">U0A1B2C3D</div><span class="b">테스트 DM</span></div>
+        <div class="f"><label>가입 · 마지막 로그인</label><div class="hint">2026-09-25 · 오늘 08:12 · 이 Mac</div><span></span></div>
+        <div class="hint">별도 로그인 ID는 두지 않습니다. 로그인 모달에서 이름을 고르고 비밀번호를 넣습니다. 이메일은 relay 연결 뒤 새 디바이스·계정 복구에만 쓰입니다.</div>
+      </div>
+      <div class="sec" data-s="login" hidden>
+        <h5>비밀번호 변경</h5>
+        <div class="f"><label>현재 비밀번호</label><div class="in">●●●●●●●●●●●●●●</div><span></span></div>
+        <div class="f"><label>새 비밀번호</label><div class="in">●●●●●●●●●●●●●●●● <span style="float:right;color:var(--accent)">강함</span></div><span></span></div>
+        <div class="f"><label>새 비밀번호 확인</label><div class="in">●●●●●●●●●●●●●●●● <span style="float:right;color:var(--accent)">일치</span></div><span class="b p">변경</span></div>
+        <h5>TOTP</h5>
+        <div class="f"><label>상태</label><div class="hint"><span class="tag ok">등록됨 · 2026-09-25</span> 인증 앱으로 매 로그인·step-up</div><span class="b">재등록</span></div>
+        <div class="f"><label>복구 코드</label><div class="hint">남은 코드 7 / 8 · 재발급하면 옛 코드는 모두 무효</div><span class="b">재발급</span></div>
+        <div class="f"><label>패스키</label><div class="hint">미등록 (1단계에서는 비활성)</div><span class="b dis">등록</span></div>
+        <h5>로그인 이력</h5>
+        <div class="hint">09/25 08:12 성공 · 이 Mac &nbsp;·&nbsp; 09/24 22:30 성공 &nbsp;·&nbsp; 09/24 22:29 실패(TOTP) &nbsp;·&nbsp; 09/23 07:58 성공</div>
+      </div>
+      <div class="sec" data-s="keys" hidden>
+        <h5>본인 키 · 값은 다시 보이지 않습니다</h5>
+        <div class="f"><label>토스증권 키</label><div class="hint"><span class="tag ok">검증됨 ···k2Qa</span> 계좌 ···1234 · 마지막 검증 09/25 08:12 · 공용 시세 수집에도 쓰임(admin)</div><span class="b">교체</span></div>
+        <div class="f"><label>금융결제원 동의</label><div class="hint"><span class="tag ok">동의 유효 · 만료 2027-03</span></div><span><span class="b">재동의</span> <span class="b">철회</span></span></div>
+        <div class="f"><label>Slack DM</label><div class="hint">봇 토큰 등록됨(admin) · 내 수신 계정 U0A1B2C3D</div><span></span></div>
+        <div class="warnbox">토스 키 교체는 TOTP 재확인 → 새 client_id·secret 입력 → 계좌 목록 검증 → 계좌 선택 순서입니다. 검증에 실패하면 옛 키가 그대로 남습니다. 삭제는 admin만 할 수 있습니다.</div>
+      </div>
+      <div class="sec" data-s="privacy" hidden>
+        <div class="f"><label>개인 키 추가 암호화</label><div class="hint">내 토스 키를 내 비밀번호 유도 키로 한 번 더 감쌈. <b>재부팅 후 로그인 전까지 내 자동화 정지</b></div><span class="sw"></span></div>
+        <div class="f"><label>로그아웃 시 자동화 정지</label><div class="hint">로그아웃하면 내 자동화를 멈추고 다음 로그인 때 재개</div><span class="sw"></span></div>
+        <h5>개인 데이터 LLM 전송 허용</h5>
+        <div class="f"><label>Ollama (로컬)</label><div class="hint">내 Mac 안에서만 처리</div><span class="sw on"></span></div>
+        <div class="f"><label>Claude</label><div class="hint">보유 단가·수량·손익이 든 프롬프트 전송 · 데이터 처리 정책 보기</div><span class="sw"></span></div>
+        <div class="f"><label>OpenAI</label><div class="hint">데이터 처리 정책 보기</div><span class="sw"></span></div>
+        <div class="f"><label>DeepSeek</label><div class="hint">데이터 처리 정책 보기</div><span class="sw"></span></div>
+        <div class="hint">꺼진 제공자에는 매도 판단·회고·리포트의 개인 절이 가지 않고 폴백 정책대로 처리됩니다.</div>
+        <div class="f"><label>내 데이터 내보내기</label><div class="hint">이벤트 로그·토론·설정 JSON (계좌번호·키 제외)</div><span class="b dis">준비 중</span></div>
+        <div class="f"><label>계정 탈퇴 요청</label><div class="hint">admin에게 요청 알림만 보냅니다</div><span class="b">요청</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal asset acc" id="ntmodal" hidden role="dialog" aria-label="알림 설정">
+    <div class="mh" id="nth"><b>🔔 알림 설정 · admin</b><span class="sub">사용자별 · 동기화</span><span class="sp"></span><span class="chk">테스트 알림</span><span class="x" id="ntx">✕</span></div>
+    <div class="mb" style="grid-template-columns:minmax(0,1fr)">
+      <div class="sec">
+        <div class="f" style="grid-template-columns:130px 1fr"><label>채널</label><div class="hint">앱 안(토스트·알림 센터) <span class="sw on" style="pointer-events:none"></span> &nbsp; macOS 알림(창 닫혔을 때) <span class="sw on"></span> &nbsp; Slack DM <span class="sw on"></span> <span class="tag ok">U0A1B2C3D · 봇 토큰 등록됨</span></div></div>
+        <table>
+          <tr><th>알림</th><th class="c">앱 안</th><th class="c">macOS</th><th class="c">Slack</th><th class="c">긴급 (방해 금지 통과)</th></tr>
+          <tr><td>체결 · 거부 (F14)</td><td class="c"><span class="sw on" style="pointer-events:none;opacity:.6"></span></td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw on"></span></td><td class="c">—</td></tr>
+          <tr><td>가드레일 발동 · 자동 주문 거부</td><td class="c"><span class="sw on" style="pointer-events:none;opacity:.6"></span></td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw on"></span></td><td class="c">✔</td></tr>
+          <tr><td>승인 요청 (만료 시간 포함)</td><td class="c"><span class="sw on" style="pointer-events:none;opacity:.6"></span></td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw on"></span></td><td class="c">✔</td></tr>
+          <tr><td>킬 스위치 · 자동화 정지</td><td class="c"><span class="sw on" style="pointer-events:none;opacity:.6"></span></td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw on"></span></td><td class="c">✔ (고정)</td></tr>
+          <tr><td>토론 완료 (심층)</td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw"></span></td><td class="c">—</td></tr>
+          <tr><td>데이터 갱신 (연기금 · 공시 감시)</td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw"></span></td><td class="c"><span class="sw"></span></td><td class="c">—</td></tr>
+          <tr><td>일간 · 주간 리포트</td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw"></span></td><td class="c"><span class="sw on"></span><div class="hint">요약+링크</div></td><td class="c">—</td></tr>
+          <tr><td>키 만료 · 검증 실패 · IP 변경</td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw on"></span></td><td class="c">✔</td></tr>
+          <tr><td>LLM 예산 80% · 초과 <span class="tag">admin</span></td><td class="c"><span class="sw on"></span></td><td class="c"><span class="sw"></span></td><td class="c"><span class="sw on"></span></td><td class="c">—</td></tr>
+        </table>
+        <div class="f" style="grid-template-columns:130px 1fr auto"><label>야간 방해 금지</label><div class="hint">23:00 ~ 07:00 KST · 긴급(✔)만 통과 · 미국 정규장(23:30~06:00)과 겹치므로 승인 요청·가드레일은 항상 옵니다</div><span class="sw on"></span></div>
+        <div class="f" style="grid-template-columns:130px 1fr auto"><label>Slack에 수량·금액 포함</label><div class="hint">끄면 종목·방향·건수만 · relay를 붙이면 서버가 읽을 수 있는 최소 정보만 나갑니다</div><span class="sw"></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal asset acc" id="admmodal" hidden role="dialog" aria-label="회원 관리 · 공유 키">
+    <div class="mh" id="admh"><b>👥 회원 관리 · 공유 키</b><span class="tabs" id="admtabs"><span class="on" data-t="members">회원 관리</span><span data-t="keys">공유 키</span></span><span class="sub">admin · step-up 유효 4:31</span><span class="sp"></span><span class="x" id="admx">✕</span></div>
+    <div class="stepup" id="admstep"><div style="display:grid;gap:8px;text-align:center;font-size:12px"><b>step-up 인증</b><span class="hint">회원 관리와 공유 키 변경은 TOTP 재확인이 필요합니다 (5분 유지)</span><div class="in" style="width:140px;margin:0 auto;letter-spacing:.25em;text-align:center">4 8 2 _ _ _</div><span class="b p" id="admgo" style="margin:0 auto">확인</span></div></div>
+    <div class="mb" style="grid-template-columns:minmax(0,1fr)">
+      <div class="sec" data-s="members">
+        <table>
+          <tr><th>이름</th><th>역할</th><th>상태</th><th>마지막 로그인</th><th class="c">TOTP</th><th class="c">토스 키</th><th class="c">금융결제원</th><th class="c">자동화</th><th></th></tr>
+          <tr><td><b>admin</b></td><td>admin</td><td><span class="tag ok">활성</span></td><td>오늘 08:12</td><td class="c">등록</td><td class="c">등록</td><td class="c">동의</td><td class="c">국내 모의</td><td class="hint">본인 · 정지 불가</td></tr>
+          <tr><td><b>지혜</b></td><td>구성원</td><td><span class="tag ok">활성</span></td><td>09/24 21:40</td><td class="c">등록</td><td class="c">등록</td><td class="c">미동의</td><td class="c">꺼짐</td><td><span class="b">정지</span> <span class="b">토스 키 삭제</span> <span class="b">데이터 파기</span></td></tr>
+          <tr><td><b>민준</b></td><td>구성원</td><td><span class="tag warn">정지</span></td><td>09/10 19:02</td><td class="c">등록</td><td class="c">미등록</td><td class="c">미동의</td><td class="c">—</td><td><span class="b">해제</span> <span class="b">데이터 파기</span></td></tr>
+        </table>
+        <div class="f" style="grid-template-columns:130px 1fr auto"><label>구성원 자리</label><div class="hint">3명 등록 · 남은 자리 1 / 3 · 미사용 코드 없음</div><span class="b p">등록 코드 발급</span></div>
+        <div class="warnbox">등록 코드는 발급 직후 한 번만 보이고 24시간 뒤 만료됩니다. 정지·탈퇴·데이터 파기 뒤에는 가족 공유 키를 교체하세요(8단계). event_log · audit_log · broker_order는 파기해도 남습니다.</div>
+        <div class="f" style="grid-template-columns:130px 1fr auto"><label>admin 이관</label><div class="hint">다른 활성 구성원에게 admin 역할을 넘기고 본인은 구성원이 됩니다 (확인 창 두 번) [제안]</div><span class="b">이관…</span></div>
+      </div>
+      <div class="sec" data-s="keys" hidden>
+        <table>
+          <tr><th>키</th><th></th><th>상태</th><th>마지막 검증</th><th>응답</th><th></th></tr>
+          <tr><td>Claude</td><td><span class="tag">LLM</span></td><td><span class="tag ok">검증됨 ···k2Qa</span></td><td>09/25 06:30</td><td>620ms</td><td><span class="b">교체</span> <span class="b">재검증</span> <span class="b">삭제</span></td></tr>
+          <tr><td>Ollama 주소</td><td><span class="tag">LLM</span></td><td><span class="tag ok">검증됨 · 모델 3개</span></td><td>09/25 06:30</td><td>18ms</td><td><span class="b">교체</span> <span class="b">재검증</span></td></tr>
+          <tr><td>OpenAI</td><td><span class="tag">LLM</span></td><td><span class="tag">미등록</span></td><td>—</td><td>—</td><td><span class="b">등록</span></td></tr>
+          <tr><td>DART <span class="tag warn">필수</span></td><td><span class="tag">공시</span></td><td><span class="tag ok">검증됨 ···7f31</span></td><td>09/25 06:30</td><td>230ms</td><td><span class="b">교체</span> <span class="b">재검증</span></td></tr>
+          <tr><td>Massive</td><td><span class="tag">시장</span></td><td><span class="tag warn">실패 · 429 한도</span></td><td>09/25 06:30</td><td>—</td><td><span class="b">교체</span> <span class="b">재검증</span> <span class="b">삭제</span></td></tr>
+          <tr><td>KRX · 네이버 · 공공데이터포털 · Slack 봇 · 금융결제원 앱</td><td></td><td><span class="tag">일부 미등록</span></td><td>—</td><td>—</td><td><span class="b">펼치기</span></td></tr>
+        </table>
+        <h5>공유 설정 (키 아님)</h5>
+        <div class="f"><label>SEC 연락처 이메일</label><div class="in">admin@example.com</div><span class="b">저장</span></div>
+        <div class="f"><label>KRX 이용 신청 만료</label><div class="hint">2027-03-31 · 만료 30일 전 알림</div><span class="b">수정</span></div>
+        <div class="f"><label>LLM 프리셋 · 예산</label><div class="hint">균형 · 설치 일일 ₩10,000 · 구성원 몫 ₩3,000 · 예비 ₩1,000 · 80% 알림 → 기능별 LLM 선택은 LLM 경로 모달(F22)</div><span class="b" id="openllm">LLM 경로 열기</span></div>
+        <div class="f"><label>공용 시세 수집 키</label><div class="hint">admin 본인의 토스 키(표시만)</div><span></span></div>
+        <div class="hint">값은 admin에게도 보이지 않습니다(끝 4자리만). 교체·삭제·재검증은 모두 감사 로그에 남고, 삭제하면 그 키에 의존하는 기능이 즉시 비활성됩니다. 마지막 정기 검증: 오늘 06:30, 실패 1건.</div>
+      </div>
+    </div>
+  </div>
+  <div class="modal asset acc llm" id="llmmodal" hidden role="dialog" aria-label="LLM 경로">
+    <div class="mh" id="llmh"><b>🧭 LLM 경로 · admin</b><span class="tabs"><span class="on">균형</span><span>품질 우선</span><span>비용 최소</span><span>로컬 전용</span><span style="color:var(--ink3)">사용자 정의</span></span><span class="sub"><span class="sw" id="llmadv" style="vertical-align:middle"></span> 고급 · step-up 유효 4:02</span><span class="sp"></span><span class="x" id="llmx">✕</span></div>
+    <div class="mb" style="grid-template-columns:minmax(0,1fr)">
+      <div class="sec">
+        <div class="prov"><span class="hint">등록 제공자</span><span class="pc ok">Claude · 검증됨 · 모델 4 · 이달 ₩41,200</span><span class="pc ok">Ollama · 검증됨 · 모델 3 · ₩0</span><span class="pc off">OpenAI · 키 미등록</span><span class="pc off">DeepSeek · 키 미등록</span><span class="hint">→ 키 등록은 회원 관리 › 공유 키</span></div>
+      <div class="card" data-cat="debate">
+        <div class="ch2"><b>토론</b><span class="lock" title="개인 데이터 포함 가능">🔒</span><span class="hint">페르소나 발언 · 사회자 결론 · 토론 중 개입 응답 · 결론 구조화</span><span class="sp"></span><span class="hint">1,718회 · ₩31,100</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>주 LLM</label><span class="sel"><span class="p">Claude</span>sonnet ▾</span><span class="hint">모델 ▾ 목록은 검증 때 받은 것</span><span class="b">테스트</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>대체 LLM</label><span class="sel"><span class="p">Ollama</span>qwen3:14b ▾</span><span class="hint">주 LLM 실패·한도 초과 시</span><span></span></div>
+        <div class="f" style="grid-template-columns:90px 1fr"><label>실패 시</label><span class="pol n">대체도 실패하면 오류 표시 · 재시도</span></div>
+        <div class="adv" hidden><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>페르소나 발언</label><span class="sel"><span class="p">Claude</span>sonnet</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>사회자</label><span class="sel"><span class="p">Claude</span>sonnet</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>개입 응답 · 질의응답</label><span class="sel"><span class="p">Claude</span>sonnet</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>결론 구조화</label><span class="sel"><span class="p">Claude</span>haiku</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>📚 가치투자자 · 🚀 모멘텀 · 🛡️ 리스크 · 🌐 매크로 · 🔄 역발상 (페르소나별)</label><span class="sel"><span class="p">Claude</span>sonnet</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div></div>
+      </div>
+      <div class="card" data-cat="report">
+        <div class="ch2"><b>리포트 · 요약</b><span class="lock" title="개인 데이터 포함 가능">🔒</span><span class="hint">일간·주간 리포트 · 개요·전망·업종 요약 · 공시 분류 · 회고</span><span class="sp"></span><span class="hint">2,440회 · ₩10,580</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>주 LLM</label><span class="sel"><span class="p">Ollama</span>qwen3:14b ▾</span><span class="hint">모델 ▾ 목록은 검증 때 받은 것</span><span class="b">테스트</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>대체 LLM</label><span class="sel"><span class="p">Claude</span>haiku ▾</span><span class="hint">주 LLM 실패·한도 초과 시</span><span></span></div>
+        <div class="f" style="grid-template-columns:90px 1fr"><label>실패 시</label><span class="pol n">건너뜀 (다음 배치)</span></div>
+        <div class="adv" hidden><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>시장 리포트</label><span class="sel"><span class="p">Claude</span>sonnet</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>요약 · 분류</label><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="sel"><span class="p">Claude</span>haiku</span><span class="b">카테고리 값 따름</span></div><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>회고</label><span class="sel"><span class="p">Claude</span>sonnet</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div></div>
+      </div>
+      <div class="card" data-cat="trade">
+        <div class="ch2"><b>거래 판단</b><span class="lock" title="개인 데이터 포함 가능">🔒</span><span class="hint">자동 매도 판단 · 급등 재료 확인</span><span class="sp"></span><span class="hint">0회</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>주 LLM</label><span class="sel"><span class="p">Claude</span>sonnet ▾</span><span class="hint">모델 ▾ 목록은 검증 때 받은 것</span><span class="b">테스트</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>대체 LLM</label><span class="sel"><span class="p">Ollama</span>qwen3:14b ▾</span><span class="hint">주 LLM 실패·한도 초과 시</span><span></span></div>
+        <div class="f" style="grid-template-columns:90px 1fr"><label>실패 시</label><span class="pol">자동 매도 판단 → 판단 보류(매도 안 함) · 급등 재료 확인 → 매수 안 함 · 고정</span></div>
+        <div class="adv" hidden><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>자동 매도 판단</label><span class="sel"><span class="p">Claude</span>sonnet</span><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="b">카테고리 값 따름</span></div><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>급등 재료 확인 (3~5초)</label><span class="sel"><span class="p">Ollama</span>qwen3:8b</span><span class="sel"><span class="p">Claude</span>haiku</span><span class="b">카테고리 값 따름</span></div></div>
+      </div>
+      <div class="card" data-cat="recommend">
+        <div class="ch2"><b>추천</b><span class="hint">F5 유력 종목 2단 분석 · 약식 토론</span><span class="sp"></span><span class="hint">96회 · ₩620</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>주 LLM</label><span class="sel"><span class="p">Ollama</span>qwen3:14b ▾</span><span class="hint">모델 ▾ 목록은 검증 때 받은 것</span><span class="b">테스트</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>대체 LLM</label><span class="sel"><span class="p">Claude</span>haiku ▾</span><span class="hint">주 LLM 실패·한도 초과 시</span><span></span></div>
+        <div class="f" style="grid-template-columns:90px 1fr"><label>실패 시</label><span class="pol n">건너뜀</span></div>
+        <div class="adv" hidden><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>추천 분석</label><span class="sel"><span class="p">Ollama</span>qwen3:14b</span><span class="sel"><span class="p">Claude</span>haiku</span><span class="b">카테고리 값 따름</span></div></div>
+      </div>
+      <div class="card" data-cat="translate">
+        <div class="ch2"><b>번역</b><span class="hint">영→한 번역 (커뮤니티 · 미국 뉴스)</span><span class="sp"></span><span class="hint">0회 · 휴면</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>주 LLM</label><span class="sel"><span class="p">Ollama</span>qwen3:8b ▾</span><span class="hint">모델 ▾ 목록은 검증 때 받은 것</span><span class="b">테스트</span></div>
+        <div class="f" style="grid-template-columns:90px 1fr 1fr auto"><label>대체 LLM</label><span class="sel"><span class="p">—</span>(없음) ▾</span><span class="hint">주 LLM 실패·한도 초과 시</span><span></span></div>
+        <div class="f" style="grid-template-columns:90px 1fr"><label>실패 시</label><span class="pol n">원문 그대로 표시</span></div>
+        <div class="adv" hidden><div class="f" style="grid-template-columns:150px 1fr 1fr auto"><label>번역</label><span class="sel"><span class="p">Ollama</span>qwen3:8b</span><span class="sel"><span class="p">—</span>(없음)</span><span class="b">카테고리 값 따름</span></div></div>
+      </div>
+      <div class="f" style="grid-template-columns:90px 1fr auto"><label>임베딩</label><span class="hint">Ollama <b>bge-m3</b> · 1024차원 · RAG 색인·검색 · 바꾸면 전체 재색인(12,480문서 · 약 40분)</span><span class="b dis">고급에서 변경</span></div>
+        <div class="hint">🔒 카테고리는 사용자별 "개인 데이터 LLM 전송 허용"과 교차합니다 — 예: 지혜는 Claude 꺼짐 → 거래 판단은 지혜에게 Ollama로, Ollama도 없으면 판단 보류. 미등록 제공자는 목록에서 회색이라 고를 수 없고, 키를 삭제하면 그 카드에 경고가 뜨며 실행은 대체 → 실패 정책으로 갑니다. 모델 이름은 이 화면과 설정에만 있습니다.</div>
+        <div style="display:flex;gap:8px;align-items:center;font-size:11px"><span class="b">프리셋으로 되돌리기</span><span class="b">검증</span><span class="b p">저장</span><span class="hint">마지막 저장 09/24 21:10 · admin</span><span class="sp" style="flex:1"></span><span class="hint">예산: 설치 일일 ₩10,000 · 오늘 ₩2,140 · 예비 ₩1,000</span></div>
+      </div>
+    </div>
   </div>
   <div class="modal asset" id="assetmodal" hidden role="dialog" aria-label="내 자산">
     <div class="mh" id="ash"><b>💰 내 자산 · admin</b><span class="sub">금융결제원 · <span class="num">09/25 08:12</span> 조회</span><span class="tag ok">동의 유효 · 만료 2027-03</span><span class="sp"></span><span class="chk">새로고침</span><span class="x" id="asx">✕</span></div>
@@ -1198,6 +1389,8 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div><b>연기금종목 · 국민연금 해외투자 현황 (F13)</b><span>상단 바 🏛️ 연기금종목 버튼(☰ 관심종목과 ⚡ 실시간 급등락 사이) 또는 ⌘N으로 여는 정보 모달. 화면은 항상 데몬의 SQLite 스냅샷(캐시)만 읽고, 데몬은 TTL 24시간이 지났을 때만 출처를 다시 부릅니다(cache-aside). 주문 모달과 같은 틀(바깥을 흐리지 않음, 테두리 발광은 강조색, 제목 바로 이동, ✕·같은 버튼·Esc로 닫음)이고 서랍 위에 뜹니다. 데이터는 둘입니다: SEC EDGAR 13F(분기, 미국 상장분, 주식 수·평가액)와 공공데이터포털 연간 자료(연말 기준, 전 지역, 평가액·비중·지분율). 데몬이 앱 기동 시와 매일 한 번 두 출처의 새 보고서를 확인해 변화가 있으면 버튼의 빨간 점, 오른쪽 아래 토스트, 알림 센터 항목, (켜 둔 사용자에게) Slack DM으로 알립니다. 정보 표시와 토론 근거일 뿐 어떤 자동 주문의 트리거도 아닙니다.</span></div>
   <div><b>주문은 모달에서</b><span>매수·매도 버튼 → 이동 가능한 모달. 지정가 주문은 확인 창, 현재가 즉시 주문은 확인 없음. 둘 다 가드레일은 통과해야 합니다. <b>"지정가만" 원칙의 예외 [확정 2026-09-25]</b>: 미국 소수점 보유분 매도(시장가만 가능 → "소수점 잔량 시장가 매도" 버튼), 미국 금액($) 매수(시장가, 수량/금액 전환), 유효 조건 노출(국내 DAY·OPG, 미국 DAY·CLS). 시장가는 정규장 시작~종료 1시간 전에만 활성이고 자동 주문은 여전히 지정가만입니다.</span></div>
   <div><b>보유주식 평가금액 패널 (F18)</b><span>상단 바 2행의 💰 보유주식 평가금액 버튼(💬 커뮤니티 오른쪽) 또는 ⌘E. 메인 영역 왼쪽 위에서 아래로 슬라이딩해 내려오는 팝업이며 폭은 메인의 40%, 서랍과 독립(서랍을 밀지 않고 위에 뜸). 오른쪽 위 ✕·같은 버튼·Esc로 닫습니다. 내용: 평가금액(전체/국내/미국 탭, 미국은 실시간 환율 원화 환산), 평가손익(금액·%), 매수금액, 담보비율(체결), 예수금 D+1·D+2, 외화 예수금, 매수 가능, "오늘 내 주식은"(오늘 평가·실현손익, 체결·미체결 건수, 오른/내린 종목 수, 자동 매수 노출)과 설정(표시 항목·금액 숨김). 보유 시세 스트림으로 실시간 갱신. 종목을 바꿔도 패널은 유지되고 금액 숨김 모드는 기본 꺼짐입니다 [확정 2026-09-25]. 위 목업에서 눌러 보세요.</span></div>
+  <div><b>상단 바 지수 티커 (F23)</b><span>1행 Stockholm 오른쪽에 지수 3개: 한국 정규장에는 KOSPI · KOSDAQ · NIKKEI 225, 미국 정규장에는 DJIA · NASDAQ · S&amp;P 500. 형식 "이름 | 지수 | ▲ 등락 (+%)"(상승 빨강 ▲, 하락 파랑 ▼). 5분마다 갱신하고 값이 바뀐 항목은 왼쪽에서 오른쪽으로 슬라이딩(새 값이 왼쪽에서 들어오고 옛 값은 오른쪽으로 밀려 나감, 목업은 8초). 장 밖에는 최근 닫힌 시장의 종가 + "종가" 칩 [제안]. 상세 docs/MARKET_INDEX_TICKER_DESIGN.md [제안 2026-09-25].</span></div>
+  <div><b>모달은 한 번에 하나</b><span>주문·정정·연기금·자산·회원정보·알림 설정·회원 관리·LLM 경로 어느 모달이든 열리는 순간 다른 모달(과 그 안의 확인 창)은 닫힙니다. 예: 회원정보 모달을 보다가 사용자 메뉴에서 자산 조회를 열면 회원정보 모달은 자동으로 닫힙니다. 패널(평가금액·거래내역)과 서랍은 모달과 독립 [확정 2026-09-25].</span></div>
   <div><b>거래내역 패널 (F20)</b><span>상단 바 2행의 📒 거래내역 버튼(💰 오른쪽) 또는 ⌘H. 메인 오른쪽 위에서 아래로 슬라이딩, 폭 60%, F18(왼쪽 40%)과 겹치지 않고 나란히. 탭: 손익(F2) · 체결내역(F14 주문 내역) · 매매내역. 기간: 일별·월별·분기별·직접. 원천은 토스 종료 주문 캐시 + lot 선입선출 매칭. 상세 docs/TRADE_HISTORY_DESIGN.md [제안 2026-09-25].</span></div>
   <div><b>사용자 메뉴 · 자산 조회 (F16)</b><span>상단 바 2행의 사용자 이름을 누르면 드롭다운(자산 조회 · 회원정보 변경 · 알림 설정 · 로그아웃, admin은 회원 관리·공유 키 추가). "자산 조회"는 금융결제원 동의(처음 한 번, 기본 브라우저)를 거쳐 본인의 모든 자산을 자산 모달에 보입니다. 계좌번호는 끝 4자리만, 저장·동기화 없음. 위 목업의 "admin ▾"을 눌러 보세요.</span></div>
   <div><b>주문 관리 (F14)</b><span>3번 영역 오른쪽 표가 보유 · 미체결 · 오늘 체결 세 탭입니다. 미체결 행의 정정 버튼은 주문 모달과 같은 틀의 정정 모달(원주문 카드 · 실시간 현재가 · 새 가격/수량 · 가드레일)을 열고, 확인 창을 거쳐 정정합니다. 국내는 가격·수량, 미국은 가격만(토스 규격). 취소는 확인 창 한 번. 자동 주문 미체결도 사람이 정정할 수 있습니다. 사람의 정정은 수동 주문으로 취급하되 lot 출처는 자동으로 남겨 노출액에 계속 계산하고, 정정 결과가 자동 매수 한도를 넘으면 확인 창을 한 번 더 띄웁니다(자동매매 한도의 유일한 예외). 상태는 토스 실시간 주문 채널로 바로 바뀌고 체결되면 토스트와 알림 센터에 남습니다. 정정·취소는 새 주문번호를 발급하므로 화면은 원주문→새 주문을 한 줄로 이어 보여 줍니다.</span></div>
@@ -1219,9 +1412,88 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   <div class="scr"><b>자동화</b><span>시장별 단계(모의/승인/자동), 한도, 예수금 하한, 제외 종목, 자동 매도 허용 종목. 모의 실행 성적표. 승인 대기 목록.</span></div>
   <div class="scr"><b>시장 리포트</b><span>일간·주간 리포트 열람. 전망의 적중 여부 표시.</span></div>
   <div class="scr"><b>학습 현황</b><span>페르소나별·모델별 성적표, 회고 목록, 가중치 변경 이력.</span></div>
-  <div class="scr"><b>설정</b><span>키 관리(admin), LLM 경로, 페르소나 편집, 알림·Slack, 서버 연결, 디바이스.</span></div>
+  <div class="scr"><b>설정</b><span>LLM 경로 편집, 페르소나 편집, 차트·테마·기본 시장, 서버 연결, 디바이스. 키 관리·회원 관리·알림은 사용자 메뉴의 F21 모달(아래).</span></div>
+  <div class="scr"><b>계정 · 알림 · 회원 관리 (F21)</b><span>사용자 메뉴 → 회원정보 변경(기본·로그인 수단·연결 키·보안) · 알림 설정(채널×항목, 방해 금지) · 회원 관리·공유 키(admin, step-up). 상세 docs/ACCOUNT_SETTINGS_DESIGN.md.</span></div>
   <div class="scr"><b>자산 조회 (F16)</b><span>사용자 메뉴 → 금융결제원 동의 → 자산 모달(총자산·현금성·투자 요약, 기관별 계좌·종류·잔액). 본인만, 저장 없음. 상세 docs/ASSET_DESIGN.md.</span></div>
   <div class="scr"><b>알림 · 승인 센터</b><span>가드레일 발동, 승인 요청(만료 시간 표시), 토론 완료, 데이터 갱신(국민연금 해외투자 현황). 승인은 여기서 step-up 인증 후.</span></div>
+</div>
+
+<!-- ===================== LLM 경로 설정 (F22) ===================== -->
+<h2>LLM 경로 설정 · 카테고리별 LLM 선택 <span class="tag">F22</span> <span class="tag warn">제안 2026-09-25 (단순화)</span></h2>
+<p class="lede">어떤 기능에서 어떤 LLM을 쓸지 admin이 <b>카테고리 다섯 개</b>(토론 · 리포트·요약 · 거래 판단 · 추천 · 번역)로 고르는 모달입니다. 카드마다 주 LLM 하나와 대체 LLM 하나(선택)를 고르고, 키가 등록·검증된 제공자만 목록에 활성으로 나옵니다. 목적 11개 단위의 세부 조정은 제목 바의 "고급" 토글 안에 숨겼습니다. 회원 관리 · 공유 키 모달의 "LLM 경로 열기"나 <a href="#app" data-open="llmmodal" style="color:var(--accent)">여기</a>서 열어 보세요(고급을 켜면 카드가 펼쳐집니다). 상세 docs/LLM_ROUTE_SETTINGS_DESIGN.md.</p>
+<div class="notes">
+  <div class="note">
+    <h3>카테고리 → 기능</h3>
+    <ul>
+      <li><b>토론</b>: 페르소나 발언 · 사회자 결론 · 토론 중 개입 응답 · 결론 구조화 (PERSONA_TURN · DEBATE_MODERATOR · USER_CHAT · STRUCTURED_EXTRACTION) 🔒</li>
+      <li><b>리포트 · 요약</b>: 일간·주간 리포트 · 개요·전망·업종 요약 · 공시 분류 · 회고 (MARKET_REPORT · DOCUMENT_DIGEST · RETROSPECTIVE) 🔒</li>
+      <li><b>거래 판단</b>: 자동 매도 판단 · 급등 재료 확인 (SELL_DECISION · SURGE_CATALYST_CHECK). 실패 시 판단 보류 · 매수 안 함은 고정 🔒</li>
+      <li><b>추천</b>: F5 2단 분석 (RECOMMENDATION_ANALYSIS). <b>번역</b>: 영→한 (TRANSLATE). <b>임베딩</b>은 로컬 Ollama bge-m3 고정 표시.</li>
+      <li>카테고리 값은 포함 목적 전부에 같은 (제공자, 모델)로 펼쳐져 저장됩니다. 코드는 여전히 목적 단위로 라우팅합니다.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>카드 한 장</h3>
+    <ul>
+      <li>머리: 이름 · 포함 기능 한 줄 · 🔒 · 이번 달 사용(호출 · 비용).</li>
+      <li>주 LLM(제공자 ▾ + 모델 ▾) · 대체 LLM(선택) · 실패 시 문구(고정) · 테스트 호출.</li>
+      <li>고급 켜짐: 카드 안에 목적별 행(주 · 대체 · "카테고리 값 따름" 되돌리기). 토론 카드에는 페르소나별 행과 구성원 허용 제공자도 여기.</li>
+      <li>프리셋(균형 · 품질 우선 · 비용 최소 · 로컬 전용)은 다섯 카드를 한 번에 채우고, 한 칸이라도 손대면 "사용자 정의".</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>규칙</h3>
+    <ul>
+      <li>선택 가능 = <code>credential_meta.status = VERIFIED</code>인 제공자. 미등록은 회색이라 고를 수 없고, 키를 삭제하면 카드에 경고 + 실행은 대체 → 실패 정책.</li>
+      <li>저장 검증: 다섯 카드 모두 주 LLM 있음 · VERIFIED만 · 주와 대체가 다름 · 로컬 전용이면 클라우드 없음 · 임베딩 변경 시 재색인 확인.</li>
+      <li>🔒 카테고리는 사용자별 개인 데이터 허용 스위치와 교차(사용자마다 실제 경로 다름). 저장마다 감사 로그 + 이력 20건.</li>
+      <li>편집은 admin + step-up(5분). 구성원은 읽기 전용 [제안]. 디바이스 덮어쓰기·모델 직접 입력은 고급에서만.</li>
+      <li>데이터: 목적별 <code>llm_route</code>(변경 없음) + <code>shared_setting</code>(프리셋 · 고급 여부 · 카테고리 값 · 허용 제공자 · 임베딩) + <code>llm_route_history</code>. API <code>PUT /admin/llm/routes</code>는 카테고리 값 + 고급 덮어쓰기를 받아 목적별로 펼쳐 저장.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===================== 계정·알림·회원 관리 (F21) ===================== -->
+<h2>계정 · 알림 · 회원 관리 모달 <span class="tag">F21</span> <span class="tag warn">제안 2026-09-25</span></h2>
+<p class="lede">상단 바 2행 사용자 이름 → 드롭다운의 세 항목입니다. 자산 모달과 같은 틀(폭 760, 바깥 흐림 없음, 강조색 발광, 제목 바 드래그)이고 admin에게만 "회원 관리 · 공유 키"가 보입니다. 위 목업에서 <b>admin ▾</b>를 누르거나 여기서 바로 열어 보세요: <a href="#app" data-open="pimodal" style="color:var(--accent)">회원정보 변경</a> · <a href="#app" data-open="ntmodal" style="color:var(--accent)">알림 설정</a> · <a href="#app" data-open="admmodal" style="color:var(--accent)">회원 관리 · 공유 키</a>. 상세 docs/ACCOUNT_SETTINGS_DESIGN.md.</p>
+<div class="notes">
+  <div class="note">
+    <h3>회원정보 변경 (본인)</h3>
+    <p>요청하신 네 가지(표시 이름 · 비밀번호 · Slack 수신 계정 · 이메일)가 뼈대입니다. 여기에 이미 확정된 "내 계정의 열쇠"들이 같은 화면에 있어야 합니다.</p>
+    <ul>
+      <li><b>기본</b>: 표시 이름(= 로그인 때 고르는 이름, 별도 ID 없음 [제안]) · 역할(표시만) · 이메일(선택, relay 뒤 복구·새 디바이스용) · Slack 수신 계정(+ 테스트 DM) · 가입일·마지막 로그인.</li>
+      <li><b>로그인 수단</b>: 비밀번호 변경(현재 → 새 → 확인, 12자+) · TOTP 재등록(현재 코드 확인 → 새 QR) · 복구 코드 재발급(남은 개수) · 패스키(자리만) · 로그인 이력 10건.</li>
+      <li><b>연결(키)</b>: 본인 토스 키 상태·교체(TOTP 재확인 → 검증 → 계좌 선택, 개인 키의 유일한 본인 교체 경로) · 금융결제원 재동의·철회 · Slack DM 상태. 값은 다시 보이지 않습니다.</li>
+      <li><b>보안·개인정보</b>: 개인 키 추가 암호화(재부팅 후 로그인 전 자동화 정지 경고) · 로그아웃 시 자동화 정지 · 개인 데이터 LLM 전송 허용(제공자별, Ollama만 기본 켬) · 내보내기(후순위) · 탈퇴 요청.</li>
+      <li>항목마다 따로 저장(인증 요구가 달라서). 모든 변경은 감사 로그.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>알림 설정 (본인)</h3>
+    <ul>
+      <li>채널 셋: 앱 안(항상) · macOS 알림(창 닫혔을 때) · Slack DM(내 수신 계정 + admin 봇 토큰이 있어야 활성).</li>
+      <li>항목 × 채널 표: 체결·거부 / 가드레일 / 승인 요청 / 킬 스위치 / 토론 완료 / 데이터 갱신 / 리포트 / 키·IP 문제 / LLM 예산(admin). 앱 안은 돈이 걸린 넷은 고정 켬. 기본값은 F13·F14 결정대로(체결 Slack 켬, 데이터 갱신 Slack 끔).</li>
+      <li>야간 방해 금지 23:00~07:00 KST, "긴급" 열(가드레일·승인·킬 스위치·키 문제)만 통과. 미국 정규장과 겹친다는 안내.</li>
+      <li>Slack에 수량·금액 포함 여부(기본 끔). 테스트 알림 버튼. 저장은 <code>user_setting</code>의 <code>notify.*</code>, 동기화.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>회원 관리 · 공유 키 (admin, step-up)</h3>
+    <ul>
+      <li>여는 순간 TOTP 재확인(5분 유지). 구성원에게는 메뉴 자체가 없고 API도 403.</li>
+      <li><b>회원 관리</b>: 4명 등록부 표(이름·역할·상태·마지막 로그인·TOTP·토스 키 등록 여부·금융결제원·자동화). 행 액션: 정지/해제(자동화 즉시 정지), 토스 키 삭제(본인이 다음 로그인 때 재입력), 동의 해제, 디바이스 폐기(8단계), 데이터 파기(이름 입력 확인, 이벤트·감사·주문은 보존). 등록 코드 발급(한 번만 표시, 24시간, 남은 자리 N/3). admin 이관 [제안]. 자기 자신은 정지·삭제 불가.</li>
+      <li><b>공유 키</b>: 마법사 ②와 같은 목록. 교체(검증 성공분만 저장) · 재검증(한 건/전체, 마법사 ④ 컴포넌트) · 삭제(의존 기능 즉시 비활성). 공유 설정: SEC 이메일 · KRX 만료일 · LLM 프리셋·예산(경로 편집은 설정 화면) · 공용 시세 수집 키(admin 본인, 표시만).</li>
+      <li>값은 admin에게도 끝 4자리만. 전부 감사 로그.</li>
+    </ul>
+  </div>
+  <div class="note">
+    <h3>데이터</h3>
+    <ul>
+      <li><code>app_user</code>에 <code>email</code> · <code>slack_user_id</code> · <code>auto_stop_on_logout</code> 추가. 알림·LLM 허용은 <code>user_setting</code>, 공유 설정은 <code>shared_setting</code>, 키 메타는 <code>credential_meta</code>, 코드는 <code>registration_code</code>(해시).</li>
+      <li>로컬 API: <code>/me/*</code>(본인 세션), <code>/admin/*</code>(admin + step-up 토큰).</li>
+      <li>결정 대기: 별도 로그인 ID 없이 표시 이름으로 · 이메일 선택 · admin 이관 · 패스키는 자리만.</li>
+    </ul>
+  </div>
 </div>
 
 <!-- ===================== 거래내역 패널 (F20) ===================== -->
@@ -1607,6 +1879,9 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
     <li>남은 외부 확인: 13F 정보표 XML 파일명(접수별 index.json), 토스 미국 종목 마스터의 ISIN·영문 회사명 제공 여부, 공공데이터포털 일일 트래픽 한도 수치(캐시로 대응하되 확인).</li>
     <li>F15 결정됨(2026-09-25): 탭·항목 승인, 마지막 탭 기억, 배당은 정보만, ETF 구성종목은 구현 보류(국내 데이터 제공자 확보 시 해제). 미국 배당 캘린더는 Massive로 해결.</li>
     <li>F1 예외·F16 자산 조회·F17 매매 통계 결정됨(2026-09-25). F17·F2 화면 목업은 후속.</li>
+    <li>F23 상단 바 지수 티커 [제안 2026-09-25]: 장 밖 표시 규칙(최근 닫힌 시장 종가 + 개장 30분 전 전환), 해외 지수 출처(토스 시장 지표 범위 확인), 클릭 동작 없음.</li>
+    <li>F22 LLM 경로 설정 [제안 2026-09-25, 카테고리 다섯 개로 단순화]: 카테고리 구성·이름, 구성원 읽기 전용 보기, 고급 모드 범위(목적별·페르소나별·디바이스·모델 직접 입력).</li>
+    <li>F21 계정·알림·회원 관리 [제안 2026-09-25]: 별도 로그인 ID 없이 표시 이름으로, 이메일 선택, admin 이관, 패스키 자리만.</li>
     <li>F20 거래내역 패널: 확정(2026-09-25) — z-order(검색·사용자 메뉴가 패널 위), 묶음 날짜 국내 KST·미국 ET, 양도세 토글은 대상 금액·예상 부과액만, CSV 없음, 실현손익 원천은 우리 DB(<code>lot_disposal</code>). 구현 단계 확인: 토스 매도 시 환율 필드(없으면 별도 환율 API), 실현손익 API(있으면 대조만).</li>
     <li>F19 최초 구동 마법사·시작 종목: 모두 확정(2026-09-25) — 토스 키 "나중에"·조회 제한 모드, 로그인 모달 바깥 흐림, TOTP 포함, 시작 종목 = 직전 종목 → 평가금액 최대 보유 → 삼성전자/엔비디아. 남은 확인: 토스 보유 조회 평가금액 필드명, ZXing 의존성.</li>
     <li>F18 보유주식 평가금액: 토스 API에서 예수금 D+1/D+2와 담보비율을 어떤 필드로 주는지 [확인 필요](신용 미사용이면 담보비율은 0.00% 고정 표시 또는 숨김). 종목 변경 시 유지·금액 숨김 기본 꺼짐은 결정됨(2026-09-25).</li>
@@ -1617,6 +1892,23 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
 
 <script>
 (function(){
+  // 모달은 한 번에 하나만: 어떤 모달을 열든 다른 모달(과 그 안의 확인 창)은 닫힌다 [확정 2026-09-25]
+  function showOnlyModal(el){ document.querySelectorAll('#app .modal').forEach(function(x){ if(x!==el){ x.hidden=true; x.querySelectorAll('.confirm').forEach(function(c){c.hidden=true;}); } }); var nb=document.getElementById('npsbtn'); if(nb&&el.id!=='npsmodal') nb.classList.remove('on'); el.hidden=false; }
+  window.showOnlyModal=showOnlyModal;
+  // 상단 바 지수 티커 (F23): 목업에서는 8초마다 값을 바꾸고 왼쪽→오른쪽으로 슬라이딩(새 값이 왼쪽에서 들어오고 옛 값은 오른쪽으로 나감). 실제는 5분, 값이 바뀐 항목만
+  (function(){
+    var KR=[['KOSPI',3412.85],['KOSDAQ',1024.17],['NIKKEI 225',42118.60]], US=[['DJIA',44120.35],['NASDAQ',18204.11],['S&P 500',6102.44]];
+    var set=KR, base=KR.map(function(x){return x[1]}), tick=0;
+    function fmt(n){return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+    function render(i,name,v,chg){var it=document.querySelector('#idx .it[data-i="'+i+'"]'),old=it.querySelector('.roll');
+      var cls=chg>0.005?'up':chg<-0.005?'down':'flat', ar=cls==='up'?'▲ ':cls==='down'?'▼ ':'— ', pct=(chg/(v-chg)*100);
+      var el=document.createElement('span');el.className='roll in';el.innerHTML='<span class="nm">'+name+'</span><span class="bar">|</span><span class="v">'+fmt(v)+'</span><span class="bar">|</span><span class="chg '+cls+'">'+ar+fmt(Math.abs(chg))+' ('+(chg>=0?'+':'−')+Math.abs(pct).toFixed(2)+'%)</span>';
+      it.insertBefore(el,old); old.classList.add('out'); requestAnimationFrame(function(){requestAnimationFrame(function(){el.classList.remove('in');});}); setTimeout(function(){old.remove();},380);}
+    function refresh(){ tick++; if(tick%6===0){ set=(set===KR?US:KR); base=set.map(function(x){return x[1]}); }
+      set.forEach(function(x,i){ var v=base[i]*(1+(Math.random()-0.5)*0.004); var chg=v-x[1]*(1-0.0036*(i===1?-1:1)); if(tick%6!==0 && Math.random()<0.35) return; render(i,x[0],v,chg); });
+      document.getElementById('idx').title='5분마다 갱신 · 토스 시장 지표 · 마지막 갱신 '+new Date().toTimeString().slice(0,5)+' KST'; }
+    setInterval(refresh,8000);
+  })();
   // 예시 캔들 데이터 (임의 값). S = 현재 종목 가격 스케일(삼성전자 74,300 기준 1.0), US = 미국 종목 여부
   var S=1, US=false, sym={name:'삼성전자',code:'005930',mkt:'KOSPI'};
   function fmt(v){return US?'$'+v.toFixed(2):Math.round(v).toLocaleString();}
@@ -1760,7 +2052,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
     mtitle.textContent=v+' · '+symName; mord.innerHTML='지정가 '+v+'<small>확인 창 후 주문</small>'; mnow.innerHTML='현재가 즉시 '+v+'<small>확인 없이 바로</small>';
     var us=!/^\d{6}$/.test(sym.code); document.getElementById('tifopg').classList.toggle('dis',us); document.getElementById('tifcls').classList.toggle('dis',!us); document.getElementById('mamt').classList.toggle('dis',!(us&&side==='buy'));
     document.getElementById('mnote').innerHTML=us?(side==='sell'?'즉시 주문은 <b>현재가 지정가</b>입니다. 소수점 보유분(예: 0.42주)은 토스 규격상 시장가 매도만 가능해 <b>소수점 잔량 시장가 매도</b> 버튼이 따로 뜹니다(정규장 시작~종료 1시간 전).':'즉시 주문은 <b>현재가 지정가</b>입니다. <b>금액($) 매수</b>는 시장가로 나가며 정규장 시작~종료 1시간 전에만 가능합니다. CLS(종가지정가)는 지정가만.'):'즉시 주문은 시장가가 아니라 <b>이 순간의 현재가 지정가</b>로 나갑니다. 체결되지 않으면 미체결로 남습니다. OPG(시가단일가)는 장 시작 전 접수.';
-    modal.hidden=false; place(); }
+    showOnlyModal(modal); place(); }
   document.querySelectorAll('.obtns .btn').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();openModal(b.dataset.side);});});
   document.getElementById('mx').addEventListener('click',function(){modal.hidden=true;});
   modal.addEventListener('click',function(e){e.stopPropagation();});
@@ -1832,7 +2124,25 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   userbtn.addEventListener('click',function(e){e.stopPropagation();umenu.hidden=!umenu.hidden;pop.hidden=true;});
   umenu.addEventListener('click',function(e){e.stopPropagation();});
   function placeAs(){ if(aspos){asm.style.left=aspos.x+'px';asm.style.top=aspos.y+'px';return;} asm.style.left=Math.max(12,(app.clientWidth-asm.offsetWidth)/2)+'px'; asm.style.top=Math.max(12,(app.clientHeight-asm.offsetHeight)/2)+'px'; }
-  document.getElementById('umAsset').addEventListener('click',function(){umenu.hidden=true;asm.hidden=false;placeAs();});
+  document.getElementById('umAsset').addEventListener('click',function(){umenu.hidden=true;showOnlyModal(asm);placeAs();});
+  // 계정·알림·회원 관리 모달 (F21)
+  function wireAcc(mid,hid,xid,menuId){var m=document.getElementById(mid),h=document.getElementById(hid),pos=null,drag=null;
+    function place(){ if(pos){m.style.left=pos.x+'px';m.style.top=pos.y+'px';return;} m.style.left=Math.max(12,(app.clientWidth-m.offsetWidth)/2)+'px'; m.style.top=Math.max(12,(app.clientHeight-m.offsetHeight)/2)+'px'; }
+    document.getElementById(menuId).addEventListener('click',function(){umenu.hidden=true;showOnlyModal(m);place();});
+    document.getElementById(xid).addEventListener('click',function(){m.hidden=true;}); m.addEventListener('click',function(e){e.stopPropagation();});
+    h.addEventListener('pointerdown',function(e){if(e.target.id===xid||e.target.closest('.tabs'))return;drag={dx:e.clientX-m.offsetLeft,dy:e.clientY-m.offsetTop};h.setPointerCapture(e.pointerId);});
+    h.addEventListener('pointermove',function(e){if(!drag)return;pos={x:Math.max(0,Math.min(app.clientWidth-m.offsetWidth,e.clientX-drag.dx)),y:Math.max(0,Math.min(app.clientHeight-m.offsetHeight,e.clientY-drag.dy))};place();});
+    h.addEventListener('pointerup',function(){drag=null;}); h.addEventListener('pointercancel',function(){drag=null;});
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape')m.hidden=true; });
+    return m; }
+  var pim=wireAcc('pimodal','pih','pix','umProfile'), ntm=wireAcc('ntmodal','nth','ntx','umNotify'), adm=wireAcc('admmodal','admh','admx','umAdmin'), llmm=wireAcc('llmmodal','llmh','llmx','openllm');
+  document.getElementById('openllm').addEventListener('click',function(){adm.hidden=true;});
+  document.getElementById('llmadv').addEventListener('click',function(){var on=!this.classList.contains('on');this.classList.toggle('on',on);llmm.querySelectorAll('.adv').forEach(function(d){d.hidden=!on;});});
+  document.querySelectorAll('#pitabs span').forEach(function(t){t.addEventListener('click',function(){document.querySelectorAll('#pitabs span').forEach(function(x){x.classList.toggle('on',x===t)});pim.querySelectorAll('.sec').forEach(function(s){s.hidden=s.getAttribute('data-s')!==t.getAttribute('data-t')});});});
+  document.querySelectorAll('#admtabs span').forEach(function(t){t.addEventListener('click',function(e){e.stopPropagation();document.querySelectorAll('#admtabs span').forEach(function(x){x.classList.toggle('on',x===t)});adm.querySelectorAll('.sec').forEach(function(s){s.hidden=s.getAttribute('data-s')!==t.getAttribute('data-t')});});});
+  document.getElementById('admgo').addEventListener('click',function(){document.getElementById('admstep').hidden=true;});
+  document.querySelectorAll('.acc .sw').forEach(function(s){s.addEventListener('click',function(){if(s.style.pointerEvents==='none')return;s.classList.toggle('on');});});
+  document.querySelectorAll('[data-open]').forEach(function(b){b.addEventListener('click',function(e){e.preventDefault();var id=b.getAttribute('data-open');if(id==='admmodal')document.getElementById('admstep').hidden=false;var m=document.getElementById(id);showOnlyModal(m);m.style.left=Math.max(12,(app.clientWidth-m.offsetWidth)/2)+'px';m.style.top=Math.max(12,(app.clientHeight-m.offsetHeight)/2)+'px';app.scrollIntoView({behavior:'smooth',block:'start'});});});
   document.getElementById('asx').addEventListener('click',function(){asm.hidden=true;}); asm.addEventListener('click',function(e){e.stopPropagation();});
   var asdrag=null;
   ash.addEventListener('pointerdown',function(e){if(e.target.id==='asx')return;asdrag={dx:e.clientX-asm.offsetLeft,dy:e.clientY-asm.offsetTop};ash.setPointerCapture(e.pointerId);});
@@ -1863,7 +2173,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   function openAmend(tr){ var us=tr.dataset.mkt==='US'; amAuto=tr.dataset.auto==='1'; am.classList.remove('buy','sell'); am.classList.add(tr.dataset.side); document.getElementById('amtitle').textContent='정정 · '+tr.dataset.name; document.getElementById('amcode').textContent=tr.dataset.code; document.getElementById('amorig').textContent=tr.dataset.desc+' (지정가'+(amAuto?' · 자동 매수':'')+')';
     var g=document.getElementById('amguard'); g.classList.toggle('no',amAuto); g.innerHTML=amAuto?'경고 · 정정 후 자동 매수 노출 <span class="num">11,340,000 / 10,000,000</span> — 한도 초과. 확인 창에서 승인해야 합니다':'가드레일 통과 · 정정 후 예상 금액 <span class="num">743,000</span> · 스냅샷 2초 전';
     document.getElementById('amq').classList.toggle('lock',us); document.getElementById('amqhint').textContent=us?'미국 주식은 가격만 정정할 수 있습니다(토스 규격). 수량을 바꾸려면 취소 후 새로 주문':'국내 주식은 가격·수량 모두 정정. 수량은 잔량 기준';
-    am.hidden=false; placeAm(); }
+    showOnlyModal(am); placeAm(); }
   document.querySelectorAll('.ord .act.amend').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation(); if(b.classList.contains('dis'))return; openAmend(b.closest('tr'));});});
   document.querySelectorAll('.ord .act.cancel').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation(); if(b.classList.contains('dis'))return; var tr=b.closest('tr'); actitle.textContent='주문 취소 확인'; acbody.textContent=tr.dataset.name+' '+tr.dataset.desc+'의 미체결 잔량을 취소합니다. 이미 체결된 수량은 그대로 남습니다.'; aconf.hidden=false;});});
   document.getElementById('amx').addEventListener('click',function(){am.hidden=true;}); am.addEventListener('click',function(e){e.stopPropagation();});
@@ -1881,7 +2191,7 @@ h2{font-size:17px;margin:40px 0 12px;letter-spacing:-.01em}
   // ===== 국민연금 해외투자 현황 모달 (F13): 상단 바 🏛️ 버튼·⌘N, 앱 기동 시 푸시(토스트 + 배지) =====
   var npsm=document.getElementById('npsmodal'), npsbtn=document.getElementById('npsbtn'), nph=document.getElementById('nph'), npst=document.getElementById('npstoast'), nppos=null;
   function placeNps(){ if(nppos){npsm.style.left=nppos.x+'px';npsm.style.top=nppos.y+'px';return;} npsm.style.left=Math.max(12,(app.clientWidth-npsm.offsetWidth)/2)+'px'; npsm.style.top=Math.max(12,(app.clientHeight-npsm.offsetHeight)/2)+'px'; }
-  function openNps(){ npsm.hidden=false; placeNps(); npsbtn.classList.add('on'); npsbtn.classList.remove('new'); npst.hidden=true; pop.hidden=true; }
+  function openNps(){ showOnlyModal(npsm); placeNps(); npsbtn.classList.add('on'); npsbtn.classList.remove('new'); npst.hidden=true; pop.hidden=true; }
   function closeNps(){ npsm.hidden=true; npsbtn.classList.remove('on'); }
   npsbtn.addEventListener('click',function(e){e.stopPropagation(); if(npsm.hidden)openNps(); else closeNps();});
   document.getElementById('npx').addEventListener('click',closeNps);

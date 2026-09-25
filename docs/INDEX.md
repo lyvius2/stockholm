@@ -41,7 +41,10 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 | [EXTERNAL_APIS.md](EXTERNAL_APIS.md) | 외부 API 카탈로그(토스·금융결제원·DART·EDGAR·KRX·Massive·네이버·NPS·Slack), 한도·제약·약관 | 갱신 중 | 어댑터 작업 전. 구현 기준은 항상 공식 문서 |
 | [ORDER_MANAGEMENT_DESIGN.md](ORDER_MANAGEMENT_DESIGN.md) | 체결 현황·미체결 정정·취소, 상태 매핑, 정정 체인, 한도 초과 확인 창(F14) | 확정 | 2단계 주문 |
 | [PORTFOLIO_PANEL_DESIGN.md](PORTFOLIO_PANEL_DESIGN.md) | 보유주식 평가금액 패널(F18) | 확정 | 2단계 |
-| [TRADE_HISTORY_DESIGN.md](TRADE_HISTORY_DESIGN.md) | 거래내역 패널(F20): 손익(F2)·체결내역(F14 주문 내역)·매매내역, 기간 단위, 선입선출 실현손익 계산, `lot_disposal` | 제안 2026-09-25 | 2단계 |
+| [TRADE_HISTORY_DESIGN.md](TRADE_HISTORY_DESIGN.md) | 거래내역 패널(F20): 손익(F2)·체결내역(F14 주문 내역)·매매내역, 기간 단위, 선입선출 실현손익 계산, `lot_disposal` | 확정 2026-09-25 | 2단계 |
+| [ACCOUNT_SETTINGS_DESIGN.md](ACCOUNT_SETTINGS_DESIGN.md) | 사용자 메뉴 세 화면(F21): 회원정보 변경(기본·로그인 수단·연결 키·보안), 알림 설정(채널×항목·방해 금지), 회원 관리·공유 키(admin, step-up) | 제안 2026-09-25 | 1~2단계 |
+| [MARKET_INDEX_TICKER_DESIGN.md](MARKET_INDEX_TICKER_DESIGN.md) | 상단 바 지수 티커(F23): 장별 지수 3개, 포맷, 세트 선택 규칙, 5분 갱신·슬라이딩, 출처 | 제안 2026-09-25 | 2단계 |
+| [LLM_ROUTE_SETTINGS_DESIGN.md](LLM_ROUTE_SETTINGS_DESIGN.md) | LLM 경로 설정 모달(F22): 카테고리 5개(토론·리포트·요약·거래 판단·추천·번역)마다 주·대체 LLM, 등록 제공자만 선택, 프리셋, 고급에서 목적별, 검증, 이력 | 제안 2026-09-25 | 4단계 |
 | [ASSET_DESIGN.md](ASSET_DESIGN.md) | 사용자 메뉴, 금융결제원 자산 조회 모달, 동의 흐름(F16) | 확정 | 2단계 |
 | [RAG_DESIGN.md](RAG_DESIGN.md) | Lucene 하이브리드, 기준 시점 `asOf`, 코퍼스 구분, 보관 규칙 | 제안 | 3단계 |
 | [DART_DESIGN.md](DART_DESIGN.md) | 공시 감시·재무·배당·기업개황, 공시 유형→조치 표 | 확정 | 3단계 |
@@ -75,6 +78,9 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 | F16 자산 조회 | [ASSET_DESIGN](ASSET_DESIGN.md) | [KEY_MANAGEMENT](KEY_MANAGEMENT.md) |
 | F18 평가금액 패널 | [PORTFOLIO_PANEL_DESIGN](PORTFOLIO_PANEL_DESIGN.md) | — |
 | F20 거래내역 패널 | [TRADE_HISTORY_DESIGN](TRADE_HISTORY_DESIGN.md) | [ORDER_MANAGEMENT](ORDER_MANAGEMENT_DESIGN.md) |
+| F21 계정·알림·회원 관리 | [ACCOUNT_SETTINGS_DESIGN](ACCOUNT_SETTINGS_DESIGN.md) | [KEY_MANAGEMENT](KEY_MANAGEMENT.md), [LLM_ROUTING](LLM_ROUTING.md) 8장 |
+| F22 LLM 경로 설정 | [LLM_ROUTE_SETTINGS_DESIGN](LLM_ROUTE_SETTINGS_DESIGN.md) | [LLM_ROUTING](LLM_ROUTING.md) 4·6·10장 |
+| F23 지수 티커 | [MARKET_INDEX_TICKER_DESIGN](MARKET_INDEX_TICKER_DESIGN.md) | [EXTERNAL_APIS](EXTERNAL_APIS.md) 1.1·2.3 |
 | F19 최초 구동·로그인·시작 종목 | [FIRST_RUN_DESIGN](FIRST_RUN_DESIGN.md) | [KEY_MANAGEMENT](KEY_MANAGEMENT.md) |
 
 ## 5. 단계 → 문서
@@ -83,10 +89,10 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 
 | 단계 | 읽을 문서 |
 |---|---|
-| 1 리포 골격 | CLAUDE, CORE_DOMAIN, DB_SCHEMA 3·4·5장, FIRST_RUN, KEY_MANAGEMENT |
-| 2 토스·F1~F4·F14·F16·F18·F19·F20 | EXTERNAL_APIS 1.1·1.2, ORDER_MANAGEMENT, PORTFOLIO_PANEL, TRADE_HISTORY, ASSET, FIRST_RUN, KRX |
+| 1 리포 골격 | CLAUDE, CORE_DOMAIN, DB_SCHEMA 3·4·5장, FIRST_RUN, KEY_MANAGEMENT, ACCOUNT_SETTINGS 3.2 |
+| 2 토스·F1~F4·F14·F16·F18·F19·F20·F21 | EXTERNAL_APIS 1.1·1.2, ORDER_MANAGEMENT, PORTFOLIO_PANEL, TRADE_HISTORY, ASSET, ACCOUNT_SETTINGS, FIRST_RUN, KRX |
 | 3 수집·RAG·F12·F13·F15 | RAG, DART, EDGAR, KRX, NPS, STOCK_INFO, EXTERNAL_APIS 2·3장 |
-| 4 토론·추천·리포트 | LLM_ROUTING, DEBATE, MIROFISH 실험 |
+| 4 토론·추천·리포트 | LLM_ROUTING, LLM_ROUTE_SETTINGS, DEBATE, MIROFISH 실험 |
 | 5 학습 | PROJECT F10, DEBATE 6장 |
 | 6 자동화 | PROJECT 10장, CORE_DOMAIN 6·7장, DB_SCHEMA 8장 |
 | 7 relay | PROJECT 3·5·7장, DB_SCHEMA 11장 |

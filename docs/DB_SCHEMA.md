@@ -20,13 +20,13 @@
 |---|---|---|---|---|
 | 설치·계정 | `installation` `app_user` `recovery_code` `registration_code` `device` `user_session` `credential_meta` `shared_setting` `audit_log` | ④ | 설치 / 사용자 | 1 |
 | 이벤트·동기화 | `event_log` `sync_cursor` `user_setting` `watchlist_group` `watchlist_item` `persona_definition` | ①② | 사용자 | 1 |
-| 종목·시세 | `stock_master` `stock_warning` `candle` `exchange_rate` `market_calendar` `krx_daily_price` `krx_etf_daily` `krx_index_daily` `dart_corp` `edgar_entity` `us_ticker_ref` | ③ | 설치 공용 | 1~2 |
+| 종목·시세 | `stock_master` `stock_warning` `candle` `exchange_rate` `market_calendar` `market_index_quote` `krx_daily_price` `krx_etf_daily` `krx_index_daily` `dart_corp` `edgar_entity` `us_ticker_ref` | ③ | 설치 공용 | 1~2 |
 | 주문·보유 | `broker_order` `lot` `lot_disposal` `portfolio_cache` `notification` `approval_request` | ③② | 사용자 | 2, 6 |
 | 자동화 | `automation_setting` `guardrail_limits` `auto_sell_permission` `kill_switch` `auto_buy_exclusion` `lease` `simulated_order` | ② | 사용자 | 6, 8 |
 | 지식·공시·재무 | `knowledge_document` `knowledge_symbol` `index_status` `symbol_alias` `kr_disclosure` `us_disclosure` `financial_fact` `financial_statement` `dividend_payment` `dividend_yield_weekly` `dividend_upcoming` `industry_profile` `sentiment_snapshot` `translation_cache` `translation_glossary` `journal_memo` `etf_composition` `etf_digest` | ③(정정은 버전) | 설치 공용 / 사용자 | 3 |
 | 연기금 | `pension_dataset` `pension_holdings_snapshot` `pension_holding` `pension_holdings_change` `pension_symbol_alias` `pension_check_log` | ③ | 설치 공용 | 3 |
 | 토론·추천·리포트 | `debate_session` `debate_participant` `debate_utterance` `debate_intervention` `debate_material` `debate_verdict` `stock_outlook_digest` `industry_digest` `related_symbol` `recommendation` `market_report` | ②③ | 사용자 / 공용 | 4 |
-| 학습 | `prediction_outcome` `persona_weight` `persona_weight_history` `retrospective` `llm_usage` `llm_route` `llm_budget` `llm_price` | ②④ | 사용자 / 설치 | 5 |
+| 학습 | `prediction_outcome` `persona_weight` `persona_weight_history` `retrospective` `llm_usage` `llm_route` `llm_route_history` `llm_budget` `llm_price` | ②④ | 사용자 / 설치 | 4~5 |
 | relay (별도 DB) | `relay_member` `relay_device` `relay_device_request` `relay_session` `relay_challenge` `relay_registration_code` `relay_mailbox` `relay_mailbox_delivery` `relay_lease` `relay_nonce` `relay_notify_route` `relay_audit_log` | ④ | 서버 | 7~8 |
 
 SQLite 예약어와 겹치는 `user`, `session`은 `app_user`, `user_session`으로 쓴다.
@@ -143,6 +143,9 @@ erDiagram
     string status "ACTIVE|SUSPENDED"
     string toss_key_decision "REGISTERED|LATER|NONE"
     int extra_key_wrap "본인 비밀번호 유도 키 옵션"
+    int auto_stop_on_logout
+    string email "선택"
+    string slack_user_id "선택, 비밀 아님"
     string created_at
     string updated_at
   }
@@ -213,7 +216,7 @@ erDiagram
 ```
 
 - `installation`은 항상 한 행(`installation_id`는 설치 ULID, 이벤트 로그의 `device_id`와는 별개). `setup_state` 전이는 5단계뿐이며 서비스가 검사한다.
-- `app_user`는 최대 4행. 5번째 삽입은 서비스가 막고, 테스트에서 확인한다(DB 제약으로 표현하지 않는다 — 벤더마다 방법이 달라서).
+- `app_user`의 `email`·`slack_user_id`는 비밀값이 아니라 DB에 둔다(F21). `app_user`는 최대 4행. 5번째 삽입은 서비스가 막고, 테스트에서 확인한다(DB 제약으로 표현하지 않는다 — 벤더마다 방법이 달라서).
 - `credential_meta` 유일 키 `(kind, scope, user_id)`. `extra_json`은 종류별 부가 메타(토스: 계좌 끝 4자리·`accountSeq`, Ollama: 주소·모델 목록, Slack: 워크스페이스, Massive: 등급). SEC 연락처 이메일은 비밀이 아니므로 `shared_setting`에 둔다(`sec.contact_email`).
 - `shared_setting`은 admin 공유 설정의 키-값(SEC 이메일, KRX 이용 신청 만료일, LLM 예산 상한 등). `user_setting`(5장)과 같은 구조이되 사용자 열이 없다.
 - `audit_log`는 **이벤트로 표현되지 않는 감사**(로그인·잠금·step-up·키 등록·검증·삭제·자산 조회·데이터 파기)만 담는다. 주문 감사는 `event_log`의 `OrderIntended → GuardrailEvaluated → OrderSubmitted → …` 연쇄 자체다(CORE_DOMAIN 9장). 두 곳에 같은 일을 쓰지 않는다. `detail_json`에 키 값·계좌번호·응답 원문을 넣지 않는다(테스트에서 표식 값 검색).
@@ -435,6 +438,7 @@ erDiagram
 - `stock_master`는 일 1회 통째로 갱신하는 **합성 표**(토스 + KRX 종목기본정보 + DART 기업개황 + Massive). 원본은 `krx_issue`를 따로 두지 않고 `source_json`에 출처별 키(KRX `ISU_SRT_CD`, DART `corp_code`, EDGAR `cik`, FIGI)를 담는다. 상장폐지는 행을 지우지 않고 `delisted=1`(과거 lot·토론이 참조).
 - `stock_warning`은 초 단위로 바뀌는 VI·경고 플래그의 **현재값**만 담는 짧은 TTL 캐시(보유·관심·후보 종목만). 이력은 두지 않는다. `StockFlags`의 네 필드는 마스터 동기화 때 `stock_warning`에서 복사하지 않고 항상 이 표에서 읽는다.
 - `candle`은 **토스가 주는 1분봉·일봉만** 저장한다. 3·5·10·30·60분·주·월·년은 조회 시 집계하고 메모리 캐시(파생물 저장 안 함). `is_final=0`은 진행 중인 봉(재연결 시 REST로 덮어씀). 보존: 1분봉 90일, 일봉 영구. KR 일봉은 2022-11-23 이전을 `krx_daily_price`에서 합성하므로 `source`가 다르다.
+- `market_index_quote(index_code PK, value, change_amount, change_ratio, as_of, closed, source, fetched_at)`는 F23 지수 티커의 마지막 값(5분 갱신, 이력 없음, 재시작·리포트용). 일별 종가 이력은 `krx_index_daily`.
 - `exchange_rate`는 토스 환율의 시계열(매수 시점 환율·분기 말 환율 조회용). 최신값은 메모리.
 - KRX 원본 세 표는 KRX_DESIGN 4장 그대로. 결측 `"-"`는 NULL. 수정주가 아님.
 
@@ -1173,6 +1177,16 @@ erDiagram
     string persona_id PK "'' = 공통"
     string chain_json "[provider, model, params] 순서"
     string updated_at
+    string updated_by
+  }
+  llm_route_history {
+    string history_id PK
+    string scope
+    string purpose
+    string persona_id
+    string chain_json
+    string changed_by
+    string changed_at
   }
   llm_budget {
     string scope PK "INSTALL|user_id"
@@ -1200,7 +1214,7 @@ erDiagram
 - `stock_outlook_digest`·`industry_digest`는 설치 공용 캐시(TTL 1주). `related_symbol`은 사용자별 projection이며 `AUTO`·`HOLDING`·`WATCH` 행은 재계산 대상, `USER_ADD`·`USER_EXCLUDE`만 이벤트로 동기화(상한 14는 서비스 검사).
 - `market_report`는 공용 본문과 개인 절(보유 종목)을 한 행에 두되 `user_id`가 NULL이면 공용 리포트다. 개인 절이 있는 사본은 사용자별 행.
 - `prediction_outcome`은 추천·결론·리포트 전망을 1·5·20일 뒤 대조한 결과의 고정 기록. 가격만으로 재계산할 수 있지만 국면·적중 판단을 고정하려고 저장한다.
-- `llm_usage`는 추가 전용 원장(보존 2년). 프롬프트·응답 전문은 없다. `llm_route`·`llm_budget`·`llm_price`는 admin 설정(동기화, 디바이스별 덮어쓰기는 `scope=device_id`).
+- `llm_usage`는 추가 전용 원장(보존 2년). 프롬프트·응답 전문은 없다. `llm_route`·`llm_budget`·`llm_price`는 admin 설정(동기화, 디바이스별 덮어쓰기는 `scope=device_id`). `llm_route_history`는 저장마다 이전 사슬을 남기는 되돌리기용 이력(최근 20건 유지, F22). 라우터는 실행 시 `credential_meta.status=VERIFIED`가 아닌 제공자를 건너뛴다.
 
 인덱스: `debate_session(user_id, market, code, started_at)`, `debate_utterance(debate_id, round)`, `debate_verdict(debate_id, sequence) UNIQUE`, `recommendation(user_id, created_at)`, `recommendation(user_id, market, code, valid_until)`, `prediction_outcome(user_id, evaluated_at)`, `llm_usage(user_id, occurred_at)`, `llm_usage(occurred_at)`(설치 예산 집계).
 
@@ -1355,7 +1369,7 @@ erDiagram
 | 버전 | 단계 | 내용 |
 |---|---|---|
 | V1 | 1 리포 골격 | 4장 전부, 5장 전부, `stock_master`·`stock_warning`·`exchange_rate`·`market_calendar` |
-| V2 | 2 토스·F1~F4 | `candle`, `broker_order`, `lot`, `lot_disposal`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref` |
+| V2 | 2 토스·F1~F4 | `candle`, `market_index_quote`, `broker_order`, `lot`, `lot_disposal`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref` |
 | V3 | 3 수집·RAG | 9장 전부(`pension_*`, `etf_*`, `translation_*` 포함) |
 | V4 | 4 토론·추천·리포트 | `debate_*`, `stock_outlook_digest`, `industry_digest`, `related_symbol`, `recommendation`, `market_report`, `llm_route`·`llm_budget`·`llm_price`·`llm_usage` |
 | V5 | 5 학습 | `prediction_outcome`, `persona_weight`, `persona_weight_history`, `retrospective` |

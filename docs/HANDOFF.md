@@ -26,6 +26,14 @@
 
 - **F20 거래내역 패널 설계 추가(2026-09-25, [확정])**: [TRADE_HISTORY_DESIGN.md](TRADE_HISTORY_DESIGN.md) — 2행 📒 버튼(💰 오른쪽, ⌘H), 오른쪽 위 슬라이딩 폭 60%(F18과 40:60 나란히), 탭 손익(F2)·체결내역(F14 주문 내역 흡수)·매매내역, 기간 일별·월별·분기별·직접, lot 선입선출 매칭(`lot_disposal`, FIFO [확정])과 매매손익·환차손익 정의. PROJECT F20·F2·F14·11.3, DB_SCHEMA 7장·V2, CORE_DOMAIN 5장, ORDER_MANAGEMENT 3.5, INDEX, DEVELOPMENT_PLAN 2단계 반영. 화면 설계서 v35(Version 38) 목업(💰·📒 함께 열기). `figma-plugin/` `history` 항목은 **02 주문 모달 · 서랍 · 검색 · 토론 페이지**에 그린다(사용자 지정). v3.11 실행 결과: 손익·체결내역 정상, 제목 텍스트가 프레임 이름과 겹침·매매내역 탭 없음 → v3.12에서 제목 제거·매매내역 장 추가. v3.12 실행은 헤더의 옛 📒 버튼 삭제 중 `does not exist`로 중단돼 아무것도 안 그려짐 → v3.13 `removeAll()`로 수정(재실행 대기). 결정됨(2026-09-25): z-order 메인 < 패널 < 검색·사용자 메뉴 < 모달(F18도 같음, PORTFOLIO_PANEL 3장 개정), 묶음 날짜 국내 KST·미국 ET(화면 안내), 양도세 토글은 대상 금액·예상 부과액만, CSV 없음, 실현손익 원천은 우리 DB(`lot_disposal`). 구현 단계 확인: 토스 매도 시 환율 필드(없으면 별도 환율 API), 실현손익 API(있으면 대조만). 화면 설계서 v36(Version 40).
 
+- **F21 계정·알림·회원 관리 설계 추가(2026-09-25, [제안])**: [ACCOUNT_SETTINGS_DESIGN.md](ACCOUNT_SETTINGS_DESIGN.md) — 사용자 메뉴 세 모달(회원정보 변경 4탭, 알림 설정 채널×항목 표·방해 금지, 회원 관리·공유 키 admin step-up), `app_user`에 `email`·`slack_user_id`·`auto_stop_on_logout`(DB_SCHEMA 4장), 로컬 API `/me/*`·`/admin/*`. PROJECT F21·11.3, KEY_MANAGEMENT 4장·ASSET 2장 포인터, INDEX, DEVELOPMENT_PLAN 1·2단계. 화면 설계서 v37(Version 41) 목업(사용자 메뉴에서 열림). `figma-plugin/` v3.14 `account` 항목(02 페이지). **결정 대기**: 별도 로그인 ID 없이 표시 이름으로, 이메일 선택, admin 이관, 패스키 자리만.
+
+- **F22 LLM 경로 설정 설계 추가(2026-09-25, [제안] → 같은 날 단순화)**: [LLM_ROUTE_SETTINGS_DESIGN.md](LLM_ROUTE_SETTINGS_DESIGN.md) — admin 모달(폭 760, step-up), **카테고리 카드 5장(토론 · 리포트·요약 · 거래 판단 · 추천 · 번역)** 마다 주·대체 LLM, 등록·검증 제공자만 선택, 프리셋은 5장 일괄, 거래 판단 실패 정책 고정, "고급" 토글에 목적별·페르소나별·디바이스·모델 직접 입력. 저장은 목적별 `llm_route`로 펼침 + `shared_setting` 카테고리 값 + `llm_route_history`. PROJECT F22, INDEX, LLM_ROUTING 3.1 카테고리 열. 화면 설계서 v39(Version 44) 목업(고급 토글 동작). `figma-plugin/` v3.16 `llmroute` 항목(02 페이지, 카드 5장). **결정 대기**: 카테고리 구성·이름, 구성원 읽기 전용, 고급 범위.
+
+- **모달 단일 규칙(2026-09-25, [확정])**: 어떤 모달이든 열리면 다른 모달(과 확인 창)은 닫힌다. PROJECT 11.3, ACCOUNT_SETTINGS 1장, 화면 설계서 v40(Version 45)의 `showOnlyModal()` 공통 헬퍼.
+
+- **F23 상단 바 지수 티커 설계 추가(2026-09-25, [제안])**: [MARKET_INDEX_TICKER_DESIGN.md](MARKET_INDEX_TICKER_DESIGN.md) — 1행 Stockholm 오른쪽 지수 3개(KR 장 KOSPI·KOSDAQ·NIKKEI 225 / US 장 DJIA·NASDAQ·S&P 500), `이름 | 지수 | ▲ 등락 (+%)` 포맷, 5분 갱신·왼쪽→오른쪽 슬라이딩(아래→위는 화면이 어색해 변경), 세트 선택 규칙(장 밖 종가 칩), 출처 확인(2026-09-25 openapi.json): 토스 시장 지표는 KOSPI·KOSDAQ·국채만 → 미국 장중은 토스 ETF 프록시(SPY·QQQ·DIA), 종가는 FRED/Massive Basic, Nikkei는 FRED 전일 종가 — **무료 구성으로 확정(2026-09-25)**, 유료 지수 API 안 씀. FRED 키는 공유 키(선택), `market_index_quote` 캐시(DB_SCHEMA 6장·V2). PROJECT F23·11.3, EXTERNAL_APIS 1.1, INDEX, DEVELOPMENT_PLAN 2단계. 화면 설계서 v42(Version 47) 목업(8초마다 좌→우 슬라이딩, 6번째마다 세트 전환). `figma-plugin/` v3.17 `ticker` 항목(네 헤더 1행). 결정 대기: 장 밖 규칙, 해외 지수 출처, 클릭 없음.
+
 ## 다음 작업: 12장 1단계 "리포 골격"
 
 세부 순서와 완료 기준은 [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) 3장. 아래는 요약.

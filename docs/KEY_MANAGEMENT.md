@@ -22,7 +22,7 @@
 |---|---|---|---|---|
 | LLM: OpenAI, Claude, DeepSeek 키 / Ollama 주소 | 공유 | admin | 최초 구동 | **1개 이상** |
 | DART 인증키 | 공유 | admin | 최초 구동 | **필수** |
-| 네이버 검색, KRX Open API, 공공데이터포털, Massive(구 Polygon), ECOS, FRED 등 | 공유 | admin | 최초 구동 또는 이후 | 선택 |
+| 네이버 검색, KRX Open API, 공공데이터포털, Massive(구 Polygon), ECOS, FRED(F23 해외 지수 종가·F9 거시) 등 | 공유 | admin | 최초 구동 또는 이후 | 선택 |
 | 한국투자증권 KIS(정보 수집용, admin 계좌 기반) | 공유 | admin | 이후 | 선택 |
 | Slack 봇 토큰 | 공유 | admin | 이후 | 선택 |
 | 금융결제원 앱 자격(client id/secret) | 공유 | admin | 이후 | 선택 |
@@ -70,6 +70,8 @@
 키를 가진 기존 디바이스가 온라인이어야 새 디바이스를 추가할 수 있다. 이후 admin이 키를 바꾸면 같은 경로로 모든 디바이스에 전파된다.
 
 ## 4. 이후의 변경 규칙
+
+> 이 규칙의 화면은 [ACCOUNT_SETTINGS_DESIGN.md](ACCOUNT_SETTINGS_DESIGN.md)(F21): 공유 키는 "회원 관리 · 공유 키" 모달(admin, step-up), 개인 토스 키 교체는 "회원정보 변경 › 연결(키)".
 
 | 대상 | 변경·삭제 | 값 조회 |
 |---|---|---|
