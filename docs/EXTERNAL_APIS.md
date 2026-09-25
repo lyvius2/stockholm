@@ -171,6 +171,12 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 
 포트: `MacroIndicatorPort`. ECOS(https://ecos.bok.or.kr/api, 기준금리·환율·물가·통화량) / FRED(https://fred.stlouisfed.org/docs/api, 미국 금리·CPI·고용·장단기 금리차). 둘 다 무료, 키 발급. 용도: F9 리포트, 매크로 분석가 페르소나의 근거 자료.
 
+**FRED — 키 확보됨(2026-09-25).** 공유 키(admin, 선택). 값은 Keychain `stockholm/shared/fred`에만 둔다.
+- 엔드포인트: `GET https://api.stlouisfed.org/fred/series/observations?series_id={id}&api_key={key}&file_type=json&sort_order=desc&limit=1`(최근 1건). 검증 호출도 이것(`SP500`).
+- F23 지수 티커의 종가: `SP500` · `DJIA` · `NASDAQCOM` · `NIKKEI225`(일별 종가, 1영업일 지연). F9 거시: `DFF`(연방기금금리) · `DGS10`·`DGS2`(국채 10년·2년) · `CPIAUCSL`(CPI) · `UNRATE`(실업률) · `DEXKOUS`(원/달러). 시리즈 id 목록은 어댑터 설정 한곳에 둔다.
+- 한도: 공식 문서상 초당 제한이 완만하며(과도 호출 시 429), 우리는 하루 수십 회다. 응답에 결측값은 `"."` 문자열로 오므로 NULL 처리한다(학습 테스트로 고정).
+- 이용 조건: 개인·비상업 표시용. NIKKEI225는 출처(Nikkei Industry Research Institute)상 **재배포 금지** → 화면 표시만, 코퍼스·공유 대상에 넣지 않는다. 신청서에 그렇게 적어 발급받았다.
+
 ### 2.6 SEC EDGAR — 미국 공시
 
 포트: `DisclosurePort`(US 구현체). https://www.sec.gov/search-filings/edgar-application-programming-interfaces — 무료, 키 없음. `User-Agent`에 연락처 명시 필수, 초당 요청 제한 준수. 제출 서류 목록, XBRL 재무 데이터(company facts). 해외 자동화의 DART 대응.

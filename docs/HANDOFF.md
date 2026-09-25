@@ -32,7 +32,7 @@
 
 - **모달 단일 규칙(2026-09-25, [확정])**: 어떤 모달이든 열리면 다른 모달(과 확인 창)은 닫힌다. PROJECT 11.3, ACCOUNT_SETTINGS 1장, 화면 설계서 v40(Version 45)의 `showOnlyModal()` 공통 헬퍼.
 
-- **F23 상단 바 지수 티커 설계 추가(2026-09-25, [제안])**: [MARKET_INDEX_TICKER_DESIGN.md](MARKET_INDEX_TICKER_DESIGN.md) — 1행 Stockholm 오른쪽 지수 3개(KR 장 KOSPI·KOSDAQ·NIKKEI 225 / US 장 DJIA·NASDAQ·S&P 500), `이름 | 지수 | ▲ 등락 (+%)` 포맷, 5분 갱신·왼쪽→오른쪽 슬라이딩(아래→위는 화면이 어색해 변경), 세트 선택 규칙(장 밖 종가 칩), 출처 확인(2026-09-25 openapi.json): 토스 시장 지표는 KOSPI·KOSDAQ·국채만 → 미국 장중은 토스 ETF 프록시(SPY·QQQ·DIA), 종가는 FRED/Massive Basic, Nikkei는 FRED 전일 종가 — **무료 구성으로 확정(2026-09-25)**, 유료 지수 API 안 씀. FRED 키는 공유 키(선택), `market_index_quote` 캐시(DB_SCHEMA 6장·V2). PROJECT F23·11.3, EXTERNAL_APIS 1.1, INDEX, DEVELOPMENT_PLAN 2단계. 화면 설계서 v42(Version 47) 목업(8초마다 좌→우 슬라이딩, 6번째마다 세트 전환). `figma-plugin/` v3.17 `ticker` 항목(네 헤더 1행). 결정 대기: 장 밖 규칙, 해외 지수 출처, 클릭 없음.
+- **F23 상단 바 지수 티커 설계 추가(2026-09-25, [제안])**: [MARKET_INDEX_TICKER_DESIGN.md](MARKET_INDEX_TICKER_DESIGN.md) — 1행 Stockholm 오른쪽 지수 3개(KR 장 KOSPI·KOSDAQ·NIKKEI 225 / US 장 DJIA·NASDAQ·S&P 500), `이름 | 지수 | ▲ 등락 (+%)` 포맷, 5분 갱신·왼쪽→오른쪽 슬라이딩(아래→위는 화면이 어색해 변경), 세트 선택 규칙(장 밖 종가 칩), 출처 확인(2026-09-25 openapi.json): 토스 시장 지표는 KOSPI·KOSDAQ·국채만 → 미국 장중은 토스 ETF 프록시(SPY·QQQ·DIA), 종가는 FRED/Massive Basic, Nikkei는 FRED 전일 종가 — **무료 구성으로 확정(2026-09-25)**, 유료 지수 API 안 씀. FRED 키는 공유 키(선택) — **확보됨(2026-09-25)**, EXTERNAL_APIS 2.5에 엔드포인트·시리즈·이용 조건 기록, `market_index_quote` 캐시(DB_SCHEMA 6장·V2). PROJECT F23·11.3, EXTERNAL_APIS 1.1, INDEX, DEVELOPMENT_PLAN 2단계. 화면 설계서 v42(Version 47) 목업(8초마다 좌→우 슬라이딩, 6번째마다 세트 전환). `figma-plugin/` v3.17 `ticker` 항목(네 헤더 1행). 결정 대기: 장 밖 규칙, 해외 지수 출처, 클릭 없음.
 
 ## 다음 작업: 12장 1단계 "리포 골격"
 
