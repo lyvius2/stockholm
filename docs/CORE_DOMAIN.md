@@ -1,8 +1,10 @@
 # CORE_DOMAIN.md — `core` 도메인 모델 설계
 
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
 > `backend/src/main/java/banghak/stockholm/core` 의 기준 문서. 프레임워크를 모르는 순수 Java 21 코드의 형태를 정한다.
 > 여기 적힌 타입 이름과 시그니처가 이후 `engine`·`localapi`·`desktop`·`protocol/` 의 공통 어휘다.
-> 표기: **[확정]** / **[제안]** / **[확인 필요]**. 근거 규칙은 `CLAUDE.md`(값 객체·BigDecimal·Clock 주입·포트 경계)와 `PROJECT.md` 6·8·10장.
+> 표기: **[확정]** / **[제안]** / **[확인 필요]**. 근거 규칙은 [`CLAUDE.md`](../CLAUDE.md)(값 객체·BigDecimal·Clock 주입·포트 경계)와 [`PROJECT.md`](../PROJECT.md) 6·8·10장.
 
 - 최종 갱신: 2026-09-23
 - 서버(relay)는 나중에 붙는다. 이 문서의 core는 **단독 모드에서 완결**되되, 이벤트 로그·userId 범위·lease 인터페이스 세 가지만 서버를 위해 미리 열어 둔다.
@@ -295,7 +297,7 @@ public final class GuardrailChain {
 
 ## 8. 토론 (debate) — core에 두는 것만
 
-상세는 `docs/DEBATE_DESIGN.md`. core에는 **저장·재개·검증에 필요한 구조**만 둔다. LLM 프롬프트, RAG, 미러피시 호출은 `engine.debate`.
+상세는 [`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md). core에는 **저장·재개·검증에 필요한 구조**만 둔다. LLM 프롬프트, RAG, 미러피시 호출은 `engine.debate`.
 
 ```java
 public enum DebateTheme { BUY, SELL, INDUSTRY }
@@ -341,7 +343,7 @@ public sealed interface DomainEvent permits
 - `seq`는 **(사용자, 디바이스) 쌍마다 단조 증가** [확정 2026-09-25]. 한 디바이스를 가족이 나눠 쓰므로 사용자 간에 번호를 섞지 않는다. 동기화는 `(userId, deviceId, seq)` 커서로 빠진 구간만 가져온다.
 - 이벤트마다 **동기화 범위**가 종류로 정해진다(코드 한곳의 표): `LOCAL`(lot·주문·체결·가드레일 판정·모의 실행 — 잔고·체결은 동기화하지 않음) / `USER`(설정·관심종목·페르소나·토론·추천·리포트·학습·승인·제외 종목) / `FAMILY`(가족 메모, 금액을 지운 회고). 동기화 에이전트는 `LOCAL`을 내보내지 않는다 [확정 2026-09-25].
 - 수정형 이벤트의 충돌은 `occurredAt`이 늦은 쪽, 같으면 `deviceId` 문자열이 큰 쪽(LWW). 가드레일 한도만 더 보수적인 값.
-- 저장 형식·표·인덱스는 `docs/DB_SCHEMA.md`.
+- 저장 형식·표·인덱스는 [`docs/DB_SCHEMA.md`](DB_SCHEMA.md).
 - `payload`는 core 타입. 직렬화(JSON)는 `shared`가 담당하고 스키마는 `protocol/`에서 생성한다.
 - 동기화하지 않는 것(잔고·체결 원본·RAG 인덱스)은 이벤트가 아니라 `engine`의 캐시 테이블이다.
 - 주문 감사 로그는 `OrderIntended → GuardrailEvaluated → OrderSubmitted → OrderStatusChanged/Filled`의 연쇄 자체다. 별도 로그 문장을 만들지 않는다. 계좌번호·키는 이벤트에 들어가지 않는다(`DepositBalance`에는 금액만 있다).

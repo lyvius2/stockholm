@@ -1,6 +1,8 @@
 # DART 어댑터 설계 — 국내 공시 감시 · 재무 · 배당 · 기업 정보
 
-작성: 2026-09-25 / 상태: **[제안]** (API 이용 자격·그룹·한도·상태 코드는 [확인함], 엔드포인트명·파라미터는 개발가이드와 대조 필요 [확인 필요]) / 관련: `docs/EXTERNAL_APIS.md` 1.3, `docs/STOCK_INFO_DESIGN.md`(F15), `docs/RAG_DESIGN.md` 4.3·5장, `docs/CORE_DOMAIN.md` 7·10장, `docs/EDGAR_DESIGN.md`(미국 대응)
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-25 / 상태: **[제안]** (API 이용 자격·그룹·한도·상태 코드는 [확인함], 엔드포인트명·파라미터는 개발가이드와 대조 필요 [확인 필요]) / 관련: [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.3, [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md)(F15), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 4.3·5장, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 7·10장, [`docs/EDGAR_DESIGN.md`](EDGAR_DESIGN.md)(미국 대응)
 
 ## 1. 결론 요약
 
@@ -64,7 +66,7 @@
 
 - `fnlttSinglAcntAll`의 행에서 표준 항목을 뽑는다. 1순위 `account_id`(IFRS 태그: `ifrs-full_Revenue`, `dart_OperatingIncomeLoss`, `ifrs-full_ProfitLoss`, `ifrs-full_Equity`, `ifrs-full_Liabilities`, `ifrs-full_BasicEarningsLossPerShare` 등), 2순위 `account_nm` 표준 명칭 표(매출액·영업이익·당기순이익·자본총계·부채총계). 표는 어댑터 안, **제조·금융 샘플 학습 테스트**로 고정.
 - 비율(영업이익률·부채비율·ROE)은 `core.FinancialRatios`(순수 함수, `RoundingMode.HALF_EVEN`).
-- 연간은 사업보고서(11011)의 당기·전기·전전기 → 3개년 한 번에. 분기는 11013/11012/11014를 분기별 호출(누적치 → 분기 값은 차감, `docs/EDGAR_DESIGN.md` 5장과 같은 주의).
+- 연간은 사업보고서(11011)의 당기·전기·전전기 → 3개년 한 번에. 분기는 11013/11012/11014를 분기별 호출(누적치 → 분기 값은 차감, [`docs/EDGAR_DESIGN.md`](EDGAR_DESIGN.md) 5장과 같은 주의).
 - 금융업(`corp_cls`·업종 코드 64~66)은 항목 표를 바꾼다(영업수익·순이자이익·BIS 등).
 - 정정 사업보고서가 오면 새 접수번호 버전으로 저장, 화면은 최신본.
 
@@ -72,7 +74,7 @@
 
 - 내역 표·다음 배당: DS005 **현금·현물배당 결정** 공시(배당 기준일·지급 예정일·1주당 배당금·배당 종류). 공시 감시가 감지하는 즉시 반영.
 - 연간 검증: `alotMatter`(주당 배당금·배당성향·수익률, 사업보고서 기재).
-- 수익률 계산은 `docs/STOCK_INFO_DESIGN.md` 3.2의 정의를 따르고 종가는 토스 일봉(백필은 KRX).
+- 수익률 계산은 [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md) 3.2의 정의를 따르고 종가는 토스 일봉(백필은 KRX).
 
 ## 8. 기업 정보 (F15 산업군 · F13)
 
@@ -86,8 +88,8 @@
 |---|---|
 | `dart_corp` | `corp_code, stock_code, corp_name, corp_name_eng, corp_cls, induty_code, acc_mt, est_dt, updated_at` |
 | `kr_disclosure` | `rcept_no(PK), corp_code, stock_code, report_nm, flr_nm, rcept_dt, rm, category(악재/호재/재무/안내/미분류), supersedes_rcept_no, first_seen_at, indexed_at` |
-| ~~`kr_financial_statement`~~ | → `financial_fact(source=DART, entity_key=corp_code, tag, unit, start_date, end_date, fy, fp, filing_ref=rcept_no, value, first_seen_at)` 원본 + `financial_statement`(F15 공용 표현, 접수번호 단위 버전)로 통합 [확정 2026-09-25, `docs/DB_SCHEMA.md` 9장] |
-| `dividend_payment`·`dividend_yield_weekly` | `docs/STOCK_INFO_DESIGN.md` 6장 |
+| ~~`kr_financial_statement`~~ | → `financial_fact(source=DART, entity_key=corp_code, tag, unit, start_date, end_date, fy, fp, filing_ref=rcept_no, value, first_seen_at)` 원본 + `financial_statement`(F15 공용 표현, 접수번호 단위 버전)로 통합 [확정 2026-09-25, [`docs/DB_SCHEMA.md`](DB_SCHEMA.md) 9장] |
+| `dividend_payment`·`dividend_yield_weekly` | [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md) 6장 |
 | `auto_buy_exclusion` | `symbol, reason(공시 유형), rcept_no, since, until` |
 
 ## 10. 오류와 fail-safe

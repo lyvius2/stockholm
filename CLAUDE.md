@@ -1,6 +1,6 @@
 # CLAUDE.md — Stockholm
 
-이 파일은 이 저장소에서 작업하는 Claude를 위한 지침이다. 프로젝트의 목적, 아키텍처 결정, 기능 명세, 자동화 규칙은 아래 문서에 있으며 **작업 전에 반드시 숙지한다.**
+이 파일은 이 저장소에서 작업하는 Claude를 위한 지침이다. 다른 코딩 에이전트는 [AGENTS.md](AGENTS.md)를 통해 이 파일로 온다. 규칙은 이 파일 한 곳에만 둔다. 프로젝트의 목적, 아키텍처 결정, 기능 명세, 자동화 규칙은 아래 문서에 있으며 **작업 전에 반드시 숙지한다.**
 
 @PROJECT.md
 
@@ -231,13 +231,15 @@ npm --prefix desktop run lint                        # TS 린트
 
 ## 문서
 
-- `docs/HANDOFF.md` — 세션 인수인계: 지금 상태, 다음 작업, 사용자 결정 대기, 외부 확인 필요. **세션을 시작할 때 먼저 읽고, 작업이 끝나면 갱신한다.**
-- `docs/CORE_DOMAIN.md` — `core` 도메인 모델(값 객체, 주문·lot·노출액, 가드레일 규칙 목록, 이벤트 타입, 포트 시그니처, 예외 분류, 필수 테스트). `core` 코드 작업 전에 읽는다.
-- `docs/DEBATE_DESIGN.md` — 토론 세 테마, 개요·전망, DebateSession 저장·재개, RAG(파인튜닝 없음). 토론 엔진 작업 전에 읽는다.
-- `docs/KEY_MANAGEMENT.md` — 키 분류(공유/개인), 최초 구동 마법사, 변경 규칙, 다른 디바이스로의 키 전달. 인증·설정·비밀값 관련 작업 전에 읽는다.
-- `docs/LLM_ROUTING.md` — 목적별 다중 LLM 라우팅(목적 분류, 폴백·실패 정책, 개인정보 등급, 예산). LLM 호출 코드 작업 전에 읽는다. **제공자·모델 이름을 `engine.llm` 밖의 코드에 쓰지 않는다.**
-- `docs/RAG_DESIGN.md` — RAG 설계(Lucene 하이브리드, 기준 시점 원칙, 코퍼스 구분). 지식 검색·수집 작업 전에 읽는다.
-- `docs/DB_SCHEMA.md` — 표 정의(성격 ①이벤트 로그·②projection·③캐시·④상태), 형식 자리표시자, FK 정책(논리는 전부, 물리는 보수적), 인덱스, Flyway 버전 계획, relay DB. 엔티티·마이그레이션 작업 전에 읽는다.
-- `docs/EXTERNAL_APIS.md` — 외부 API 카탈로그(엔드포인트, 호출 제한, 제약). 어댑터 작업 전에 읽는다. 단, 구현 기준은 항상 각 API의 공식 문서다.
-- `PROJECT.md` — 프로젝트 기준 문서. 결정이 바뀌면 코드보다 먼저 갱신한다.
+- [`docs/README.md`](docs/README.md) — **문서 지도.** 읽는 순서, 주제별·기능별·단계별 색인, 문서 규약. 어떤 문서를 봐야 할지 모르면 여기부터.
+- [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md) — 단계별 착수 순서·읽을 문서·완료 기준. 작업을 고를 때 HANDOFF와 함께 본다.
+- [`docs/HANDOFF.md`](docs/HANDOFF.md) — 세션 인수인계: 지금 상태, 다음 작업, 사용자 결정 대기, 외부 확인 필요. **세션을 시작할 때 먼저 읽고, 작업이 끝나면 갱신한다.**
+- [`docs/CORE_DOMAIN.md`](docs/CORE_DOMAIN.md) — `core` 도메인 모델(값 객체, 주문·lot·노출액, 가드레일 규칙 목록, 이벤트 타입, 포트 시그니처, 예외 분류, 필수 테스트). `core` 코드 작업 전에 읽는다.
+- [`docs/DEBATE_DESIGN.md`](docs/DEBATE_DESIGN.md) — 토론 세 테마, 개요·전망, DebateSession 저장·재개, RAG(파인튜닝 없음). 토론 엔진 작업 전에 읽는다.
+- [`docs/KEY_MANAGEMENT.md`](docs/KEY_MANAGEMENT.md) — 키 분류(공유/개인), 최초 구동 마법사, 변경 규칙, 다른 디바이스로의 키 전달. 인증·설정·비밀값 관련 작업 전에 읽는다.
+- [`docs/LLM_ROUTING.md`](docs/LLM_ROUTING.md) — 목적별 다중 LLM 라우팅(목적 분류, 폴백·실패 정책, 개인정보 등급, 예산). LLM 호출 코드 작업 전에 읽는다. **제공자·모델 이름을 `engine.llm` 밖의 코드에 쓰지 않는다.**
+- [`docs/RAG_DESIGN.md`](docs/RAG_DESIGN.md) — RAG 설계(Lucene 하이브리드, 기준 시점 원칙, 코퍼스 구분). 지식 검색·수집 작업 전에 읽는다.
+- [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md) — 표 정의(성격 ①이벤트 로그·②projection·③캐시·④상태), 형식 자리표시자, FK 정책(논리는 전부, 물리는 보수적), 인덱스, Flyway 버전 계획, relay DB. 엔티티·마이그레이션 작업 전에 읽는다.
+- [`docs/EXTERNAL_APIS.md`](docs/EXTERNAL_APIS.md) — 외부 API 카탈로그(엔드포인트, 호출 제한, 제약). 어댑터 작업 전에 읽는다. 단, 구현 기준은 항상 각 API의 공식 문서다.
+- [`PROJECT.md`](PROJECT.md) — 프로젝트 기준 문서. 결정이 바뀌면 코드보다 먼저 갱신한다.
 - `docs/` — 보조 문서. 설계 결정의 배경이 길어지면 여기에 ADR로 남기고 PROJECT.md에서 참조한다.

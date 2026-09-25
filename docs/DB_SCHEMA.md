@@ -1,6 +1,8 @@
 # DB 스키마 설계 (SQLite · Flyway)
 
-작성: 2026-09-25 / 상태: **[확정 2026-09-25]** — 12장의 결정 1·6·9(BigDecimal TEXT, relay TOTP는 클라이언트 검증, 보존 기간)는 사용자 승인, 정합성 항목 3·4·5·7·8·10은 관련 문서에 반영 완료. 남은 것은 11(메일박스 30일, 제안)과 12(정정 주문 clientOrderId 승계, 확인 필요). 각 설계 문서가 정한 표(`installation`, `credential_meta`, `broker_order`, `pension_*`, `financial_*`, `knowledge_*`)를 그대로 받고, 나머지는 기능 서술에서 끌어냈다. 결정 대기 항목은 12장 / 관련: `PROJECT.md` 6장(데이터와 동기화)·11.1, `CLAUDE.md` 시스템 절, `docs/CORE_DOMAIN.md` 9장(이벤트 로그), 각 기능 설계 문서의 "저장" 절
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-25 / 상태: **[확정 2026-09-25]** — 12장의 결정 1·6·9(BigDecimal TEXT, relay TOTP는 클라이언트 검증, 보존 기간)는 사용자 승인, 정합성 항목 3·4·5·7·8·10은 관련 문서에 반영 완료. 남은 것은 11(메일박스 30일, 제안)과 12(정정 주문 clientOrderId 승계, 확인 필요). 각 설계 문서가 정한 표(`installation`, `credential_meta`, `broker_order`, `pension_*`, `financial_*`, `knowledge_*`)를 그대로 받고, 나머지는 기능 서술에서 끌어냈다. 결정 대기 항목은 12장 / 관련: [`PROJECT.md`](../PROJECT.md) 6장(데이터와 동기화)·11.1, [`CLAUDE.md`](../CLAUDE.md) 시스템 절, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 9장(이벤트 로그), 각 기능 설계 문서의 "저장" 절
 
 ## 1. 결론 요약
 
@@ -1317,7 +1319,7 @@ erDiagram
 | 11 | relay 메일박스 보관 상한 30일 | [제안] | PROJECT 6장 |
 | 12 | 토스 정정·취소 주문의 `clientOrderId` 승계 여부 | [확인 필요, 학습 테스트] | ORDER_MANAGEMENT 2장 |
 
-1·6·9는 2026-09-25 사용자 승인. 3~5·7·8·10은 같은 날 관련 문서에 반영했다(`CORE_DOMAIN` 4·9장, `NPS_HOLDINGS_DESIGN` 6장, `DART_DESIGN` 9장, `STOCK_INFO_DESIGN` 6장, `EDGAR_DESIGN` 7장, `FIRST_RUN_DESIGN` 7장, `PROJECT.md` 5·6장).
+1·6·9는 2026-09-25 사용자 승인. 3~5·7·8·10은 같은 날 관련 문서에 반영했다(`CORE_DOMAIN` 4·9장, `NPS_HOLDINGS_DESIGN` 6장, `DART_DESIGN` 9장, `STOCK_INFO_DESIGN` 6장, `EDGAR_DESIGN` 7장, `FIRST_RUN_DESIGN` 7장, [`PROJECT.md`](../PROJECT.md) 5·6장).
 
 ## 13. Flyway 버전 계획
 

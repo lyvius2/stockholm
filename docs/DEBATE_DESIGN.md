@@ -1,6 +1,8 @@
 # 토론(F6) 설계 — 세 가지 테마, 재개, 기술 방안
 
-작성: 2026-09-22 / 상태: v3 — 여론·수급 자료 투입 규칙(3.2) 추가 2026-09-23 / 관련: `PROJECT.md` 9장 F6, `docs/LLM_ROUTING.md`, `docs/RAG_DESIGN.md`, `docs/MIROFISH_EXPERIMENT_GUIDE.md`
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-22 / 상태: v3 — 여론·수급 자료 투입 규칙(3.2) 추가 2026-09-23 / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F6, [`docs/LLM_ROUTING.md`](LLM_ROUTING.md), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md), [`docs/MIROFISH_EXPERIMENT_GUIDE.md`](MIROFISH_EXPERIMENT_GUIDE.md)
 
 ## 1. 확정 사항
 
@@ -70,9 +72,9 @@ F12가 모으는 커뮤니티·여론 데이터는 **두 엔진 모두의 기본
 5. **화제성 신호.** 메시지 수·검색 결과 수가 7일 평균 대비 3배 이상이면 스냅샷 표에 "화제성 급증" 플래그를 붙인다. F7(b) 급등 탐지기의 입력이 아니라 토론 자료다(랭킹과 마찬가지로 자동 주문 트리거가 아니다).
 6. **재개 시.** 이전 결론 이후의 여론 변화(심리 비율 변화, 화제성 변화, 새 게시글)를 "무엇이 달라졌나" 자료에 포함한다.
 7. **F10 대조.** `Verdict`에 여론 자료 인용 비중을 기록해, 여론 의존도가 높은 결론의 적중률을 페르소나 성적표에서 따로 본다. 여론 과의존이 확인되면 페르소나 보정으로 가중을 낮춘다.
-8. **약관 꼬리표.** 네이버 출처 문서는 `source=naver`로 태그해 일괄 삭제·재색인이 가능하다(`docs/EXTERNAL_APIS.md` 2.7). StockTwits 원문 보관 범위는 착수 전 확인 [확인 필요].
+8. **약관 꼬리표.** 네이버 출처 문서는 `source=naver`로 태그해 일괄 삭제·재색인이 가능하다([`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.7). StockTwits 원문 보관 범위는 착수 전 확인 [확인 필요].
 
-**미러피시 시드 문서의 "여론·수급" 절.** 시드 문서에 다음 절을 추가한다: (a) 심리·수급 스냅샷 표(기준 시점 기준), (b) 대표 게시글 10~20건 발췌(강세·약세 균형, 원문·번역, 게시 시각), (c) "이 자료는 시장 참여자의 심리를 보여주는 여론이며 사실 검증되지 않았다"는 머리말. 예측 요구사항 프롬프트에는 "개인 투자자 페르소나가 이 여론에 어떻게 반응하는지"를 포함한다. 미러피시가 생성하는 에이전트가 여론 절을 실제로 활용하는지는 사전 실험 항목이다(`docs/MIROFISH_EXPERIMENT_GUIDE.md`).
+**미러피시 시드 문서의 "여론·수급" 절.** 시드 문서에 다음 절을 추가한다: (a) 심리·수급 스냅샷 표(기준 시점 기준), (b) 대표 게시글 10~20건 발췌(강세·약세 균형, 원문·번역, 게시 시각), (c) "이 자료는 시장 참여자의 심리를 보여주는 여론이며 사실 검증되지 않았다"는 머리말. 예측 요구사항 프롬프트에는 "개인 투자자 페르소나가 이 여론에 어떻게 반응하는지"를 포함한다. 미러피시가 생성하는 에이전트가 여론 절을 실제로 활용하는지는 사전 실험 항목이다([`docs/MIROFISH_EXPERIMENT_GUIDE.md`](MIROFISH_EXPERIMENT_GUIDE.md)).
 
 세 테마는 **같은 페르소나 명단**을 쓰되, 테마별로 사회자의 질문 순서와 결론 스키마가 다르다. 페르소나 명단은 사용자가 편집하며 기본은 가치투자자 · 모멘텀 트레이더 · 리스크 매니저 · 매크로 분석가 · 역발상 투자자 · 사회자.
 
@@ -126,7 +128,7 @@ F12가 모으는 커뮤니티·여론 데이터는 **두 엔진 모두의 기본
 4. 새 결론이 나오면 결론 이력에 추가된다. 이전 결론은 지워지지 않고 F10 대조 대상으로 남는다.
 5. 긴 토론은 라운드 요약을 계층적으로 압축해 컨텍스트를 관리한다(전체 전문은 SQLite에, 프롬프트에는 요약 + 최근 N라운드 전문).
 
-미러피시 심층 토론의 재개는 미러피시 프로젝트를 다시 만들되, 시드 문서에 이전 리포트 요약과 새 자료를 넣는 방식이다. 미러피시가 프로젝트 이어가기를 지원하는지는 사전 실험에서 확인한다(`docs/MIROFISH_EXPERIMENT_GUIDE.md`).
+미러피시 심층 토론의 재개는 미러피시 프로젝트를 다시 만들되, 시드 문서에 이전 리포트 요약과 새 자료를 넣는 방식이다. 미러피시가 프로젝트 이어가기를 지원하는지는 사전 실험에서 확인한다([`docs/MIROFISH_EXPERIMENT_GUIDE.md`](MIROFISH_EXPERIMENT_GUIDE.md)).
 
 ### 5.5 인격의 일관성을 만드는 세 겹
 
@@ -150,7 +152,7 @@ F10: 모든 Verdict를 1/5/20일 뒤 실제 수익률과 대조
 
 ## 7. 구현 위치
 
-`engine.debate` 아래 `DebateSession`(도메인은 `core.debate`), `DebateOrchestrator`(테마별 진행), `PersonaSnapshot`, `QuickDebateEngine`, `MiroFishDebateEngine`(`SimulationPort` 사용), `VerdictExtractor`. 발언 병렬 호출은 `LlmPort`의 `PERSONA_TURN`, 종합은 `DEBATE_MODERATOR`, 변환은 `STRUCTURED_EXTRACTION`(`docs/LLM_ROUTING.md`).
+`engine.debate` 아래 `DebateSession`(도메인은 `core.debate`), `DebateOrchestrator`(테마별 진행), `PersonaSnapshot`, `QuickDebateEngine`, `MiroFishDebateEngine`(`SimulationPort` 사용), `VerdictExtractor`. 발언 병렬 호출은 `LlmPort`의 `PERSONA_TURN`, 종합은 `DEBATE_MODERATOR`, 변환은 `STRUCTURED_EXTRACTION`([`docs/LLM_ROUTING.md`](LLM_ROUTING.md)).
 
 
 **미러피시 프로세스 관리(D13 관리형 설치).** `engine.debate.mirofish` 아래에 `SimulationPort` 어댑터와 별도로 `MiroFishInstaller`(uv·Python·고정 커밋 설치, 검증 커밋으로 업데이트)와 `MiroFishProcess`(심층 토론 요청 시 기동, 헬스체크, 유휴 타임아웃 후 종료, 비정상 종료 시 토론을 "심층 엔진 오류"로 실패 처리하고 빠른 토론 폴백 제안)를 둔다. 어댑터는 **내장 프로세스 / 외부 주소** 두 모드를 설정으로 고르며 호출 코드는 구분하지 않는다. Zep Cloud 키와 미러피시용 LLM 키는 공유 서비스 키(D17)로 Keychain에 두고 자식 프로세스에는 환경 변수로만 넘긴다(명령행 인자 금지 — `ps`에 노출). 설치 상태·버전·마지막 헬스체크는 하단 상태줄과 설정 화면에 표시한다.

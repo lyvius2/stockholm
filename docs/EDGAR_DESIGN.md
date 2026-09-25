@@ -1,6 +1,8 @@
 # SEC EDGAR 어댑터 규격 — 미국 공시·재무 가져오기
 
-작성: 2026-09-24 / 상태: **[제안]** (규격은 실측 [확인함] / [확인 필요] 표기) / 관련: `docs/EXTERNAL_APIS.md` 2.6, `docs/STOCK_INFO_DESIGN.md`(F15), `docs/NPS_HOLDINGS_DESIGN.md`(13F), `docs/RAG_DESIGN.md` 4.3, `docs/CORE_DOMAIN.md` 10장(`DisclosurePort`, `FundamentalsPort`)
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-24 / 상태: **[제안]** (규격은 실측 [확인함] / [확인 필요] 표기) / 관련: [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.6, [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md)(F15), [`docs/NPS_HOLDINGS_DESIGN.md`](NPS_HOLDINGS_DESIGN.md)(13F), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 4.3, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 10장(`DisclosurePort`, `FundamentalsPort`)
 
 ## 1. 결론 요약
 
@@ -101,7 +103,7 @@
 | `us_disclosure` | `accession_no(PK), cik, form, items, filing_date, report_date, accepted_at, primary_document, size, supersedes_accession, first_seen_at, indexed_at` | 공시 감시 결과. F15 공시 탭·가드레일 이벤트 원천 |
 | `us_financial_fact` | `cik, tag, unit, end_date, start_date, frame, fy, fp, form, accession_no, filed, val` | company facts 정규화. `(cik, tag, unit, end_date, frame, accession_no)` 유일 |
 
-F15의 `financial_statement`(`docs/STOCK_INFO_DESIGN.md` 6장)는 위 표에서 계산한 결과를 접수번호 단위 버전으로 담는다. `us_financial_fact`는 DART 원본과 합쳐 `financial_fact(source=EDGAR, entity_key=cik, …, filing_ref=accession_no)` 한 표로 둔다 [확정 2026-09-25, `docs/DB_SCHEMA.md` 9장].
+F15의 `financial_statement`([`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md) 6장)는 위 표에서 계산한 결과를 접수번호 단위 버전으로 담는다. `us_financial_fact`는 DART 원본과 합쳐 `financial_fact(source=EDGAR, entity_key=cik, …, filing_ref=accession_no)` 한 표로 둔다 [확정 2026-09-25, [`docs/DB_SCHEMA.md`](DB_SCHEMA.md) 9장].
 
 ## 8. 오류와 fail-safe
 
@@ -127,6 +129,6 @@ F15의 `financial_statement`(`docs/STOCK_INFO_DESIGN.md` 6장)는 위 표에서 
 
 1. `www.sec.gov` 계열(티커 파일, Archives index.json, 원문, Atom 피드)을 연락처 UA로 재확인. 이번 실측은 `data.sec.gov`만 통과했다.
 2. submissions JSON의 `ETag`/`If-Modified-Since` 지원 여부(폴링 비용 절감).
-3. ~~배당 기준일·지급일 출처~~ → Massive `/v3/reference/dividends`로 해결(2026-09-25, `docs/EXTERNAL_APIS.md` 2.9).
+3. ~~배당 기준일·지급일 출처~~ → Massive `/v3/reference/dividends`로 해결(2026-09-25, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.9).
 4. `6-K`(ADR)에는 `items`가 없어 분류가 어렵다 — 제목(`primaryDocDescription`) 키워드로 보조할지.
 5. F5 미국 스크리닝에 frames API를 쓸지(한 호출로 전 종목 한 분기 값).

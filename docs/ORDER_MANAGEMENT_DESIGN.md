@@ -1,6 +1,8 @@
 # 주문 관리 (F14) — 체결 현황과 미체결 정정·취소 설계
 
-작성: 2026-09-24 / 상태: **[확정 2026-09-24]** — 탭·모달 구성, 자동 주문 정정 규칙, clientOrderId, 정정 가능 수량은 사용자 결정(8장). 토스 규격은 [확인함 2026-09-24, OpenAPI v1.2.17] / 관련: `PROJECT.md` 9장 F1·F14·11.3, `docs/CORE_DOMAIN.md` 4·9·10장, `docs/EXTERNAL_APIS.md` 1.1, 화면 설계 아티팩트 v18 "주문 관리"
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-24 / 상태: **[확정 2026-09-24]** — 탭·모달 구성, 자동 주문 정정 규칙, clientOrderId, 정정 가능 수량은 사용자 결정(8장). 토스 규격은 [확인함 2026-09-24, OpenAPI v1.2.17] / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F1·F14·11.3, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 4·9·10장, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.1, 화면 설계 아티팩트 v18 "주문 관리"
 
 ## 1. 결론 요약
 

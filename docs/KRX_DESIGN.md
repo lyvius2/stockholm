@@ -1,6 +1,8 @@
 # KRX Open API 어댑터 규격 — 국내 일별 시세·종목 기본정보·지수·ETF
 
-작성: 2026-09-25 / 상태: **[확인함]** — 8개 API의 엔드포인트·요청·응답 필드는 KRX가 배포한 개발 명세서(docx, `docs/external/krx/`, 저장소 밖)로 확인. 갱신 시각·호출 한도·값 형식은 [확인 필요] / 관련: `docs/EXTERNAL_APIS.md` 2.3, `docs/STOCK_INFO_DESIGN.md` 3.3·3.6, `PROJECT.md` F5·F10·F15
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-25 / 상태: **[확인함]** — 8개 API의 엔드포인트·요청·응답 필드는 KRX가 배포한 개발 명세서(docx, `docs/external/krx/`, 저장소 밖)로 확인. 갱신 시각·호출 한도·값 형식은 [확인 필요] / 관련: [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.3, [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md) 3.3·3.6, [`PROJECT.md`](../PROJECT.md) F5·F10·F15
 
 ## 1. 결론 요약
 
@@ -75,7 +77,7 @@
 2. **DART 기업개황**(`company` API)의 `induty_code`(업종 코드, 한국표준산업분류) — 키가 있고 종목당 1회면 된다. 표준산업분류 → 우리 업종 분류 표는 `core`에 둔다 [제안].
 3. 지수 구성종목은 KRX Open API에 없으므로 "업종 지수 대비 수익률"은 종목의 업종을 1·2로 정한 뒤 이름이 대응하는 업종 지수(`IDX_NM`)를 고른다. 대응 표는 어댑터 안.
 
-이 결정은 `docs/STOCK_INFO_DESIGN.md` 3.3에 반영한다.
+이 결정은 [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md) 3.3에 반영한다.
 
 ## 7. 오류와 fail-safe
 
@@ -101,5 +103,5 @@
 1. 요청 전송 방식(JSON POST vs GET 쿼리), 값의 쉼표 여부, `ISU_CD`가 단축코드인지 — 첫 학습 테스트에서 확인(키는 환경 변수로만).
 2. 전일 데이터가 열리는 시각과 호출 한도.
 3. 업종 출처 결정(6장): 토스 종목 정보 → DART 기업개황 순으로 확인.
-4. ETF 구성종목 국내 출처(별도 결정, `docs/STOCK_INFO_DESIGN.md` 3.6).
+4. ETF 구성종목 국내 출처(별도 결정, [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md) 3.6).
 5. 이용 신청 만료 관리(설정 항목·알림).

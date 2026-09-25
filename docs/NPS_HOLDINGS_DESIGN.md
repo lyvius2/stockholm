@@ -1,6 +1,8 @@
 # 국민연금 해외투자 현황 (F13) — 모달과 갱신 푸시 설계
 
-작성: 2026-09-24 / 상태: **[확정 2026-09-24]** — 버튼 이름·위치, 캐시, 매핑, 알림 기본값, 토론 투입은 사용자 결정으로 확정(11장). 외부 사실은 [확인함]/[확인 필요]로 표기 / 관련: `PROJECT.md` 9장 F13·11.3, `docs/EXTERNAL_APIS.md` 2.8, `docs/CORE_DOMAIN.md` 10장, `docs/DEBATE_DESIGN.md` 3.2, 화면 설계 아티팩트 v16 "국민연금 해외투자 현황 모달"
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-24 / 상태: **[확정 2026-09-24]** — 버튼 이름·위치, 캐시, 매핑, 알림 기본값, 토론 투입은 사용자 결정으로 확정(11장). 외부 사실은 [확인함]/[확인 필요]로 표기 / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F13·11.3, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.8, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 10장, [`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md) 3.2, 화면 설계 아티팩트 v16 "국민연금 해외투자 현황 모달"
 
 ## 1. 결론 요약
 
@@ -126,7 +128,7 @@ Flyway 마이그레이션으로 다음 표를 둔다. 이벤트 로그(동기화
 | `pension_holdings_snapshot` | `id`, `dataset_id`, `content_hash`, `fetched_at`, `row_count`, `total_valuation`, `total_currency` | 13F는 USD, 연간은 KRW. 같은 dataset의 해시가 바뀌면 새 행 |
 | `pension_holding` | `snapshot_id`, `rank`, `company_name`, `company_key`(정규화), `cusip`(null 가능), `shares`(null 가능, BigDecimal), `valuation`(BigDecimal), `currency`, `weight_ratio`(null 가능), `stake_ratio`(null 가능) | 억원 → 원으로 환산해 `Money(KRW)`. 비율은 `Percent`(0.0362) |
 | `pension_holdings_change` | `id`, `prev_snapshot_id`(null 가능), `new_snapshot_id`, `kind`(NEW_FILING/AMENDED/NEW_DATASET/CONTENT_CHANGED), `detected_at`, `summary_json` | 알림의 원천 |
-| ~~`pension_holdings_change_ack`~~ | → 범용 `notification(user_id, kind=DATA_UPDATED, dedupe_key=change_id, acked_at)`으로 흡수 [확정 2026-09-25, `docs/DB_SCHEMA.md` 7장] | 사용자별 확인 |
+| ~~`pension_holdings_change_ack`~~ | → 범용 `notification(user_id, kind=DATA_UPDATED, dedupe_key=change_id, acked_at)`으로 흡수 [확정 2026-09-25, [`docs/DB_SCHEMA.md`](DB_SCHEMA.md) 7장] | 사용자별 확인 |
 | `pension_symbol_alias` | `company_key` 또는 `cusip`, `symbol_market`, `symbol_code`, `source`(ISIN_MATCH/NAME_MATCH/USER), `updated_at` | 종목 매핑(8장) |
 
 크기: 13F 분기 600~700행 × 48분기 + 연간 3천 행 × 8년 ≈ 6만 행. 무시할 수준.
@@ -168,7 +170,7 @@ public sealed interface PensionHoldingsChange permits NewFiling, Amended, NewDat
    - 13F 표: 종목명·티커·주식 수·평가액(USD)·전분기 대비 주식 수·비고(신규/추가 매수/일부 매도/전량 매도). 원화 환산은 분기 말 환율로 병기.
    - 연간 표: 순위·종목명·티커·평가액(억원)·비중·지분율·전년 대비 pp. 미국 밖 보유분은 여기서만 보인다.
 2. **토론 개요 탭의 "국민연금 보유" 행**(해외 종목만): 13F가 있으면 "13F 2Q26 24.9M주(전분기 ▲6.2%) · 연간 비중 3.54% · 지분율 0.28%", 없으면 연간 값만. "현황"을 누르면 모달이 그 종목을 강조한 채 열린다. 국내 종목에는 "해외 종목만 제공".
-3. **토론 자료** [확정]: `docs/DEBATE_DESIGN.md` 3.2의 수치 스냅샷 표에 "국민연금 보유(13F 최근 분기 주식 수·전분기 대비, 연간 비중·지분율)" 한 줄. 등급은 `[S]`(공공기관 사실 자료)이되 **기준일이 오래됐음을 표에 명시**한다. `firstSeenAt <= asOf` 필터.
+3. **토론 자료** [확정]: [`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md) 3.2의 수치 스냅샷 표에 "국민연금 보유(13F 최근 분기 주식 수·전분기 대비, 연간 비중·지분율)" 한 줄. 등급은 `[S]`(공공기관 사실 자료)이되 **기준일이 오래됐음을 표에 명시**한다. `firstSeenAt <= asOf` 필터.
 4. **F5 스크리닝 보조 신호** [보류]: 분기 데이터라도 45일 지연이라 스크리닝 신호로는 약하다. 넣지 않는다.
 
 **종목 매핑 [확정].**
@@ -202,10 +204,10 @@ public sealed interface PensionHoldingsChange permits NewFiling, Amended, NewDat
 ## 11. 열린 항목
 
 **결정됨 (2026-09-24, 사용자)**
-1. 버튼 이름 **"연기금종목"**, 위치 **☰ 관심종목과 ⚡ 실시간 급등락 사이**, 단축키 ⌘N. `PROJECT.md` 11.3 상단 바 순서 [확정] 개정.
+1. 버튼 이름 **"연기금종목"**, 위치 **☰ 관심종목과 ⚡ 실시간 급등락 사이**, 단축키 ⌘N. [`PROJECT.md`](../PROJECT.md) 11.3 상단 바 순서 [확정] 개정.
 2. 캐시는 **cache-aside, TTL 24시간**(4장). `perPage` 상한은 정의를 찾지 못했으므로 500씩 끝까지 페이지를 넘긴다.
 3. 회사명→티커 매핑: 종목 마스터 영문명 정확 일치 + 사용자 편집 별칭 표, 미매칭은 칩 없이 표시(8장).
-4. 알림 기본값 앱 안 켬 · Slack 끔. 토론 수치 스냅샷 표에 "국민연금 보유" 줄 추가(`docs/DEBATE_DESIGN.md` 3.2).
+4. 알림 기본값 앱 안 켬 · Slack 끔. 토론 수치 스냅샷 표에 "국민연금 보유" 줄 추가([`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md) 3.2).
 5. 13F: 정보표 파일명은 접수별 `index.json`으로 확인, CUSIP 매핑은 ISIN 3~11자리, SEC 연락처 이메일은 admin 공유 설정.
 
 **외부 확인**
@@ -220,6 +222,6 @@ public sealed interface PensionHoldingsChange permits NewFiling, Amended, NewDat
 | SEC EDGAR 13F-HR (CIK 0001608046) | 미국 상장분 종목별 주식 수·평가액(USD), CUSIP | 분기, 분기 말 후 35~45일 | **회원가입·키 없음, 무료, 공공 데이터.** 별도 이용 신청 없음 | `User-Agent`에 이름·연락처 이메일(없으면 차단), 초당 10회 이하, 대량 내려받기는 미국 야간. 공식 안내 https://www.sec.gov/search-filings/edgar-application-programming-interfaces |
 | 공공데이터포털 국민연금공단_해외주식 투자정보 | 전 지역 종목별 평가액(억원)·비중·지분율, 회사명만 | 연 1회, 연말 기준, 이듬해 가을~겨울 공개(2024년 말분은 2025-12-10) | **활용신청으로 발급된 서비스 키 사용(이미 확보).** 이용허락범위 제한 없음, 무료 | 키는 공유 키(admin, Keychain). 일일 트래픽 한도(계정 종류에 따름 [확인 필요]). 한 번 확인 5회 안팎이라 여유 |
 | 기금운용본부 월간 운용현황 | 자산군 합계만 | 월간, 약 2개월 지연 | 공개 페이지, API 없음 | 이번 설계에서 제외. 쓰려면 페이지 수집이라 약관 확인 선행 |
-| KRX 투자자별 매매동향 "연기금등" | 국내 종목별 일간 순매수(연기금 합산) | 일간 | KRX Open API 승인 절차(`docs/EXTERNAL_APIS.md` 2.3) 또는 토스 수급 API | F13 범위 밖. F12 수급 카드 후보 |
+| KRX 투자자별 매매동향 "연기금등" | 국내 종목별 일간 순매수(연기금 합산) | 일간 | KRX Open API 승인 절차([`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.3) 또는 토스 수급 API | F13 범위 밖. F12 수급 카드 후보 |
 
 두 채택 출처 모두 **별도 계약이나 승인 절차가 새로 필요하지 않다.** 공공데이터포털 키는 이미 있고, EDGAR는 설정에 연락처 이메일을 넣는 것으로 끝난다.

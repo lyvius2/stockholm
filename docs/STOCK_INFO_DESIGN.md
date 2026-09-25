@@ -1,6 +1,8 @@
 # 종목 정보 서랍 (F15) — 재무제표 · 배당 · 산업군 · 관련 종목 · 공시
 
-작성: 2026-09-24 / 상태: **[확정 2026-09-25]** — 탭·항목·마지막 탭 기억 승인. ETF 구성종목 탭은 화면·설계 유지, **구현 보류**(국내 데이터 제공자 확보 시 해제). 배당은 정보 표시만(F7 필터에 쓰지 않음) / 관련: `PROJECT.md` 9장 F15·11.3, `docs/EXTERNAL_APIS.md` 1.3(DART)·2.6(EDGAR), `docs/RAG_DESIGN.md` 4.3·5장, `docs/DEBATE_DESIGN.md` 3.1(동종 종목), 화면 설계 아티팩트 v22 "종목 정보 서랍"
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-24 / 상태: **[확정 2026-09-25]** — 탭·항목·마지막 탭 기억 승인. ETF 구성종목 탭은 화면·설계 유지, **구현 보류**(국내 데이터 제공자 확보 시 해제). 배당은 정보 표시만(F7 필터에 쓰지 않음) / 관련: [`PROJECT.md`](../PROJECT.md) 9장 F15·11.3, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.3(DART)·2.6(EDGAR), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 4.3·5장, [`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md) 3.1(동종 종목), 화면 설계 아티팩트 v22 "종목 정보 서랍"
 
 ## 1. 결론 요약
 
@@ -47,7 +49,7 @@
 
 ### 3.3 산업군
 
-- KRX 업종 · GICS 분류, 업종 내 시총 순위, 업종 지수 20일 수익률과 종목의 초과 수익률. **업종의 출처**: KRX Open API 종목기본정보에는 업종 필드가 없다(2026-09-25 명세 확인). 후보 순서 — (1) 토스 종목 정보의 업종·GICS [확인 필요], (2) DART 기업개황의 표준산업분류 코드(`induty_code`) → `core`의 분류 대응 표 [제안]. **미국 종목은 Massive 종목 개요의 `sic_code`·`sic_description`**(무료 등급)으로 채운다. 업종 지수는 KRX Open API 지수 시리즈(코스피·코스닥 업종 지수, `docs/KRX_DESIGN.md` 3.4)에서 받고, 종목→업종 지수 대응 표는 어댑터에 둔다.
+- KRX 업종 · GICS 분류, 업종 내 시총 순위, 업종 지수 20일 수익률과 종목의 초과 수익률. **업종의 출처**: KRX Open API 종목기본정보에는 업종 필드가 없다(2026-09-25 명세 확인). 후보 순서 — (1) 토스 종목 정보의 업종·GICS [확인 필요], (2) DART 기업개황의 표준산업분류 코드(`induty_code`) → `core`의 분류 대응 표 [제안]. **미국 종목은 Massive 종목 개요의 `sic_code`·`sic_description`**(무료 등급)으로 채운다. 업종 지수는 KRX Open API 지수 시리즈(코스피·코스닥 업종 지수, [`docs/KRX_DESIGN.md`](KRX_DESIGN.md) 3.4)에서 받고, 종목→업종 지수 대응 표는 어댑터에 둔다.
 - 업종 요약: DART "사업의 내용" + 업종 뉴스를 RAG로 모아 `DOCUMENT_DIGEST` 목적으로 주 1회 요약(F6 전망 요약과 같은 규칙, 출처 번호).
 - "산업 동향 토론 열기" 버튼 → 4번 영역에서 산업 동향 테마 시작.
 
@@ -64,11 +66,11 @@ ETF·ETN을 고르면 재무제표 탭이 숨고 이 탭이 기본으로 열린�
 2. **구성종목 표**(기준일 표시): `순번 | 종목 | 자산종류 | 비율`. 자산종류는 **주식 · 채권 · 현금 · 파생(선물·스왑) · 기타(ETF·리츠·원자재)** 다섯 가지로 정규화하고, 주식은 시장(국내/미국/ADR)을 덧붙인다. 비율은 평가금액 ÷ 순자산, 합계 100%. 전체 구성은 스크롤.
 3. **"어떤 ETF인가" 요약 문장**: 추적지수·운용사·총보수·순자산·환헤지 여부(구조화 값)와 함께, 어떤 산업·테마·지역으로 구성됐는지, 상위 비중·자산 구성(주식 %·현금 %)을 3~4문장으로. `DOCUMENT_DIGEST` 목적으로 **주 1회** 생성(투자설명서·운용사 상품 설명 + 구성종목의 업종 집계가 입력, 출처 번호 필수), 구성이 크게 바뀌면(상위 10 변화 20%p 이상) 즉시 재생성.
 
-출처: 국내 ETF의 구성종목은 **KRX Open API에 없다**(2026-09-25 확인 — ETF 일별매매정보는 종가·NAV·순자산·기초지수까지). 후보는 운용사 사이트 일별 CSV(운용사별 형식) [결정 필요]. 헤더의 추적지수·순자산·괴리율은 KRX ETF 일별매매정보(`docs/KRX_DESIGN.md` 3.3)에서 받는다. 미국 ETF는 운용사 일일 공시(예: iShares·Vanguard CSV)와 **SEC N-PORT**(월간, 공개는 분기 지연). 배당 탭은 ETF에서는 **분배금**으로 같은 구성이다. 산업군 탭은 ETF의 추적지수 업종·테마 분류를 보인다.
+출처: 국내 ETF의 구성종목은 **KRX Open API에 없다**(2026-09-25 확인 — ETF 일별매매정보는 종가·NAV·순자산·기초지수까지). 후보는 운용사 사이트 일별 CSV(운용사별 형식) [결정 필요]. 헤더의 추적지수·순자산·괴리율은 KRX ETF 일별매매정보([`docs/KRX_DESIGN.md`](KRX_DESIGN.md) 3.3)에서 받는다. 미국 ETF는 운용사 일일 공시(예: iShares·Vanguard CSV)와 **SEC N-PORT**(월간, 공개는 분기 지연). 배당 탭은 ETF에서는 **분배금**으로 같은 구성이다. 산업군 탭은 ETF의 추적지수 업종·테마 분류를 보인다.
 
 ### 3.5 공시
 
-- 공시 감시(`docs/EXTERNAL_APIS.md` 1.3 사용 방식 1)가 모은 결과를 종목으로 걸러 최근순. **새 API 호출 없음**.
+- 공시 감시([`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.3 사용 방식 1)가 모은 결과를 종목으로 걸러 최근순. **새 API 호출 없음**.
 - 행: 제목(정정이면 `[정정]`), 유형 칩(재무 / 호재 / 악재 / 안내 — `core`의 공시 유형→분류 표), 접수일, **감지 시각(firstSeenAt)**, 정정 연결("정정됨 → 날짜"), 원문 링크아웃.
 - 악재 유형은 가드레일 이벤트로도 흐른다는 사실을 바닥 줄에 밝힌다(표시일 뿐 여기서 판단하지 않는다).
 
@@ -125,7 +127,7 @@ public enum ReportPeriod { ANNUAL, QUARTERLY }
 
 | 표 | 열 | 비고 |
 |---|---|---|
-| `financial_statement` | `statement_id, market, code, basis, period_kind, fiscal_year, fiscal_quarter, filing_ref, supersedes_id, first_seen_at, figures_json` | 접수번호 단위 버전. 원본은 `financial_fact`(DART·EDGAR 공용) [확정 2026-09-25, `docs/DB_SCHEMA.md` 9장]. 배당 표의 키는 `market + code`, US용 `ex_date`·`declaration_date`·`distribution_type`·통화 추가 |
+| `financial_statement` | `statement_id, market, code, basis, period_kind, fiscal_year, fiscal_quarter, filing_ref, supersedes_id, first_seen_at, figures_json` | 접수번호 단위 버전. 원본은 `financial_fact`(DART·EDGAR 공용) [확정 2026-09-25, [`docs/DB_SCHEMA.md`](DB_SCHEMA.md) 9장]. 배당 표의 키는 `market + code`, US용 `ex_date`·`declaration_date`·`distribution_type`·통화 추가 |
 | `dividend_payment` | `symbol, payment_date, record_date, per_share, yield_at_payment, receipt_no, first_seen_at` | 결정 공시 단위, 최신순 표의 원천 |
 | `dividend_yield_weekly` | `symbol, week_ending, trailing_dps, close, trailing_yield` | 1년 추이 그래프·평균 수익률 계산 |
 | `dividend_upcoming` | `symbol, record_date, ex_date, payment_date, per_share, receipt_no, first_seen_at` | 결정 공시 기준 |

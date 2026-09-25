@@ -1,7 +1,9 @@
 # 목적별 다중 LLM 설계
 
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
 작성: 2026-09-20 / 상태: 초안 v1
-관련: `PROJECT.md` 8장·9장·10.4, `docs/RAG_DESIGN.md`, `docs/EXTERNAL_APIS.md` 1.4
+관련: [`PROJECT.md`](../PROJECT.md) 8장·9장·10.4, [`docs/RAG_DESIGN.md`](RAG_DESIGN.md), [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.4
 
 ## 1. 확정 사항과 이 문서의 범위
 
@@ -40,7 +42,7 @@ Spring AI가 네 제공자 모두의 채팅 모델 구현을 제공한다(DeepSe
 | `USER_CHAT` | 종목 질의응답 | 대화 품질, 스트리밍 | 첫 토큰 2초 | 상황에 따라 |
 | `TRANSLATE` | F12 커뮤니티 게시글·댓글 영→한 번역 (제목은 배치, 본문은 펼칠 때) | 투자 은어 처리, 대량 단가 | 10초(배치 30건) | 없음(공개 글) |
 
-`PERSONA_TURN`은 **페르소나별로 다른 경로를 지정**할 수 있다(가치투자자=Claude, 모멘텀=DeepSeek, 리스크 매니저=OpenAI 식). 임베딩은 채팅과 성격이 달라 별도 포트(`EmbeddingPort`)로 둔다(`docs/RAG_DESIGN.md`).
+`PERSONA_TURN`은 **페르소나별로 다른 경로를 지정**할 수 있다(가치투자자=Claude, 모멘텀=DeepSeek, 리스크 매니저=OpenAI 식). 임베딩은 채팅과 성격이 달라 별도 포트(`EmbeddingPort`)로 둔다([`docs/RAG_DESIGN.md`](RAG_DESIGN.md)).
 
 ## 4. 기본 배치안 (프리셋)
 
@@ -122,7 +124,7 @@ engine.llm
 - 제공자마다 **"개인 데이터 전송 허용"** 스위치를 사용자별로 둔다(키는 공유하지만 자기 자료를 어디로 보낼지는 본인이 정한다). Ollama는 기본 허용, 나머지 세 제공자는 **기본 꺼짐**이며 사용자가 각 제공자의 데이터 처리 정책을 확인하고 직접 켠다.
 - `PERSONAL` 요청은 허용된 제공자로만 라우팅된다. 허용된 제공자가 하나도 없으면 해당 기능은 개인 자료를 뺀 축약 모드로 동작하거나(예: 시장 리포트에서 보유 종목 절 생략) 비활성화된다.
 - 가능한 한 개인 자료를 프롬프트에 넣지 않는 쪽으로 설계한다. 예컨대 매도 판단에는 수량·계좌 정보 없이 "평균 단가 대비 수익률, 보유 일수"만 전달한다.
-- 이것은 `docs/RAG_DESIGN.md` 12장 3번("개인 코퍼스의 외부 전달 방침")에 대한 답이기도 하다: **사용자별·제공자별 선택.**
+- 이것은 [`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 12장 3번("개인 코퍼스의 외부 전달 방침")에 대한 답이기도 하다: **사용자별·제공자별 선택.**
 
 ## 9. 예산과 사용 기록
 
@@ -146,5 +148,5 @@ engine.llm
 
 1. 기본 프리셋을 "균형"으로 두는 안과 4장의 배치
 2. 클라우드 제공자의 "개인 데이터 전송 허용"을 기본 꺼짐으로 두는 안 (8장)
-3. ~~가족 구성원이 각자 LLM 키를 등록하는지~~ → **확정: admin이 최초 구동 시 입력한 키를 가족이 공유한다.** 상세 `docs/KEY_MANAGEMENT.md`
-4. 밖의 Mac에서의 Ollama 운용 여부 (`docs/RAG_DESIGN.md` 12장 1번과 동일)
+3. ~~가족 구성원이 각자 LLM 키를 등록하는지~~ → **확정: admin이 최초 구동 시 입력한 키를 가족이 공유한다.** 상세 [`docs/KEY_MANAGEMENT.md`](KEY_MANAGEMENT.md)
+4. 밖의 Mac에서의 Ollama 운용 여부 ([`docs/RAG_DESIGN.md`](RAG_DESIGN.md) 12장 1번과 동일)

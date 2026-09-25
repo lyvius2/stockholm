@@ -1,6 +1,8 @@
 # 보유주식 평가금액 패널 (F18)
 
-작성: 2026-09-25 / 상태: **[확정 2026-09-25]** — 버튼 위치·팝업 방식(왼쪽 위 슬라이딩, 폭 40%, ✕)은 사용자 결정. 토스 API 필드 대응은 [확인 필요] / 관련: `PROJECT.md` F2·F18·11.3, `docs/CORE_DOMAIN.md` 5장(`PortfolioSnapshot`), `docs/EXTERNAL_APIS.md` 1.1, 화면 설계 아티팩트 "보유주식 평가금액 패널"
+> 문서 지도: [docs/README.md](README.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
+
+작성: 2026-09-25 / 상태: **[확정 2026-09-25]** — 버튼 위치·팝업 방식(왼쪽 위 슬라이딩, 폭 40%, ✕)은 사용자 결정. 토스 API 필드 대응은 [확인 필요] / 관련: [`PROJECT.md`](../PROJECT.md) F2·F18·11.3, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 5장(`PortfolioSnapshot`), [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.1, 화면 설계 아티팩트 "보유주식 평가금액 패널"
 
 ## 1. 결론 요약
 
@@ -38,7 +40,7 @@
 - 평가금액(시장) = Σ 보유수량 × 현재가. 전체 = 국내 + 미국 × 환율(실시간, 없으면 마지막 환율 + "지연").
 - 평가손익 = 평가금액 − 매수금액, 수익률 = 평가손익 ÷ 매수금액(매수금액 0이면 표시 안 함).
 - 오늘 평가손익 변동 = Σ 보유수량 × (현재가 − 전일 종가). 오늘 실현손익 = 오늘 매도 체결의 (체결가 − 매입가) × 수량 − 수수료·세금.
-- 자동 매수 노출 = `AutoBuyExposure`(`docs/CORE_DOMAIN.md` 6장) 그대로.
+- 자동 매수 노출 = `AutoBuyExposure`([`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 6장) 그대로.
 
 ## 5. 포트·데이터
 
