@@ -1,0 +1,19 @@
+# dmg 산출 설정. 서명·공증은 가족 Mac 배포 시점에 정함.
+appId: banghak.stock.stockholm
+productName: Stockholm
+directories:
+  buildResources: resources
+  output: release
+files:
+  - out/**
+# jlink JRE와 bootJar는 scripts/dist.sh가 resources/daemon/ 에 넣고 아래로 포함함
+extraResources:
+  - from: resources/daemon
+    to: daemon
+    filter: ['**/*']
+mac:
+  target:
+    - target: dmg
+      arch: [arm64]
+  category: public.app-category.finance
+  hardenedRuntime: false

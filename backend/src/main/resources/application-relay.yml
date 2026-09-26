@@ -1,0 +1,4 @@
+# 중계 서버. 포트·WebSocket 경로는 7단계 착수 전에 정함(HANDOFF B2).
+# TODO(7단계 B2): relay 포트 확정 후 server.port 지정
+server:
+  address: 127.0.0.1

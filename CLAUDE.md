@@ -172,7 +172,7 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
   - `core`는 프레임워크를 모른다. Spring, JPA, Jackson 애너테이션, HTTP 클라이언트를 import하지 않는다. JPA 엔티티는 `engine`/`relay`의 `adapter.out.persistence`에 따로 두고 도메인 객체와 변환한다.
   - 진입 어댑터(controller·ws·scheduler)는 `core.usecase`만 부르고, `application`이 그것을 구현한다. `application`끼리는 usecase와 이벤트로 협력한다.
   - `engine`과 `relay`는 서로를 참조하지 않는다. 둘 다 `core`와 `shared`만 참조한다. `engine`·`relay`의 모든 빈은 해당 프로필(`@Profile`)에서만 로드되고, 프로필 없는 빈은 `shared`에만 둔다.
-  - 이 규칙들은 Spring Modulith 검증 테스트와 ArchUnit 테스트로 강제한다. **이 테스트를 끄거나 예외를 추가해서 빌드를 통과시키지 않는다.** 경계를 바꿔야 하면 사용자와 먼저 합의한다.
+  - 이 규칙들은 ArchUnit 테스트(`backend/src/test/kotlin/banghak/stock/architecture/`)로 강제한다. **이 테스트를 끄거나 예외를 추가해서 빌드를 통과시키지 않는다.** 경계를 바꿔야 하면 사용자와 먼저 합의한다.
 - 횡단 관심사(트랜잭션, 감사 로그, 인증)는 도메인 로직에 섞지 않는다.
 - 필요해지기 전에 만들지 않는다(YAGNI). 단, PROJECT.md가 미리 요구하는 구조(이벤트 로그 저장, 포트 추상화, `userId` 범위)는 처음부터 지킨다.
 
@@ -220,15 +220,20 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 
 ## 명령어
 
-> 1단계(리포 골격)가 끝나면 실제 명령으로 갱신한다.
-
 ```bash
-cd backend && ./gradlew build                        # 빌드 + 전체 테스트(경계 검증 포함)
-cd backend && ./gradlew test --tests 'banghak.stock.core.*'   # core 단위 테스트만
-cd backend && ./gradlew bootRun --args='--spring.profiles.active=engine'   # 클라이언트 데몬 실행
-cd backend && ./gradlew spotlessApply                # Java 포맷
+cd backend && ./gradlew build                        # 빌드 + 전체 테스트(경계 검증 포함, 학습 테스트 제외)
+cd backend && ./gradlew test --tests 'banghak.stock.core.*'          # core 단위 테스트만
+cd backend && ./gradlew test --tests 'banghak.stock.architecture.*'  # 경계 검증(ArchUnit)만
+cd backend && ./gradlew bootRun --args='--spring.profiles.active=engine'   # 클라이언트 데몬 실행(127.0.0.1:2609, -Xmx384m)
+cd backend && ./gradlew spotlessApply                # Kotlin 포맷(ktfmt kotlinlang)
+./scripts/learning-tests.sh                          # 외부 API 학습 테스트(@Tag("learning"), 키는 환경 변수)
 npm --prefix desktop run dev                         # Electron 개발 실행
-npm --prefix desktop run lint                        # TS 린트
+npm --prefix desktop run typecheck                   # TS 타입 검사(main·preload·renderer)
+npm --prefix desktop run lint                        # ESLint
+npm --prefix desktop run format                      # Prettier
+npm --prefix desktop test                            # Vitest
+./protocol/generate.sh                               # JSON Schema → Kotlin·TS 타입 생성(커밋 안 함)
+./scripts/dev.sh                                     # 데몬 + Electron 함께 실행
 ./scripts/dist.sh                                    # bootJar + jlink JRE + dmg 산출
 ```
 

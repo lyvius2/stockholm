@@ -1,0 +1,57 @@
+/* 색 토큰. 화면 설계서(docs/screens/MAIN_SCREEN_DESIGN.html)와 같은 값. 화면은 토큰만 쓰고 고정 색을 쓰지 않음. */
+:root {
+  color-scheme: light;
+  --bg: #f3f5f7;
+  --panel: #ffffff;
+  --panel2: #e9edf1;
+  --line: #cfd6dd;
+  --ink: #15202b;
+  --ink2: #5b6b7a;
+  --ink3: #8b98a5;
+  --accent: #0f8b8d;
+  --accent-soft: #d7eeee;
+  --up: #d9333f;
+  --down: #2b6fd6;
+  --warn: #c47a12;
+  --warn-soft: #fbeedb;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+  --sb: color-mix(in srgb, var(--ink3) 45%, transparent);
+  --sb-hover: color-mix(in srgb, var(--ink2) 75%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0f1418;
+    --panel: #161d23;
+    --panel2: #1e272f;
+    --line: #2b3641;
+    --ink: #e6edf3;
+    --ink2: #9fb0bf;
+    --ink3: #6b7b8a;
+    --accent: #3ec1c3;
+    --accent-soft: #12383a;
+    --up: #ff5a66;
+    --down: #5c9cff;
+    --warn: #e9a23b;
+    --warn-soft: #3a2a10;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0f1418;
+  --panel: #161d23;
+  --panel2: #1e272f;
+  --line: #2b3641;
+  --ink: #e6edf3;
+  --ink2: #9fb0bf;
+  --ink3: #6b7b8a;
+  --accent: #3ec1c3;
+  --accent-soft: #12383a;
+  --up: #ff5a66;
+  --down: #5c9cff;
+  --warn: #e9a23b;
+  --warn-soft: #3a2a10;
+}

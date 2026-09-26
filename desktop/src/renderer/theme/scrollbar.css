@@ -1,0 +1,21 @@
+/* 6px 얇은 스크롤바. 트랙 투명, 썸은 잉크색을 옅게 섞은 토큰. 서랍·표·모달 모두 같음. */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--sb);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--sb-hover);
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}

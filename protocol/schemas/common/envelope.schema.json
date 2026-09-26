@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/common/envelope.schema.json",
+  "title": "Envelope",
+  "description": "클라이언트와 relay 사이 모든 메시지의 공통 봉투. body는 kind에 따라 평문 JSON 또는 암호문 문자열임.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "userId", "fromDevice", "issuedAt", "expiresAt", "nonce", "body"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "kind": {
+      "type": "string",
+      "enum": ["COMMAND", "EVENT", "QUERY", "SNAPSHOT", "SYNC", "NOTIFY", "LEASE"]
+    },
+    "userId": { "type": "string", "pattern": "^u_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "fromDevice": { "type": "string", "pattern": "^d_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "toDevice": { "type": ["string", "null"], "pattern": "^d_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "nonce": { "type": "string", "minLength": 16 },
+    "stepUpProof": { "type": "string", "description": "민감 명령에만 붙음. TOTP 재인증 증표." },
+    "body": {
+      "type": "object",
+      "description": "kind별 본문 객체. SYNC는 { \"ciphertext\": base64 } 한 필드만 가짐.",
+      "additionalProperties": true
+    }
+  }
+}

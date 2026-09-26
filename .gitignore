@@ -15,18 +15,26 @@
 data/
 lucene-index/
 
-# Gradle / Java
+# Gradle / Kotlin / Java
 .gradle/
+.kotlin/
 build/
 out/
 *.class
 hs_err_pid*
+*.log
 
 # Node / Electron
 node_modules/
 dist/
 release/
 *.tsbuildinfo
+desktop/resources/daemon/*
+!desktop/resources/daemon/.gitkeep
+
+# protocol 생성물 (protocol/generate.sh)
+desktop/src/renderer/generated/*
+!desktop/src/renderer/generated/.gitkeep
 
 # IDE / OS
 .idea/

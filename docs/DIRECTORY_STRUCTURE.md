@@ -17,7 +17,7 @@
 
 ```
 stockholm/
-├─ AGENTS.md  CLAUDE.md  PROJECT.md  README.md(작성 예정)
+├─ AGENTS.md  CLAUDE.md  PROJECT.md  README.md
 ├─ .gitignore  .editorconfig  .github/workflows/ci.yml
 ├─ backend/        # 단일 Spring Boot 4.x 프로젝트, Kotlin (3장)
 ├─ desktop/        # Electron + React + TypeScript (4장)
@@ -123,7 +123,7 @@ backend/
    │  └─ static/(relay 원격 웹 UI)
    │
    ├─ test/kotlin/banghak/stock/
-   │  ├─ architecture/   CoreHasNoFrameworkTest  HexagonalDependencyTest(adapter→application→usecase/port→domain)  ModulithVerifyTest
+   │  ├─ architecture/   CoreHasNoFrameworkTest  HexagonalDependencyTest(adapter→application→usecase/port→domain)  NoCyclesTest
    │  │                  EngineRelayIsolationTest  ProfileBeansTest  RepositoryUserScopedTest  NoModelNamesOutsideLlmTest
    │  │                  GuardrailNotBypassableTest  OrderApiOnlyInTossOrderClientTest  FallbackRequiredTest
    │  ├─ core/…  engine/…  relay/…   (대상과 같은 패키지. 단위: Spring 없음 / 어댑터: WireMock / persistence: 골든·정밀도·FK)

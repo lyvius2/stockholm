@@ -1,0 +1,41 @@
+# 공통 설정. 비밀값은 어디에도 적지 않음(Keychain 전용).
+spring:
+  application:
+    name: stockholm
+  main:
+    banner-mode: off
+  threads:
+    virtual:
+      enabled: true
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=10m
+
+server:
+  address: 127.0.0.1
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+stockholm:
+  data-dir: ${user.home}/Library/Application Support/Stockholm
+  http:
+    connect-timeout: 5s
+    read-timeout: 15s
+    user-agent: Stockholm/0.1
+  concurrency:
+    llm-calls: 4
+    collectors: 8
+
+logging:
+  level:
+    root: info
+    banghak.stock: info

@@ -8,7 +8,7 @@
 
 | 항목 | 결정 |
 |---|---|
-| Spring Boot | **4.x** (Spring Framework 7, Jakarta EE 11). Modulith·Spring AI·Resilience4j는 4.x 짝 버전 [착수 시 확인] |
+| Spring Boot | **4.x** (Spring Framework 7, Jakarta EE 11). Spring AI·Resilience4j는 4.x 짝 버전(Resilience4j 2.4.0 `spring-boot4` 확인, 2026-09-26) |
 | 언어 | **Kotlin**(2.x, JDK 25 타깃). **코루틴 금지**, 비동기·병렬은 **가상 스레드**, 동시 실행 수 제어는 **`Semaphore`**(Kotlin `@Configuration`으로 빈 등록) |
 | 영속성 | **JPA + jOOQ(코드 생성 없음)**. jOOQ는 **Join 쿼리와 Bulk INSERT/UPDATE에만**, 나머지는 JPA. 리포지터리 메서드 이름이 **16자를 넘으면 JPQL `@Query`** |
 | HTTP 클라이언트 | **Retrofit2**(OkHttp) [확정 2026-09-26, RestClient에서 변경]. 엔드포인트(URL) 그룹별로 인터페이스 하나 + **빈 하나**(FeignClient 방식). JDK 25라 OkHttp의 `synchronized` pinning 문제 없음 |
@@ -42,7 +42,7 @@
 |---|---|---|---|---|
 | 프레임워크 | **Spring Boot 4.x** [확정 2026-09-26] | 4.x 최신 패치 | Apache-2.0 | 프로필 `engine`/`relay`, 생성자 주입만. Spring Framework 7 |
 | 언어 | **Kotlin** [확정 2026-09-26] | 2.x(`jvmTarget=25`, 지원 버전 확인) | Apache-2.0 | `kotlin-spring`·`kotlin-jpa`(allopen·noarg) 플러그인, `jackson-module-kotlin`. data class·value class·sealed interface. 코루틴 없음 |
-| 모듈 경계 | **Spring Modulith** + **ArchUnit** | Modulith 2.x, ArchUnit 1.4.x | Apache-2.0 | 패키지 경계·프로필 빈 검증 테스트 |
+| 모듈 경계 | **ArchUnit**만 [확정 2026-09-26] | 1.5.1 | Apache-2.0 | 의존 방향·순환(slices)·프로필 빈·프레임워크 격리 테스트. Spring Modulith는 제외 — Kotlin에 패키지 애너테이션이 없어 `package-info.java`가 필요했고, 순환 검사는 ArchUnit slices로 대신함 |
 | 웹 | **Spring MVC**(servlet) + 가상 스레드(`spring.threads.virtual.enabled=true`) | Boot 내장 Tomcat | Apache-2.0 | WebFlux 불필요. `127.0.0.1:2609` 바인딩 [포트 확정 2026-09-26] |
 | 병렬·동시성 | 가상 스레드 `Executor` + **`java.util.concurrent.Semaphore`**(도메인별 상한 빈, Kotlin Config) | JDK 25 | — | 예: 토스 MARKET_DATA 15, LLM 병렬 4, 수집 배치 8. 코루틴 금지 |
 | 로컬 WebSocket | **Spring WebSocket**(서버) | Boot 내장 | Apache-2.0 | 시세·체결·토론·알림 스트림 |
@@ -138,7 +138,7 @@
 
 ## 8. 결정 대기
 
-1. ~~Spring Boot 3.5 vs 4.x~~ → 4.x 확정(2026-09-26). Spring AI·Modulith·Resilience4j 짝 버전은 착수 시 확인.
+1. ~~Spring Boot 3.5 vs 4.x~~ → 4.x 확정(2026-09-26). Spring AI·Resilience4j 짝 버전은 착수 시 확인. Modulith는 제외(2026-09-26).
 2. MySQL 드라이버(GPL+FOSS exception) vs MariaDB Connector/J(LGPL) — relay 7단계.
 2-1. relay 브로커 제품: NATS JetStream(제안) vs Valkey Streams — **7단계(relay 서버) 착수 전까지 보류** [사용자 결정 2026-09-25]. relay 포트·WS 경로도 같이 연기.
 3. ~~protocol 생성 도구·ktfmt 스타일~~ → quicktype · kotlinlang [확정 2026-09-26].

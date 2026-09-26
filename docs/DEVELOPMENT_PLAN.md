@@ -29,7 +29,7 @@
 착수 순서:
 
 1. `backend/` Gradle(Kotlin DSL) + **Kotlin 2.x + Spring Boot 4.x** + GraalVM JDK 25 toolchain(`vendor = GRAAL_VM`) + Spotless(ktfmt). 루트 `banghak.stock`, 헥사고날 계층 골격 `core(domain·usecase·port)` / `engine(application·adapter·config)` / `relay` / `shared`(DIRECTORY_STRUCTURE 3장, 빈 패키지는 자리만). 프로필 `engine`/`relay`. `shared/config`에 가상 스레드 Executor·`Semaphore` 빈·OkHttp/Retrofit 공통·Resilience4j 레지스트리·CacheConfig(Caffeine, Valkey/Redis 전환) 뼈대. 로컬 API `127.0.0.1:2609`.
-2. **경계 검증 테스트를 코드보다 먼저**: ArchUnit(헥사고날 의존 방향, `core` 프레임워크 import 금지, 진입 어댑터는 usecase만, `engine`↔`relay` 상호 참조 금지, `@Profile` 필수, Retrofit 인터페이스 호출마다 fallback 존재, 주문 API는 `adapter.out.toss.TossOrderClient`에만), Spring Modulith 모듈 검증, 프로필별 컨텍스트 기동 3종 + `relay`만 켰을 때 주문·증권사·LLM 빈 부재. 이 테스트가 빨간 상태로 시작한다.
+2. **경계 검증 테스트를 코드보다 먼저**: ArchUnit(헥사고날 의존 방향, `core` 프레임워크 import 금지, 진입 어댑터는 usecase만, `engine`↔`relay` 상호 참조 금지, `@Profile` 필수, Retrofit 인터페이스 호출마다 fallback 존재, 주문 API는 `adapter.out.toss.TossOrderClient`에만), ArchUnit slices 순환 검사, 프로필별 컨텍스트 기동 3종 + `relay`만 켰을 때 주문·증권사·LLM 빈 부재. 이 테스트가 빨간 상태로 시작한다.
 3. `core` 값 객체 TDD: `Money`(HALF_EVEN, 통화 scale), `Quantity`(KR 정수·US 6자리), `Symbol`, `UserId`/`DeviceId`(ULID), `ClientOrderId`(36자·결정적 생성 26자), `Percent`, `ExchangeRate`. 경계값 테스트 전부.
 4. `core` 이벤트 로그: `EventEnvelope`, `DomainEvent` sealed 목록(빈 record라도 전부), `EventStore` 포트 + 메모리 fake, `(user, device)`별 seq·`LOCAL/USER/FAMILY` 범위 표.
 5. 영속성 기반: SQLite JDBC + Hibernate + jOOQ(코드 생성 없음, 같은 DataSource·트랜잭션) + Flyway, 자리표시자(`${decimal}`…), `AttributeConverter`(BigDecimal↔TEXT, Instant↔ISO-8601), 연결 초기화 SQL(WAL·`foreign_keys=ON`·busy_timeout). **V1 마이그레이션**: DB_SCHEMA 4·5장 + `stock_master`·`stock_warning`·`exchange_rate`·`market_calendar`. 마이그레이션 골든 테스트, 정밀도 테스트(17자리), FK PRAGMA 테스트.

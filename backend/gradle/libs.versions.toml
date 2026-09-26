@@ -1,0 +1,66 @@
+# 버전 카탈로그. 선택 이유·라이선스는 docs/TECH_STACK.md에 적음.
+# Spring Boot BOM이 관리하는 라이브러리(Jackson·Hibernate·Flyway·jOOQ·Caffeine·Lettuce·JUnit·AssertJ 등)는 버전을 적지 않음.
+# 2026-09-26 Maven Central 기준 최신 안정판.
+
+[versions]
+kotlin = "2.4.20"
+spring-boot = "4.1.1"
+resilience4j = "2.4.0"
+retrofit = "3.0.0"
+okhttp = "5.5.0"
+archunit = "1.5.1"
+spotless = "8.10.2"
+ktfmt = "0.64"
+sqlite-jdbc = "3.53.4.0"
+lucene = "10.5.1"
+spring-ai = "2.0.1"
+zxing = "3.5.4"
+ulid = "8.3.0"
+wiremock = "3.13.2"
+jackson2 = "2.22.3"
+
+[libraries]
+spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web" }
+spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
+spring-boot-starter-validation = { module = "org.springframework.boot:spring-boot-starter-validation" }
+spring-boot-starter-aspectj = { module = "org.springframework.boot:spring-boot-starter-aspectj" }
+spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache" }
+spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
+spring-boot-starter-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
+spring-boot-starter-jooq = { module = "org.springframework.boot:spring-boot-starter-jooq" }
+spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway" }
+spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket" }
+spring-boot-starter-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
+
+
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version.ref = "jackson2" }
+jackson2-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin" }
+
+resilience4j-spring-boot4 = { module = "io.github.resilience4j:resilience4j-spring-boot4", version.ref = "resilience4j" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+retrofit-converter-jackson = { module = "com.squareup.retrofit2:converter-jackson", version.ref = "retrofit" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
+hibernate-community-dialects = { module = "org.hibernate.orm:hibernate-community-dialects" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
+lucene-core = { module = "org.apache.lucene:lucene-core", version.ref = "lucene" }
+lucene-analysis-nori = { module = "org.apache.lucene:lucene-analysis-nori", version.ref = "lucene" }
+spring-ai-bom = { module = "org.springframework.ai:spring-ai-bom", version.ref = "spring-ai" }
+zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
+zxing-javase = { module = "com.google.zxing:javase", version.ref = "zxing" }
+ulid = { module = "de.huxhorn.sulky:de.huxhorn.sulky.ulid", version.ref = "ulid" }
+
+archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
+kotlin-jpa = { id = "org.jetbrains.kotlin.plugin.jpa", version.ref = "kotlin" }
+spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

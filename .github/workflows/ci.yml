@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: backend (Kotlin · Spring Boot 4 · GraalVM JDK 25)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm-community'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and test (경계 검증 포함, 학습 테스트 제외)
+        working-directory: backend
+        run: ./gradlew build --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: backend-test-reports
+          path: backend/build/reports/tests
+
+  desktop:
+    name: desktop (Electron · React · TypeScript)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - working-directory: desktop
+        run: npm ci
+      - working-directory: desktop
+        run: npm run typecheck
+      - working-directory: desktop
+        run: npm run lint
+      - working-directory: desktop
+        run: npm run format:check
+      - working-directory: desktop
+        run: npm test
+      - working-directory: desktop
+        run: npm run build

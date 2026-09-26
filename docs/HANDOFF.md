@@ -2,13 +2,15 @@
 
 > 문서 지도: [docs/INDEX.md](INDEX.md) · 기준 문서: [PROJECT.md](../PROJECT.md) · 작업 규칙: [CLAUDE.md](../CLAUDE.md) · 개발 순서: [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md)
 
-갱신: 2026-09-24. 설계 단계(Cowork, claude.ai 프로젝트 "주식 거래 프로그램 프로젝트")를 마치고 개발 단계로 넘어간다. **이 저장소의 문서가 유일한 기준이다.** claude.ai 프로젝트의 `claude/*.md`는 같은 내용의 사본이며, 앞으로는 저장소를 먼저 고친다.
+갱신: 2026-09-26(리포 골격 생성). 설계 단계(Cowork, claude.ai 프로젝트 "주식 거래 프로그램 프로젝트")를 마치고 개발 단계로 넘어간다. **이 저장소의 문서가 유일한 기준이다.** claude.ai 프로젝트의 `claude/*.md`는 같은 내용의 사본이며, 앞으로는 저장소를 먼저 고친다.
 
 ## 지금 상태
 
 - 설계 문서 완료: [`PROJECT.md`](../PROJECT.md)(기준), [`CLAUDE.md`](../CLAUDE.md)(작업 규칙), [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md), [`docs/DEBATE_DESIGN.md`](DEBATE_DESIGN.md), [`docs/RAG_DESIGN.md`](RAG_DESIGN.md), [`docs/LLM_ROUTING.md`](LLM_ROUTING.md), [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md), [`docs/KEY_MANAGEMENT.md`](KEY_MANAGEMENT.md), [`docs/MIROFISH_EXPERIMENT_GUIDE.md`](MIROFISH_EXPERIMENT_GUIDE.md).
 - 화면 설계: Cowork 아티팩트 "Stockholm 화면 설계" Version 17(HTML 목업), Figma 파일 `sZLAmrVRCfMgkfF7sS1uCx`. Figma 반영은 `figma-plugin/`(개발 플러그인 v2)으로 하며, **실행 결과 대조는 아직 안 됨**.
-- 코드는 아직 없다. `backend/`, `desktop/`, `protocol/`은 미생성.
+- **리포 골격 생성(2026-09-26, 1단계 착수)**: `README.md`(shields.io 배지), `backend/`(Gradle 9.8 래퍼 · Kotlin 2.4.20 · Spring Boot 4.1.1 · GraalVM JDK 25 toolchain `vendor = GRAAL_VM` · Spotless+ktfmt kotlinlang · 버전 카탈로그 `gradle/libs.versions.toml`), 계층 골격 `core(domain 18개념·usecase·port)` / `engine(application 14·adapter/in 3·adapter/out 18·config)` / `relay` / `shared(config·web·crypto·time·util·protocol)`은 `.gitkeep` 자리, `shared/config`에 `ProfileGuard`(프로필 없으면 기동 실패)·`StockholmProperties`(data-dir)·`ClockConfig`·`VirtualThreadConfig`·`ConcurrencyLimits`+`SemaphoreConfig`(llm 4·collector 8, 낮출 수만)·`HttpProperties`+`OkHttpConfig`(로깅 인터셉터 없음)·`RetrofitFactory`(Jackson 2 컨버터)·`JacksonConfig`(BigDecimal → 문자열)·`CacheConfig`(Caffeine, yml spec)·`ZoneIds`, `engine/config/EngineConfig`·`relay/config/RelayConfig`(@Profile), `application.yml`(가상 스레드, actuator health만, 127.0.0.1)·`application-engine.yml`(2609)·`application-relay.yml`(포트 B2 보류). 경계 테스트 `architecture/`: `CoreHasNoFrameworkTest`·`HexagonalDependencyTest`·`EngineRelayIsolationTest`·`ProfileBeansTest`(engine/relay 빈은 정확히 그 @Profile, shared는 프로필 없음)·`NoCyclesTest`(slices) + `ProfileContextTest`(engine/relay/둘 다 기동, relay만 켜면 engine 빈 0, 프로필 없으면 실패) + `LocalApiSmokeTest`(헬스 UP). **`./gradlew build` 녹색.** `desktop/`(Electron 44 · electron-vite 5 · Vite 7 · React 19.3 · TS 5.9 strict · TanStack Query · Zustand · Vitest 5 · ESLint 10 flat + Prettier): main(`contextIsolation`·`sandbox`·외부 링크는 브라우저로, `daemon.ts` 헬스 폴링) · preload(CJS, `daemon.status`·`theme.current`만 노출, 타입은 `bridge.ts`) · renderer(App: 상단 바 + 데몬 연결 상태, 색 토큰·얇은 스크롤바 css는 화면 설계서 값 그대로) · `tests/App.test.tsx`. **typecheck·lint·format·test·build 녹색.** `protocol/`(README·`schemas/common/envelope.schema.json`·`generate.sh` quicktype), `scripts/`(dev·dist 뼈대·learning-tests·db-dump), `.editorconfig`, `.github/workflows/ci.yml`(GraalVM 25 CE + Node 22), `.gitignore` 보강. CLAUDE.md 명령어 절 실제 명령으로 갱신.
+- **1단계 첫날 확인 결과(2026-09-26)**: GraalVM CE 25.0.2(sdkman) toolchain 자동 감지됨, Kotlin 2.4.20 `jvmTarget=25` 컴파일됨, Gradle 9.8 + 설정 캐시 정상 → **21 후퇴 불필요**. 데몬 jar를 `-Xmx384m`으로 띄우면 기동 1.8초, 유휴 RSS **292MB**(목표 400MB 이하, 골격 상태 기준). `jlink`는 dist.sh에서 아직 실행 안 해봄.
+- **골격에서 내린 결정·주의(2026-09-26)**: ① Boot 4.1에서 `spring-boot-starter-aop`가 **`spring-boot-starter-aspectj`**로 바뀜(Resilience4j 애너테이션용). ② Boot 4는 Jackson 3(`tools.jackson`)이고 Retrofit 컨버터는 Jackson 2라 `RetrofitFactory`가 별도 `ObjectMapper`(jackson-bom 2.22.3)를 가짐. 로컬 API 직렬화는 Spring의 Jackson 3. ③ **Spring Modulith 제외(사용자 결정 2026-09-26)**: Kotlin에 패키지 애너테이션이 없어 `package-info.java`(Java 소스 루트)가 필요했음 → 경계는 ArchUnit만으로 강제하고 순환 검사는 `NoCyclesTest`(slices)로 대신함. `src/main/java` 없음, core 규칙에 예외 없음. ④ `archunit.properties`에 `failOnEmptyShould=false`(빈 패키지 규칙 통과). ⑤ TypeScript는 7.0이 나왔지만 typescript-eslint가 <6.1만 지원해 **5.9.3** 고정, electron-vite 5가 Vite 8 미지원이라 **Vite 7**. ⑥ 로컬 Node 22.17.1은 jsdom 의존성의 engine 조건(22.22+)에 경고만 남김 → Node 22 LTS 최신으로 올리길 권함. ⑦ 샌드박스 렌더러는 CommonJS preload만 받아 electron-vite preload 출력을 `.cjs`로 고정.
 - **F13 연기금종목(국민연금 해외투자 현황) 설계 추가·확정(2026-09-24)**: [`docs/NPS_HOLDINGS_DESIGN.md`](NPS_HOLDINGS_DESIGN.md)(두 출처 SEC 13F 분기 + 공공데이터포털 연간, 모달·갱신 푸시·저장·포트·출처별 이용 조건), [`PROJECT.md`](../PROJECT.md) 9장 F13·8장 포트 표·11.3 상단 바 개정안, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.8, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) pension 패키지·포트. 화면 설계 아티팩트 v26(Version 29, [`docs/screens/MAIN_SCREEN_DESIGN.html`](screens/MAIN_SCREEN_DESIGN.html) 사본)에 모달·🏛️ 버튼·토스트·주석 반영. `figma-plugin/` v3 `nps` 항목은 반영·확인 완료(2026-09-24).
 - **F14 주문 관리 설계 추가·확정(2026-09-24)**: [`docs/ORDER_MANAGEMENT_DESIGN.md`](ORDER_MANAGEMENT_DESIGN.md)(3번 영역 세 탭, 정정 모달, 상태 매핑, `TradingPort.amend/cancel/closedOrders`, 예외), [`PROJECT.md`](../PROJECT.md) 9장 F14·8.1 정정·취소 규격·11.3 3번 영역, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) OrderStatus·OrderAmendment·BrokerOrder 체인, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 1.1 항목 9. 화면 설계서 v18에 목업(미체결 탭·정정 모달·취소 확인). `figma-plugin/` `orders` 항목 반영 완료(2026-09-25).
 - **F15 종목 정보 서랍 설계 추가(2026-09-24, [제안]; 서랍 순서 |Main|종목 정보|급등락|과 좌우 배타 규칙은 [확정])**: [`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md)(탭 다섯, DART·EDGAR 출처, 갱신·캐시, `FundamentalsPort`, 저장, 예외), [`PROJECT.md`](../PROJECT.md) 9장 F15·11.3 서랍 네 개·2번 영역 버튼, [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md) 포트. 화면 설계서 v22에 목업. `figma-plugin/` v3.5 `info` 항목 + **섹션 정리(`organize`: F13·F14·F15·테마를 01 메인 화면의 섹션 네 개로 분리 — 무료 요금제 페이지 3장 제한)** — **Figma 반영 실행은 아직 안 함**.
@@ -42,21 +44,16 @@
 
 - **백엔드 스펙 확정(2026-09-26, 사용자 결정)**: Spring Boot 4.x · **Kotlin**(코루틴 금지, 가상 스레드 + `Semaphore` 빈) · JPA + jOOQ(코드 생성 없음, Join·Bulk만, 리포지터리 메서드 16자 초과 시 JPQL) · `RestClient` HTTP 인터페이스를 엔드포인트별 빈으로(Feign 방식) · Resilience4j(fallback 필수) · 로컬 API 포트 2609 · 캐시는 등록된 Valkey/Redis 연결 성공 시 사용, 아니면 로컬(Caffeine) · **Hexagonal, 루트 `banghak.stock`** — 도메인별 패키지 분할은 **같은 날 취소** → 계층별 `core(domain·usecase·port)` / `engine`·`relay`(application·adapter·config) / `shared`. 반영: CLAUDE.md 기술 기준·경계·형식·TDD 문구, PROJECT D3·11.1(트리·경계 규칙·스택 줄), DIRECTORY_STRUCTURE 개정(계층 골격, usecase/port 위치, 기능→위치 표), TECH_STACK 0장(확정 스펙)·행 갱신, CORE_DOMAIN 머리말(Java 예시 → Kotlin 구현), FIRST_RUN ②·검증 표에 캐시 서버, ACCOUNT 5.2 공유 설정, DEVELOPMENT_PLAN 1단계, 패키지명 일괄 치환. **2026-09-26 결정**: 공용 값 객체는 `core/domain/{money,market,identity}` 한곳, `research` 유지, 테스트 JUnit 5 + AssertJ, 캐시 대상 제안 채택, relay 포트는 연기. ktfmt kotlinlang 스타일·protocol 생성 quicktype도 확정. **같은 날 추가 결정: GraalVM for JDK 25 LTS(JVM 모드, 21에서 상향, 첫날 Kotlin·Gradle·jlink 확인; 배포판 Community 제안 — GFTC 재배포 조건 때문) · 외부 HTTP는 Retrofit2 + OkHttp(RestClient HTTP 인터페이스 대체, 토스 WebSocket도 OkHttp)**. 백엔드 스펙 결정 사항은 모두 닫힘(relay 포트·브로커 제품만 7단계로 연기).
 
-## 다음 작업: 12장 1단계 "리포 골격"
+## 다음 작업: 1단계 나머지 (DEVELOPMENT_PLAN 3장 기준)
 
-세부 순서와 완료 기준은 [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md) 3장. 아래는 요약.
+골격(3장 1번)·CLAUDE 명령어(12번)는 끝났고 2·9·10·11번은 부분 완료. 남은 순서:
 
-[`PROJECT.md`](../PROJECT.md) 12장 1단계 순서대로. 착수 전에 [`CLAUDE.md`](../CLAUDE.md)의 절대 규칙과 [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md)를 읽는다.
+1. **경계 테스트 나머지(2번)**: `OrderApiOnlyInTossOrderClientTest`, `GuardrailNotBypassableTest`, `FallbackRequiredTest`(Retrofit 인터페이스 호출마다 `@CircuitBreaker(fallbackMethod)`), `NoModelNamesOutsideLlmTest`, `RepositoryUserScopedTest`. 검사 대상 코드가 없어도 규칙을 먼저 둔다.
+2. `core` 값 객체 TDD(3번): `Money`·`Quantity`·`Symbol`·`UserId`/`DeviceId`·`ClientOrderId`·`Percent`·`ExchangeRate`, 경계값 전부.
+3. 이벤트 로그(4번) → 영속성 V1(5번, JPA·jOOQ·Flyway 스타터는 카탈로그에 이미 있음) → Keychain(6번) → 데몬 기동·`/setup/*`·로컬 토큰(7번) → 사용자·세션·TOTP(8번).
+4. desktop(9번) 나머지: 데몬 자식 프로세스 기동(`daemon.ts` TODO), 트레이 상주, 마법사 4단계·로그인 모달·네 영역 골격, 데이터 접근 계층. protocol(10번): `generate.sh`는 동작 확인됨(봉투 스키마 → `Envelope.kt`(Jackson 애너테이션)·`envelope.ts`, `body`는 객체로 고정하고 SYNC는 `{ciphertext}`), 다음은 이벤트 payload 스키마 1개와 생성 타입의 실제 사용. dist(11번): `dist.sh`의 jlink 모듈 목록을 jdeps로 확정, dmg 실제 산출.
 
-1. `backend/` 단일 Spring Boot 4.x 프로젝트(Kotlin, Gradle Kotlin DSL, JDK 25 toolchain, 루트 패키지 `banghak.stock`, 프로필 `engine`/`relay`), Spotless(google-java-format).
-2. 경계 검증 테스트: Spring Modulith 모듈 검증 + ArchUnit(`core`는 프레임워크 import 금지, `engine`↔`relay` 상호 참조 금지, 프로필별 컨텍스트 기동 3종 + `relay`만 켰을 때 주문·증권사·LLM 빈 부재).
-3. `core` 값 객체부터 TDD: `Money`, `Quantity`(국내 정수·미국 소수 6자리), `StockCode`, `ClientOrderId`(36자·10분), `AutoBuyExposure`(168시간 경계값). 한도 상수는 `core`에 한곳.
-4. 데몬 기동: `127.0.0.1` 바인딩, 로컬 토큰 파일, 헬스 엔드포인트. SQLite(WAL) + Flyway V1.
-5. `desktop/` Electron + React + TS 골격(`contextIsolation` 켬), 데몬 기동·접속만.
-6. `protocol/` JSON Schema 자리와 양쪽 타입 생성 파이프라인.
-7. dmg 산출 스크립트 뼈대(`scripts/dist.sh`), 메모리 실측(`-Xmx384m`).
-
-끝나면 [`CLAUDE.md`](../CLAUDE.md)의 "명령어" 절을 실제 명령으로 갱신한다.
+착수 전에 [`CLAUDE.md`](../CLAUDE.md) 절대 규칙과 [`docs/CORE_DOMAIN.md`](CORE_DOMAIN.md)를 읽는다. 아직 커밋하지 않았다(사용자 요청 시 `chore: 리포 골격` 등으로).
 
 ## 미결 항목 (2026-09-26 정리)
 
@@ -82,7 +79,7 @@
 5. **Massive**: 분당 5회 동작, dividends `frequency`, news `insights`, 관련 종목 경로, Indices Basic 포함 지수.
 6. **FRED**: 결측 `"."` 처리, 양도세용 결제일 기준환율 출처(없으면 체결일 근사).
 7. **공공데이터포털**: `perPage` 상한, 일일 한도, `Authorization` 접두, 데이터셋 기준 시점.
-8. **1단계 첫날**: JDK 25에서 Kotlin `jvmTarget`·Gradle·Spring AI·Modulith·Resilience4j 짝 버전 확인.
+8. **1단계 첫날**: JDK 25에서 Kotlin `jvmTarget`·Gradle·Spring AI·Resilience4j 짝 버전 확인(Modulith 제외).
 
 ### D. 외부 확인·문의 (약관·계약)
 

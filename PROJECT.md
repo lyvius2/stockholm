@@ -24,7 +24,7 @@
 |---|---|---|
 | D1 | 클라이언트 = Electron(React+TypeScript) 셸 + **Java/Spring Boot 데몬** | 핵심 매매 로직을 주력 스택으로. Electron을 닫아도 엔진은 동작 |
 | D2 | 서버는 **optional**. 역할: 원격 컨트롤, 그 UI 제공, 클라이언트 간 동기화 중계, Slack 알림 | 클라이언트는 서버 없이 완결 |
-| D3 | 백엔드는 **Kotlin 단일 Spring Boot 4.x 프로젝트**(`backend/`, Hexagonal 계층별 패키지 [2026-09-26]). 클라이언트 데몬과 서버는 프로필(`engine` / `relay`)로 구분. 모듈 경계는 패키지 + Spring Modulith·ArchUnit 테스트로 강제 | 1인 유지보수. Mac mini에서는 한 JVM에 두 프로필을 함께 올림 |
+| D3 | 백엔드는 **Kotlin 단일 Spring Boot 4.x 프로젝트**(`backend/`, Hexagonal 계층별 패키지 [2026-09-26]). 클라이언트 데몬과 서버는 프로필(`engine` / `relay`)로 구분. 모듈 경계는 패키지 + ArchUnit 테스트로 강제(Spring Modulith는 2026-09-26 제외: Kotlin에 패키지 애너테이션이 없어 Java 파일이 필요했음) | 1인 유지보수. Mac mini에서는 한 JVM에 두 프로필을 함께 올림 |
 | D4 | 모든 업무 데이터는 클라이언트에 저장. 서버는 **암호문만** 중계·임시보관 | 서버가 뚫려도 키·매매 데이터 비노출 |
 | D5 | 각 클라이언트는 독립 동작(offline-first). 집 Mac이 꺼져도 밖의 Mac이 단독 동작 | 요구사항 |
 | D6 | 자동 실행 권한은 한 시점에 한 디바이스만(**lease**). 갱신 실패 시 자동 실행 자진 중단 | 이중 주문(split-brain) 방지 |
@@ -352,12 +352,12 @@ stockholm/
 - 진입 어댑터는 `core.usecase`만 부른다. `application`끼리는 usecase와 이벤트로 협력한다.
 - `engine`과 `relay`는 서로를 참조하지 않는다. 둘 다 `core`와 `shared`만 참조한다.
 - 모든 자동 주문은 `EvaluateGuardrailUseCase`를 거친다. 주문 API 호출은 `engine.adapter.out.toss.TossOrderClient`에만 있다. 외부 HTTP 호출에는 Resilience4j 서킷 브레이커와 fallback이 반드시 있다.
-- 위 규칙은 **Spring Modulith의 모듈 검증 테스트와 ArchUnit 테스트**로 빌드에서 강제한다.
+- 위 규칙은 **ArchUnit 테스트**(의존 방향·순환·프로필·프레임워크 격리)로 빌드에서 강제한다. Spring Modulith는 쓰지 않는다(2026-09-26, 위 D3).
 - 프로필별 컨텍스트 테스트: `engine`만, `relay`만, 둘 다 켠 세 경우 모두 기동되는지, 그리고 **`relay`만 켰을 때 주문·증권사·LLM 관련 빈이 하나도 로드되지 않는지** 검증한다.
 
 **실행 형태.** 같은 산출물을 프로필로 구분한다: 클라이언트 `engine` / 서버 단독 `relay` / Mac mini 겸용 `engine,relay`.
 
-기술 스택 [2026-09-26 확정]: **Kotlin 2.x · GraalVM for JDK 25 LTS(JVM 모드, 배포판은 Community 제안) · Spring Boot 4.x**, 루트 패키지 `banghak.stock`, Spring Modulith, Gradle(Kotlin DSL), JPA + jOOQ(코드 생성 없음, Join·Bulk만), Retrofit2(OkHttp) 인터페이스를 엔드포인트별 빈으로 + Resilience4j(fallback 필수), 가상 스레드 + `Semaphore`(코루틴 없음), 로컬 API `127.0.0.1:2609`, 캐시 Caffeine 또는 등록된 Valkey/Redis, SQLite, Flyway, Lucene, Spring AI / Electron, React, TypeScript, electron-builder. 대상은 Apple Silicon(arm64) 우선. 항목별 선택·버전·라이선스·쓰지 않기로 한 것은 [`docs/TECH_STACK.md`](docs/TECH_STACK.md) [제안 2026-09-25].
+기술 스택 [2026-09-26 확정]: **Kotlin 2.x · GraalVM for JDK 25 LTS(JVM 모드, 배포판은 Community 제안) · Spring Boot 4.x**, 루트 패키지 `banghak.stock`, ArchUnit, Gradle(Kotlin DSL), JPA + jOOQ(코드 생성 없음, Join·Bulk만), Retrofit2(OkHttp) 인터페이스를 엔드포인트별 빈으로 + Resilience4j(fallback 필수), 가상 스레드 + `Semaphore`(코루틴 없음), 로컬 API `127.0.0.1:2609`, 캐시 Caffeine 또는 등록된 Valkey/Redis, SQLite, Flyway, Lucene, Spring AI / Electron, React, TypeScript, electron-builder. 대상은 Apple Silicon(arm64) 우선. 항목별 선택·버전·라이선스·쓰지 않기로 한 것은 [`docs/TECH_STACK.md`](docs/TECH_STACK.md) [제안 2026-09-25].
 
 ### 11.2 빌드·패키징과 GraalVM 네이티브 이미지 방침 [제안]
 
@@ -406,7 +406,7 @@ stockholm/
 
 각 단계의 세부 착수 순서·읽을 문서·완료 기준은 [`docs/DEVELOPMENT_PLAN.md`](docs/DEVELOPMENT_PLAN.md), 문서 색인은 [`docs/INDEX.md`](docs/INDEX.md).
 
-1. **리포 골격**: `backend/`(단일 Spring Boot) + `desktop/`(Electron) 빌드 파이프라인, 경계 검증 테스트(Modulith·ArchUnit), 데몬 기동·로컬 토큰 접속, 로컬 프로필, dmg 산출, 메모리 실측
+1. **리포 골격**: `backend/`(단일 Spring Boot) + `desktop/`(Electron) 빌드 파이프라인, 경계 검증 테스트(ArchUnit), 데몬 기동·로컬 토큰 접속, 로컬 프로필, dmg 산출, 메모리 실측
 2. 토스 API 연동(시세·계좌·승인 기반 소액 주문), F1~F4, 금융결제원 본인인증·자산 조회
 3. 데이터 수집과 RAG: DART, 뉴스, Lucene 인덱스
 4. 페르소나 토론(세 테마, 개요·전망, DebateSession 저장·재개), 추천, 시장 리포트 (주문 미연결). 미러피시 사전 실험 결과 반영
