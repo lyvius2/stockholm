@@ -13,7 +13,7 @@ value class DeviceId(val value: String) {
 
     companion object {
         private const val PREFIX = "d_"
-        private val PATTERN = Regex("d_[0-9A-HJKMNP-TV-Z]{26}")
+        private val PATTERN = Regex("d_[0-7][0-9A-HJKMNP-TV-Z]{25}")
 
         fun from(ulid: Ulid): DeviceId = DeviceId(PREFIX + ulid.value)
     }

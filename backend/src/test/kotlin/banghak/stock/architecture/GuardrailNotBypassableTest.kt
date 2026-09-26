@@ -44,6 +44,26 @@ class GuardrailNotBypassableTest {
             .check(ProductionClasses.all)
     }
 
+    @Test
+    @DisplayName("TradingPort 구현체는 toss 어댑터와 engine 조립 설정 밖에서 참조하지 않음")
+    fun tradingPortImplementationsAreNotReferencedDirectly() {
+        noClasses()
+            .that()
+            .resideOutsideOfPackages(
+                "banghak.stock.engine.adapter.out.toss..",
+                "banghak.stock.engine.config..",
+            )
+            .should()
+            .dependOnClassesThat(implementTradingPort())
+            .check(ProductionClasses.all)
+    }
+
+    private fun implementTradingPort() =
+        object : DescribedPredicate<JavaClass>("implement TradingPort") {
+            override fun test(type: JavaClass): Boolean =
+                type.allRawInterfaces.any { it.name == TRADING_PORT }
+        }
+
     private fun placingOrderOnTradingPort() =
         object : DescribedPredicate<JavaMethodCall>("place an order on TradingPort") {
             override fun test(call: JavaMethodCall): Boolean =

@@ -10,6 +10,7 @@ import banghak.stock.core.port.EventStore
 import banghak.stock.support.fakes.MemoryEventStore
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -17,7 +18,13 @@ import org.junit.jupiter.api.Test
 open class EventStoreContractTest {
     protected open fun newStore(): EventStore = MemoryEventStore()
 
-    private val store = newStore()
+    private lateinit var store: EventStore
+
+    @BeforeEach
+    fun createStore() {
+        store = newStore()
+    }
+
     private val t0 = Instant.parse("2026-09-26T09:00:00Z")
     private val alice = UserId.from(Ulid.of(t0, ByteArray(10) { 1 }))
     private val bob = UserId.from(Ulid.of(t0, ByteArray(10) { 2 }))

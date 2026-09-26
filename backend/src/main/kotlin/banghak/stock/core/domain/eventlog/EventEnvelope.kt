@@ -1,5 +1,6 @@
 package banghak.stock.core.domain.eventlog
 
+import banghak.stock.core.domain.error.InvalidValue
 import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.UserId
 import java.time.Instant
@@ -17,6 +18,12 @@ data class EventEnvelope(
     val type: String,
     val payload: DomainEvent,
 ) {
+    init {
+        if (seq < 1) throw InvalidValue("seq 는 1 이상이어야 함: $seq")
+        if (type != typeOf(payload))
+            throw InvalidValue("type '$type' 이 payload 의 종류 '${typeOf(payload)}' 와 다름")
+    }
+
     val syncScope: SyncScope
         get() = SyncScopes.of(payload)
 

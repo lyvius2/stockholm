@@ -1,5 +1,6 @@
 package banghak.stock.core.domain.eventlog
 
+import banghak.stock.core.domain.error.InvalidValue
 import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
@@ -8,6 +9,7 @@ import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.trading.ClientOrderId
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -29,6 +31,17 @@ class EventEnvelopeTest {
         assertThat(SyncScopes.of(WatchlistChanged("g1", samsung, added = true)))
             .isEqualTo(SyncScope.USER)
         assertThat(SyncScopes.of(JournalMemoChanged(samsung, "m1"))).isEqualTo(SyncScope.FAMILY)
+    }
+
+    @Test
+    @DisplayName("seq 는 1 이상이고 type 은 payload 의 종류와 같아야 함")
+    fun validatesSeqAndType() {
+        val event = ChartModeChanged(detailed = true)
+        assertThatThrownBy { EventEnvelope.of(user, deviceA, 0, t0, event) }
+            .isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { EventEnvelope(user, deviceA, 1, t0, "UserSettingChanged", event) }
+            .isInstanceOf(InvalidValue::class.java)
+        assertThat(EventEnvelope.of(user, deviceA, 1, t0, event).type).isEqualTo("ChartModeChanged")
     }
 
     @Test

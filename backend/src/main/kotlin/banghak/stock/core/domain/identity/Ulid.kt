@@ -25,13 +25,17 @@ value class Ulid private constructor(val value: String) : Comparable<Ulid> {
         private const val LENGTH = 26
         private val DECODE: Map<Char, Int> =
             ALPHABET.withIndex().associate { (index, char) -> char to index }
-        private val PATTERN = Regex("[0-9A-HJKMNP-TV-Z]{26}")
+        // 48비트 시각을 10자(50비트)에 담으므로 첫 글자는 상위 2비트가 0인 0~7뿐임
+        private val PATTERN = Regex("[0-7][0-9A-HJKMNP-TV-Z]{25}")
+        private const val MAX_TIME_MILLIS = (1L shl 48) - 1
 
         fun of(time: Instant, entropy: ByteArray): Ulid {
             if (entropy.size != ENTROPY_BYTES)
                 throw InvalidValue("ULID 엔트로피는 ${ENTROPY_BYTES}바이트여야 함: ${entropy.size}")
-            val bits = StringBuilder(LENGTH)
             var millis = time.toEpochMilli()
+            if (millis < 0 || millis > MAX_TIME_MILLIS)
+                throw InvalidValue("ULID 시각은 0..2^48-1 밀리초여야 함: $millis")
+            val bits = StringBuilder(LENGTH)
             val timeChars = CharArray(TIME_CHARS)
             for (index in TIME_CHARS - 1 downTo 0) {
                 timeChars[index] = ALPHABET[(millis and 0x1F).toInt()]

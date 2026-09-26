@@ -35,6 +35,26 @@ class UlidTest {
     }
 
     @Test
+    @DisplayName("시각은 0 이상 2^48-1 밀리초 이하만 허용함")
+    fun rejectsTimeOutsideFortyEightBits() {
+        val max = Instant.ofEpochMilli((1L shl 48) - 1)
+        assertThat(Ulid.of(max, entropy).value).startsWith("7ZZZZZZZZZ")
+        assertThat(Ulid.of(Instant.EPOCH, entropy).value).startsWith("0000000000")
+        assertThatThrownBy { Ulid.of(max.plusMillis(1), entropy) }
+            .isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { Ulid.of(Instant.ofEpochMilli(-1), entropy) }
+            .isInstanceOf(InvalidValue::class.java)
+    }
+
+    @Test
+    @DisplayName("첫 글자는 0~7만 허용함")
+    fun firstCharIsAtMostSeven() {
+        assertThat(Ulid.parse("7ZZZZZZZZZZZZZZZZZZZZZZZZZ").value).startsWith("7")
+        assertThatThrownBy { Ulid.parse("8ZZZZZZZZZZZZZZZZZZZZZZZZZ") }
+            .isInstanceOf(InvalidValue::class.java)
+    }
+
+    @Test
     @DisplayName("문자열 파싱은 형식을 검증함")
     fun parseValidatesFormat() {
         assertThat(Ulid.parse("01ARYZ6S41TSV4RRFFQ69G5FAV").value)

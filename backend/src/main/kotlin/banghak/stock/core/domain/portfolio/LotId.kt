@@ -13,7 +13,7 @@ value class LotId(val value: String) {
     override fun toString(): String = value
 
     companion object {
-        private val PATTERN = Regex("[0-9A-HJKMNP-TV-Z]{26}")
+        private val PATTERN = Regex("[0-7][0-9A-HJKMNP-TV-Z]{25}")
 
         fun from(ulid: Ulid): LotId = LotId(ulid.value)
     }

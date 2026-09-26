@@ -3,6 +3,7 @@ package banghak.stock.architecture
 import com.tngtech.archunit.base.DescribedPredicate
 import com.tngtech.archunit.core.domain.JavaMethod
 import com.tngtech.archunit.lang.ArchCondition
+import com.tngtech.archunit.lang.ArchRule
 import com.tngtech.archunit.lang.ConditionEvents
 import com.tngtech.archunit.lang.SimpleConditionEvent
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods
@@ -14,11 +15,10 @@ class FallbackRequiredTest {
     @Test
     @DisplayName("Retrofit 인터페이스를 부르는 메서드는 @CircuitBreaker(fallbackMethod)를 가짐")
     fun everyRetrofitCallSiteHasCircuitBreakerWithFallback() {
-        methods()
-            .that(callRetrofitInterface())
-            .should(haveCircuitBreakerWithExistingFallback())
-            .check(ProductionClasses.all)
+        rule().check(ProductionClasses.all)
     }
+
+    fun rule(): ArchRule = methods().that(callRetrofitInterface()).should(haveCompatibleFallback())
 
     private fun callRetrofitInterface() =
         object : DescribedPredicate<JavaMethod>("call a Retrofit interface method") {
@@ -28,10 +28,10 @@ class FallbackRequiredTest {
                 }
         }
 
-    private fun haveCircuitBreakerWithExistingFallback() =
+    private fun haveCompatibleFallback() =
         object :
             ArchCondition<JavaMethod>(
-                "be annotated with @CircuitBreaker whose fallbackMethod exists in the same class"
+                "be annotated with @CircuitBreaker whose fallbackMethod exists with a compatible signature"
             ) {
             override fun check(item: JavaMethod, events: ConditionEvents) {
                 val annotation = item.annotations.firstOrNull { it.rawType.name == CIRCUIT_BREAKER }
@@ -47,16 +47,33 @@ class FallbackRequiredTest {
                         .orElse(null)
                         ?.toString()
                         .orEmpty()
-                val exists = fallback.isNotBlank() && item.owner.methods.any { it.name == fallback }
+                val compatible =
+                    fallback.isNotBlank() &&
+                        item.owner.methods.any {
+                            it.name == fallback && isCompatibleFallback(item, it)
+                        }
                 events.add(
                     SimpleConditionEvent(
                         item,
-                        exists,
-                        "${item.fullName} 의 fallbackMethod='$fallback'",
+                        compatible,
+                        "${item.fullName} 의 fallbackMethod='$fallback' 가 없거나 시그니처가 맞지 않음",
                     )
                 )
             }
         }
+
+    /** Resilience4j 규칙: 반환 타입이 같고, 인자는 원본과 같거나 끝에 예외 하나가 더 붙음. */
+    private fun isCompatibleFallback(original: JavaMethod, fallback: JavaMethod): Boolean {
+        if (fallback.rawReturnType != original.rawReturnType) return false
+        val originalParams = original.rawParameterTypes.map { it.name }
+        val fallbackParams = fallback.rawParameterTypes.map { it.name }
+        val sameParams = fallbackParams == originalParams
+        val withThrowable =
+            fallbackParams.size == originalParams.size + 1 &&
+                fallbackParams.dropLast(1) == originalParams &&
+                fallback.rawParameterTypes.last().isAssignableTo(Throwable::class.java)
+        return sameParams || withThrowable
+    }
 
     companion object {
         private const val CIRCUIT_BREAKER =
