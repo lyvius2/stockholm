@@ -19,7 +19,7 @@ lucene-index/
 .gradle/
 .kotlin/
 build/
-out/
+desktop/out/
 *.class
 hs_err_pid*
 *.log

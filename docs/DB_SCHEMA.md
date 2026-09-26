@@ -75,7 +75,7 @@ backend/src/main/resources/db/
 
 - `spring.flyway.locations`는 프로필별로 `db/engine/common,db/engine/{vendor}` 형태. 자리표시자 값은 `application-{profile}.yml`에서 벤더별로 넣는다.
 - 한 JVM에 `engine,relay`를 함께 올릴 때는 **DataSource 두 개, Flyway 두 개, JPA EntityManagerFactory 두 개**(패키지로 분리: `engine.persistence`, `relay.persistence`). ArchUnit이 두 패키지의 상호 참조를 막는다.
-- SQLite 연결 설정: `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`(연결마다), `busy_timeout=5000`. 커넥션 풀은 쓰기 1개로 직렬화한다(SQLite는 쓰기 단일 — 주문·lease·노출액 계산의 직렬화 지점이기도 하다).
+- SQLite 연결 설정: `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`(연결마다), `busy_timeout=5000`. **커넥션 풀은 HikariCP 두 개: 쓰기 풀(최대 1, 주문·lease·노출액 계산의 직렬화 지점)과 읽기 풀(읽기 전용 연결, 기본 4). `@Transactional(readOnly = true)`면 읽기 풀, 그 밖은 쓰기 풀로 라우팅한다(`ReadWriteRoutingDataSource` + `LazyConnectionDataSourceProxy`). 읽기 전용 연결에서 쓰기는 SQLite가 거부하므로 잘못된 readOnly 표시는 곧바로 드러난다. JPA·jOOQ·Flyway가 같은 라우팅 DataSource를 쓴다(Flyway는 트랜잭션 밖이라 쓰기 풀).
 - 이미 적용된 마이그레이션 파일은 고치지 않는다(CLAUDE.md). 열 삭제·타입 변경은 SQLite에서 표 재생성이므로 새 버전에서 `CREATE … AS SELECT` 방식으로 한다.
 
 ### 3.4 FK 정책
@@ -240,6 +240,7 @@ erDiagram
     int seq "디바이스별 단조 증가"
     string occurred_at
     string type "DomainEvent 이름"
+    int payload_version "payload 스키마 버전, 기본 1"
     string payload_json
     string sync_scope "LOCAL|USER|FAMILY"
     string received_at "동기화로 받은 시각"
@@ -290,7 +291,7 @@ erDiagram
 - `sync_scope`는 이벤트 종류에서 결정된다(코드 표, 한곳). `LOCAL`: lot·주문·가드레일 판정·체결(잔고·체결은 동기화 안 함) / `USER`: 설정·관심종목·페르소나·토론·추천·리포트·학습 / `FAMILY`: 가족 메모, 금액 제거된 회고. 동기화 에이전트는 `LOCAL`을 내보내지 않는다.
 - **LWW 기준**: 같은 항목의 수정형 이벤트는 `occurred_at`이 늦은 쪽, 같으면 `device_id` 문자열이 큰 쪽. 가드레일 한도는 예외로 더 보수적인 값(`GuardrailLimits.lowerTo`). 이 규칙은 projection 재생기에 있고 DB는 모른다.
 - **CDC(Debezium 등)는 쓰지 않는다** [2026-09-25 검토]. `event_log`가 곧 **트랜잭션 아웃박스**다: 도메인 변경은 같은 SQLite 트랜잭션 안에서 "이벤트 추가 + projection 갱신"으로 커밋되고, 동기화 에이전트는 커밋된 `event_log`를 `(user_id, device_id, seq)` 커서로 읽어 암호화해 내보낸다. DB 로그를 뒤져 변경을 복원하는 CDC는 (1) SQLite에 binlog·논리 복제가 없어 트리거 기반으로 만들어야 하고, (2) 우리는 변경을 원천에서 이미 이벤트로 만들며, (3) relay MySQL은 업무 표의 복제본이 아니라 **암호문 메일박스**라(D4) 표 단위 복제 자체가 없기 때문에 필요 없다. 원격 화면의 조회는 서버 DB가 아니라 QUERY/SNAPSHOT을 클라이언트로 중계해 답한다.
-- `payload_json` 스키마는 `protocol/`에서 생성한다. `type` 이름은 CORE_DOMAIN 9장의 sealed 목록 그대로이며, FIRST_RUN의 `SETTING_CHANGED` 표기는 `UserSettingChanged`로 통일한다(문서 수정 대상).
+- `payload_version`은 payload 스키마 버전(기본 1). 필드를 호환되지 않게 바꾸면 올리고 구버전 읽기 경로를 둔다. `payload_json` 스키마는 `protocol/`에서 생성한다. `type` 이름은 CORE_DOMAIN 9장의 sealed 목록 그대로이며, FIRST_RUN의 `SETTING_CHANGED` 표기는 `UserSettingChanged`로 통일한다(문서 수정 대상).
 - `user_setting`은 키-값 projection(`lastViewedStock`, `defaultMarket`, `layoutRatios`, `chartMode`, `chartPeriod.simple`, `chartPeriod.detailed`, `theme`, `drawerWidth.*`, `stockInfoLastTab`, `portfolioPanel.*`, `notify.*`, `llm.allowPersonal.{provider}`, `translationGlossary` …). 키 목록과 기본값은 코드 한곳(`UserSettingKey`)에 둔다.
 - `watchlist_*`와 `persona_definition`은 `WatchlistChanged`·`PersonaDefinitionChanged`의 projection. 페르소나는 **사용자별**이며 이전 버전을 지우지 않는다(토론 스냅샷과 F10 집계가 참조).
 
@@ -1385,3 +1386,9 @@ erDiagram
 - **이벤트 로그**: `(user_id, device_id, seq)` 유일, 같은 디바이스의 두 사용자가 각자 1부터 세는지, `sync_scope=LOCAL`이 동기화 출력에 없는지.
 - **projection 재생**: `event_log`만으로 `lot`·`user_setting`·`watchlist_*`·`debate_*`를 비운 뒤 다시 만들었을 때 같은지.
 - **보존 정리**: 1분봉 90일·커뮤니티 원문 90일·알림 180일 정리 작업이 경계값을 정확히 지키는지(고정 `Clock`).
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | 3.3 커넥션 풀을 HikariCP 쓰기 풀 1 + 읽기 전용 풀로 확정(readOnly 트랜잭션 라우팅). 5장 `event_log.payload_version` 추가(코드 리뷰 반영) |

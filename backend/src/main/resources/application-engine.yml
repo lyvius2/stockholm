@@ -1,3 +1,20 @@
-# 클라이언트 데몬. 로컬 API는 127.0.0.1:2609 에만 바인딩함.
 server:
   port: 2609
+
+spring:
+  jpa:
+    open-in-view: false
+
+stockholm:
+  db:
+    file-name: stockholm.db
+    read-pool-size: 4
+    placeholders:
+      id: TEXT
+      decimal: TEXT
+      instant: TEXT
+      date: TEXT
+      bool: INTEGER
+      json: TEXT
+      text: TEXT
+      blob: BLOB

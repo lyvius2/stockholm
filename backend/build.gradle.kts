@@ -5,6 +5,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.kotlin.jpa)
+    alias(libs.plugins.kotlin.allopen)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spotless)
 }
@@ -30,6 +32,13 @@ kotlin {
 
 repositories { mavenCentral() }
 
+// JPA 엔티티는 Hibernate 프록시를 위해 open 이어야 함
+allOpen {
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+}
+
 // protocol/generate.sh 가 JSON Schema에서 만든 Kotlin 타입. 커밋하지 않음
 kotlin.sourceSets.main { kotlin.srcDir(layout.buildDirectory.dir("generated/protocol/kotlin")) }
 
@@ -46,6 +55,11 @@ dependencies {
     implementation(libs.jackson.module.kotlin)
     implementation(libs.caffeine)
     implementation(libs.resilience4j.spring.boot4)
+    implementation(libs.spring.boot.starter.jpa)
+    implementation(libs.spring.boot.starter.jooq)
+    implementation(libs.spring.boot.starter.flyway)
+    implementation(libs.hibernate.community.dialects)
+    implementation(libs.sqlite.jdbc)
     implementation(libs.okhttp)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.jackson)

@@ -1,7 +1,16 @@
-# 공통 설정. 비밀값은 어디에도 적지 않음(Keychain 전용).
 spring:
   application:
     name: stockholm
+  autoconfigure:
+    # 영속성은 프로필별로 DataSource·Flyway·EMF 를 명시 구성함(engine: SqliteConfig, relay: 7단계). 자동 구성은 끔
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceInitializationAutoConfiguration
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceTransactionManagerAutoConfiguration
+      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+      - org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration
+      - org.springframework.boot.flyway.autoconfigure.FlywayAutoConfiguration
+      - org.springframework.boot.jooq.autoconfigure.JooqAutoConfiguration
   main:
     banner-mode: off
   threads:
