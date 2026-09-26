@@ -41,13 +41,13 @@ backend/
    │  │  ├─ domain/                           #   값 객체·엔티티·규칙·도메인 이벤트 (data class · value class · sealed interface)
    │  │  │  ├─ money/        Money  Currency  ExchangeRate  Percent  Quantity  RoundingRules
    │  │  │  ├─ market/       Market  Symbol  StockFlags  Candle  CandleInterval  IndexCode  IndexQuote  MarketSession  TradingCalendar
-   │  │  │  ├─ identity/     UserId  DeviceId  Role
+   │  │  │  ├─ identity/     UserId  DeviceId  Role  Ulid(순수 인코더, 난수·시계는 밖에서 받음)
    │  │  │  ├─ trading/      OrderIntent  OrderSide  OrderKind  TimeInForce  OrderOrigin  OrderTrigger  ClientOrderId  BrokerOrder  OrderStatus
    │  │  │  │                OrderAmendment  Fill  DuplicateIntent  StartStockResolver  StartStock
-   │  │  │  ├─ portfolio/    Lot  LotId  BuyOrigin  LotDisposal  FifoMatcher  Position  PortfolioSnapshot  DepositBalance  ProfitLoss  RealizedPnl
+   │  │  │  ├─ portfolio/    Lot  LotId  BuyOrigin(있음)  LotDisposal  FifoMatcher  Position  PortfolioSnapshot  DepositBalance  ProfitLoss  RealizedPnl
    │  │  │  ├─ guardrail/    GuardrailLimits  GuardrailRule  rules/(11개)  AutoBuyExposure  GuardrailVerdict  Violation  AutoExposureOverCapNotice
-   │  │  │  ├─ automation/   ExecutionStage  AutomationScope  AutomationSetting  KillSwitch  KillReason  AutoSellPermission  ApprovalRequest  SimulatedOrder  SurgeSignal
-   │  │  │  ├─ eventlog/     EventEnvelope  DomainEvent(sealed)  events/  SyncScope
+   │  │  │  ├─ automation/   StrategyId  ExecutionStage  AutomationScope  AutomationSetting  KillSwitch  KillReason  AutoSellPermission  ApprovalRequest  SimulatedOrder  SurgeSignal
+   │  │  │  ├─ eventlog/     EventEnvelope  DomainEvent(sealed, 이벤트 36개는 같은 파일)  SyncScope  SyncScopes(종류→범위 표)
    │  │  │  ├─ lease/        LeaseState
    │  │  │  ├─ debate/       PersonaDefinition  PersonaId  DebateSession  DebateTheme  Utterance  Intervention  InterventionKind  Verdict  Conclusion  CitationRef
    │  │  │  ├─ knowledge/    KnowledgeDocument  DocType  Scope  Grade  SearchQuery(asOf 필수)  SearchHit  SentimentSnapshot
@@ -57,7 +57,8 @@ backend/
    │  │  │  ├─ learning/     PredictionOutcome  PersonaWeight  Retrospective
    │  │  │  ├─ account/      SetupState  CredentialKind  CredentialCheck  UserSettingKey  NotificationPolicy
    │  │  │  ├─ notification/ Notification  NotificationKind
-   │  │  │  └─ llm/          LlmPurpose  LlmCategory  Sensitivity  LlmRequest  LlmResponse   # 제공자·모델 이름 없음
+   │  │  │  ├─ llm/          LlmPurpose  LlmCategory  Sensitivity  LlmRequest  LlmResponse   # 제공자·모델 이름 없음
+   │  │  │  └─ error/        DomainException  InvalidValue  CurrencyMismatch  (GuardrailViolation  BrokerUnavailable  OrderRejected  OrderResultUnknown …)
    │  │  ├─ usecase/                          #   port.in — 진입 어댑터가 부르는 usecase 인터페이스 (Command/Query)
    │  │  │                   PlaceOrderUseCase  AmendOrderUseCase  QueryTradeHistoryUseCase  ResolveStartStockUseCase  EvaluateGuardrailUseCase
    │  │  │                   RunQuickDebateUseCase  RecommendUseCase  GenerateReportUseCase  SetupWizardUseCase  LoginUseCase  ManageMembersUseCase
