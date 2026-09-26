@@ -35,7 +35,9 @@ class RepositoryUserScopedTest {
             ) {
             override fun check(item: JavaClass, events: ConditionEvents) {
                 val entity = entityOf(item) ?: return
-                if (!entity.tryGetField(USER_ID_FIELD).isPresent) return
+                val userIdField = entity.tryGetField(USER_ID_FIELD).orElse(null) ?: return
+                // 사용자 등록부(app_user)는 userId 가 곧 PK 라 목록 조회가 정당함
+                if (userIdField.isAnnotatedWith(ID_ANNOTATION)) return
                 item.methods
                     .filterNot { isScopedByUserId(it) }
                     .forEach {
@@ -58,7 +60,8 @@ class RepositoryUserScopedTest {
         val query = method.annotations.firstOrNull { it.rawType.name == QUERY_ANNOTATION }
         val jpql =
             query?.tryGetExplicitlyDeclaredProperty("value")?.orElse(null)?.toString().orEmpty()
-        return derivedName || jpql.contains(USER_ID_PARAM)
+        // "userId is null" 은 설치 단위(공유) 행만 고르는 명시적 조건임
+        return derivedName || jpql.contains(USER_ID_PARAM) || jpql.contains(SHARED_ONLY)
     }
 
     companion object {
@@ -68,5 +71,7 @@ class RepositoryUserScopedTest {
         private const val USER_ID_FIELD = "userId"
         private const val USER_ID_IN_NAME = "UserId"
         private const val USER_ID_PARAM = ":userId"
+        private const val SHARED_ONLY = "userId is null"
+        private const val ID_ANNOTATION = "jakarta.persistence.Id"
     }
 }

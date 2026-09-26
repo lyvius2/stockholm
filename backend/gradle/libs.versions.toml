@@ -17,6 +17,7 @@ spring-ai = "2.0.1"
 zxing = "3.5.4"
 ulid = "8.3.0"
 wiremock = "3.13.2"
+bouncycastle = "1.86"
 jackson2 = "2.22.3"
 
 [libraries]
@@ -33,6 +34,7 @@ spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-st
 spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket" }
 spring-boot-starter-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis" }
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
 
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }

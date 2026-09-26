@@ -230,3 +230,9 @@ Electron 기동 → 데몬 기동 대기 → GET /setup/state
 - `lastViewedStock` 디바운스: 2초 안 여러 번 전환 시 마지막 값 한 번만 저장(고정 `Clock`).
 - 구성원 첫 로그인: 공유 키 단계가 없고 본인 토스 키만 묻는지, 구성원이 `/setup/keys`를 부르면 403인지.
 - 로그인 모달(프론트): 로그아웃 직후 모달 뒤 DOM에 직전 사용자의 종목·보유·토론 텍스트가 없는지, 흐림 상태에서 바깥 클릭·키 입력이 막히는지, Esc로 닫히지 않는지, 데몬 미기동 시 "기동 중" 표시.
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | 7번 구현. API는 `GET /setup/state`, `POST /setup/admin`(TOTP QR·수동 키 반환) → `/setup/admin/totp`(확인 뒤 ADMIN_CREATED), `/setup/keys/{kind}`, `/setup/keys/done`(LLM 프리셋), `/setup/toss/keys`, `/setup/toss`(REGISTERED·LATER), `/setup/complete`. 키 검증은 형식 검사 수준(실제 호출 어댑터는 2·3단계). ① 뒤 마법사 세션은 8번 |

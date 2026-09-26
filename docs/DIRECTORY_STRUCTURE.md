@@ -219,4 +219,4 @@ protocol/
 | 날짜 | 변경 |
 |---|---|
 | 2026-09-26 | Modulith 제거(NoCyclesTest), `error/` 패키지·`Ulid`·`StrategyId` 위치 반영 |
-| 2026-09-27 | persistence·keychain 실제 클래스 반영, 예외 이름 접미어 |
+| 2026-09-27 | persistence·keychain 실제 클래스 반영, 예외 이름 접미어 || 2026-09-27 | 7번 반영: `adapter/in`은 Kotlin 예약어라 패키지 `adapter.`in``(백틱). 로컬 토큰·SetupGate 필터는 `engine/adapter/in/web/filter`(shared/web이 아님). `adapter/out/credential`(형식 검증기)·`adapter/out/crypto`(Argon2) 추가 |

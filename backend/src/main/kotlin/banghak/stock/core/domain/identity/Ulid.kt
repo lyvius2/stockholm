@@ -21,7 +21,7 @@ value class Ulid private constructor(val value: String) : Comparable<Ulid> {
         private const val ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
         private const val BITS_PER_CHAR = 5
         private const val TIME_CHARS = 10
-        private const val ENTROPY_BYTES = 10
+        const val ENTROPY_BYTES = 10
         private const val LENGTH = 26
         private val DECODE: Map<Char, Int> =
             ALPHABET.withIndex().associate { (index, char) -> char to index }
