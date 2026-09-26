@@ -55,10 +55,10 @@ backend/
    │  │  │  ├─ recommend/    Recommendation  RecommendationId  ScreeningResult
    │  │  │  ├─ report/       MarketReport  Forecast
    │  │  │  ├─ learning/     PredictionOutcome  PersonaWeight  Retrospective
-   │  │  │  ├─ account/      SetupState  CredentialKind  CredentialCheck  UserSettingKey  NotificationPolicy
+   │  │  │  ├─ account/      SecretScope  SecretKey  SecretValue(있음)  SetupState  CredentialKind  CredentialCheck  UserSettingKey  NotificationPolicy
    │  │  │  ├─ notification/ Notification  NotificationKind
    │  │  │  ├─ llm/          LlmPurpose  LlmCategory  Sensitivity  LlmRequest  LlmResponse   # 제공자·모델 이름 없음
-   │  │  │  └─ error/        DomainException  InvalidValue  CurrencyMismatch  (GuardrailViolation  BrokerUnavailable  OrderRejected  OrderResultUnknown …)
+   │  │  │  └─ error/        DomainException  InvalidValueException  CurrencyMismatchException  SecretMissingException  SecretStoreFailureException  (GuardrailViolationException  BrokerUnavailableException  OrderRejectedException …)
    │  │  ├─ usecase/                          #   port.in — 진입 어댑터가 부르는 usecase 인터페이스 (Command/Query)
    │  │  │                   PlaceOrderUseCase  AmendOrderUseCase  QueryTradeHistoryUseCase  ResolveStartStockUseCase  EvaluateGuardrailUseCase
    │  │  │                   RunQuickDebateUseCase  RecommendUseCase  GenerateReportUseCase  SetupWizardUseCase  LoginUseCase  ManageMembersUseCase
@@ -98,8 +98,8 @@ backend/
    │  │  │     ├─ llm/       OpenAiProvider  AnthropicProvider  DeepSeekProvider  OllamaProvider  ProviderRegistry  OllamaEmbeddingAdapter
    │  │  │     ├─ lucene/    LuceneIndex  NoriAnalyzerConfig  HybridSearcher  IndexStatusTracker
    │  │  │     ├─ mirofish/  MirofishInstaller  MirofishProcess  MirofishAdapter
-   │  │  │     ├─ keychain/  KeychainSecretStore(`security` CLI)  SecretValue  MemorySecretStore(테스트)
-   │  │  │     └─ persistence/  entity/(표 이름 1:1)  repository/(JPA, UserId 필수, 16자 초과 → @Query)  jooq/(Join·Bulk)  projection/  converter/  SqliteConfig  EngineFlywayConfig
+   │  │  │     ├─ keychain/  KeychainSecretStore(`security` CLI, SecretStorePort+SecretReader)  SecretReader  KeychainProperties   (MemorySecretStore는 test/support/fakes)
+   │  │  │     └─ persistence/  entity/(표 이름 1:1)  repository/(JPA, UserId 필수, 16자 초과 → @Query)  jooq/(Join·Bulk)  projection/  converter/  SqliteConfig(풀 2개·Flyway·EMF·jOOQ)  DbProperties  ReadWriteRoutingDataSource  JpaEventStore
    │  │  └─ config/                          #   Kotlin @Configuration: Retrofit 인터페이스 빈(엔드포인트별), Resilience4j 인스턴스, Semaphore 상한, 어댑터 조립, @Profile("engine")
    │  │                      TossHttpConfig  DartHttpConfig  EdgarHttpConfig  …  ResilienceInstancesConfig  ConcurrencyLimitsConfig  EngineConfig
    │  │
@@ -213,3 +213,10 @@ protocol/
 5. **protocol 타입 생성 = quicktype**(JSON Schema → Kotlin·TypeScript를 한 도구로, npm) [확정 2026-09-26]. Gradle 단일 모듈 유지.
 6. relay 포트·WebSocket 경로는 7단계로 연기.
 7. **캐시 대상** = 종목 검색·현재가 스냅샷·환율·지수·RAG 검색 결과·요약만. 비밀·계좌·주문·lot은 캐시하지 않는다.
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-26 | Modulith 제거(NoCyclesTest), `error/` 패키지·`Ulid`·`StrategyId` 위치 반영 |
+| 2026-09-27 | persistence·keychain 실제 클래스 반영, 예외 이름 접미어 |

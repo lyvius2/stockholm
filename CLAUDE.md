@@ -43,6 +43,7 @@ Robert C. Martin의 『Clean Code』를 기준으로 하고, 구조 개선은 Ma
 - 클래스는 명사, 메서드는 동사. boolean은 `is`/`has`/`can`으로 시작한다.
 - 검색 가능한 이름을 쓴다. 매직 넘버는 이름 있는 상수로 뺀다. 특히 한도·기간·비율(`1000만원`, `7일`, `90%`, `50%`)은 반드시 한곳에 정의된 상수·설정으로만 참조한다.
 - 인코딩을 넣지 않는다. 헝가리안 표기, `I` 접두어, `Impl` 접미어를 피한다(어댑터는 `TossTradingAdapter`처럼 무엇인지로 이름 짓는다).
+- **예외 클래스는 접미어 `Exception`으로 끝낸다**(`InvalidValueException`, `GuardrailViolationException`). 같은 이름의 이벤트(`OrderResultUnknown`)와 구분하기 위함이다.
 
 ### 함수
 
@@ -152,7 +153,7 @@ if (lot.isOlderThan(AUTO_BUY_EXPOSURE_WINDOW, now)) { ... }
 - 테스트 코드는 프로덕션 코드와 같은 품질로 쓴다. 지저분한 테스트는 없는 것보다 나쁘다.
 - F.I.R.S.T: 빠르고, 독립적이고, 반복 가능하고, 자가 검증하고, 적시에 쓴다.
 - 테스트 하나는 개념 하나를 검증한다. given-when-then 구조.
-- **테스트 이름 규칙 [확정 2026-09-26]**: 메서드명은 영문 camelCase로 행위를 쓰고(`rejectsNegativeAllowsZero`), 사람이 읽는 설명은 **`@DisplayName`에 한국어 개조식**으로 쓴다(`@DisplayName("음수는 거부하고 0은 허용함")`). 백틱 한글 메서드명은 쓰지 않는다. `@Nested` 클래스도 같다(영문 클래스명 + `@DisplayName`). 테스트 메서드마다 `@DisplayName`을 붙인다.
+- **테스트 이름 규칙**: 메서드명은 영문 camelCase로 행위를 쓰고(`rejectsNegativeAllowsZero`), 사람이 읽는 설명은 **`@DisplayName`에 한국어 개조식**으로 쓴다(`@DisplayName("음수는 거부하고 0은 허용함")`). 백틱 한글 메서드명은 쓰지 않는다. `@Nested` 클래스도 같다(영문 클래스명 + `@DisplayName`). 테스트 메서드마다 `@DisplayName`을 붙인다.
 - **`core`의 가드레일·노출액·FIFO·한도·lease·이벤트 로그 로직은 테스트를 먼저 쓴다(TDD).** 이 영역의 경계값(정확히 1000만원, 정확히 168시간, 정확히 90%, 정확히 50%)은 빠짐없이 테스트한다.
 - 단위 테스트는 Spring 컨텍스트를 띄우지 않는다. 포트는 손으로 만든 fake를 우선하고 mock은 상호작용 검증이 본질일 때만 쓴다.
 - 통합 테스트는 어댑터와 영속성에 한정한다. 외부 API는 WireMock 등으로 대체한다.
@@ -254,3 +255,11 @@ cd backend && ./gradlew dev                          # 데몬 + Electron 개발 
 - [`docs/EXTERNAL_APIS.md`](docs/EXTERNAL_APIS.md) — 외부 API 카탈로그(엔드포인트, 호출 제한, 제약). 어댑터 작업 전에 읽는다. 단, 구현 기준은 항상 각 API의 공식 문서다.
 - [`PROJECT.md`](PROJECT.md) — 프로젝트 기준 문서. 결정이 바뀌면 코드보다 먼저 갱신한다.
 - `docs/` — 보조 문서. 설계 결정의 배경이 길어지면 여기에 ADR로 남기고 PROJECT.md에서 참조한다.
+- **문서 변경 이력 규칙**: 문서를 바꾸거나 더할 때 본문에 확정·변경 날짜를 쓰지 않는다(`[확정 YYYY-MM-DD]` 같은 표기 금지). 대신 문서 맨 끝의 `## Changes` 표(없으면 만든다)에 `| 날짜 | 변경 |` 한 줄로 이력을 남긴다. 본문은 현재 상태만 말한다. HANDOFF.md는 인수인계 일지이므로 예외다.
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-26 | 테스트 이름 규칙(영문 camelCase + `@DisplayName` 한국어) 확정. 경계 강제 도구를 ArchUnit만으로 변경. 명령어 절을 실제 명령으로 갱신 |
+| 2026-09-27 | 예외 클래스 접미어 `Exception` 규칙. 문서 변경 이력 규칙(본문 날짜 금지, `## Changes` 표) |
