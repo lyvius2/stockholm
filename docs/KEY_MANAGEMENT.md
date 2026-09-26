@@ -118,7 +118,19 @@
 - **어떤 API 응답·로그·예외·감사 로그에도 키 값이 나타나지 않는지**(테스트용 표식 값을 넣고 전 출력에서 검색).
 - 사용자 A의 세션으로 사용자 B의 토스 어댑터가 절대 선택되지 않는지.
 - 5번째 사용자 등록이 거부되는지.
-- Keychain은 `SecretStorePort`의 메모리 구현으로 대체해 테스트한다.
+- Keychain은 `SecretStorePort`의 메모리 구현(`MemorySecretStore`)으로 대체해 테스트한다. 두 구현은 같은 계약 테스트(`SecretStoreContractTest`)를 통과해야 하며, 실제 Keychain 테스트는 macOS에서만 임시 계정 이름으로 돌고 끝나면 항목을 지운다.
+
+### 개발 키와 학습 테스트
+
+- **개발용 키도 Keychain에 둔다.** 파일(`.env`·yml)에 적지 않는다. 항목은 계정 `stockholm-dev`, 서비스 이름은 키 이름(`DART_API_KEY`, `TOSS_CLIENT_ID` …)이다. 제품 항목(계정 `stockholm`, 경로 `stockholm/shared/…`)과 섞이지 않는다.
+  - 넣기·수정: `security add-generic-password -a stockholm-dev -s DART_API_KEY -U -w` (값은 프롬프트로 입력, 셸 히스토리에 남지 않음)
+  - 지우기: `security delete-generic-password -a stockholm-dev -s DART_API_KEY`
+  - 확인: "키체인 접근" 앱에서 `stockholm-dev` 검색
+- **학습 테스트(`@Tag("learning")`)는 환경 변수 `STOCKHOLM_TEST_{이름}`으로만 키를 받는다.** `scripts/learning-tests.sh`가 실행 직전에 Keychain에서 꺼내 그 프로세스의 환경 변수로만 넘긴다. 변수가 없으면 실패가 아니라 **건너뜀**(`assumeTrue`)이라 키 없는 Mac·CI에서도 빌드가 깨지지 않는다.
+- **학습 테스트는 주문 엔드포인트를 부를 수 없다.** `LearningTestSupport.httpClient()`의 인터셉터가 경로에 `/orders`가 들어간 요청을 거부한다. 토스 키로는 시세·달력·계좌 조회 그룹만 부른다.
+- 데몬 코드에는 "환경 변수가 있으면 우선"하는 분기를 두지 않는다. 개발 실행도 제품과 같은 경로(마법사 → Keychain)를 쓴다.
+- 값은 `SecretValue`로만 다닌다(`toString`·`equals`에 값 없음, `reveal()`은 출력 어댑터에서만 — ArchUnit `SecretsStayInAdaptersTest`). 저장은 `security` 명령의 표준 입력으로 넘겨 프로세스 목록에 보이지 않는다.
+- Keychain 항목의 접근 권한(ACL) 때문에 다른 실행 파일(jlink 배포판 vs 개발 실행)이 처음 읽을 때 macOS 확인 창이 뜰 수 있다. 배포 시점에 실측해 필요하면 `-T`로 신뢰 앱을 지정한다 [확인 필요].
 
 ## 9. 확정된 사항 (2026-09-20)
 
@@ -127,3 +139,9 @@
 3. 개인 키의 추가 암호화(본인 비밀번호 기반)는 **구성원별 옵션**으로 둔다(5장).
 
 남은 확인: 토스 약관상 공용 시세 수집의 허용 여부. [확인 필요]
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | 8장에 "개발 키와 학습 테스트" 절 확정: 개발 키도 Keychain(`stockholm-dev`), 학습 테스트는 환경 변수 주입·없으면 건너뜀·주문 경로 거부 |
