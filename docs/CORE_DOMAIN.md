@@ -117,7 +117,7 @@ public record Quantity(BigDecimal value) {
 }
 ```
 
-**결정 근거.** `Money`가 통화를 품으면 "국내·해외 한도 각각"이 타입 수준에서 강제된다 — KRW 한도와 USD 노출액을 더하는 코드는 컴파일은 되지만 실행 즉시 `CurrencyMismatch`로 죽는다. 이 실패는 테스트에서 반드시 잡힌다.
+**결정 근거.** `Money`가 통화를 품으면 "국내·해외 한도 각각"이 타입 수준에서 강제된다 — KRW 한도와 USD 노출액을 더하는 코드는 컴파일은 되지만 실행 즉시 `CurrencyMismatchException`로 죽는다. 이 실패는 테스트에서 반드시 잡힌다.
 
 ## 4. 거래 (trading) [확정]
 
@@ -411,33 +411,33 @@ public interface LeaseHolder {                         // 서버가 없을 때�
 public final class AlwaysHeldLease implements LeaseHolder { /* 단독 모드: 항상 true */ }
 ```
 
-## 11. 예외 (error)
+## 11. 예외 (error) — 모든 예외 클래스는 접미어 `Exception`
 
 ```java
 public abstract class DomainException extends RuntimeException {}
 // 입력·불변식
-public final class InvalidValue extends DomainException {}          // 값 객체 생성 실패
-public final class CurrencyMismatch extends DomainException {}
+public final class InvalidValueException extends DomainException {}          // 값 객체 생성 실패
+public final class CurrencyMismatchException extends DomainException {}
 // 규칙
-public final class GuardrailViolation extends DomainException { GuardrailVerdict.Rejected verdict; }
-public final class LimitRaiseRejected extends DomainException {}
+public final class GuardrailViolationException extends DomainException { GuardrailVerdict.Rejected verdict; }
+public final class LimitRaiseRejectedException extends DomainException {}
 // 외부 세계 (어댑터가 서드파티 예외를 이걸로 감싼다)
-public final class BrokerUnavailable extends DomainException {}
-public final class OrderRejected extends DomainException {}
-public final class OrderResultUnknown extends DomainException {}   // 타임아웃. 호출자는 lookup 후에만 재시도
-public final class MarketDataUnavailable extends DomainException {}
-public final class LlmUnavailable extends DomainException {}
-public final class SecretMissing extends DomainException {}
+public final class BrokerUnavailableException extends DomainException {}
+public final class OrderRejectedException extends DomainException {}
+public final class OrderResultUnknownException extends DomainException {}   // 타임아웃. 호출자는 lookup 후에만 재시도
+public final class MarketDataUnavailableException extends DomainException {}
+public final class LlmUnavailableException extends DomainException {}
+public final class SecretMissingException extends DomainException {}
 ```
 
-분류 기준은 "호출자가 무엇을 할 수 있는가": `BrokerUnavailable`은 재시도·알림, `OrderRejected`는 사용자에게 사유 표시, `OrderResultUnknown`은 조회 후 결정, `GuardrailViolation`은 화면에 위반 목록.
+분류 기준은 "호출자가 무엇을 할 수 있는가": `BrokerUnavailableException`은 재시도·알림, `OrderRejectedException`는 사용자에게 사유 표시, `OrderResultUnknownException`은 조회 후 결정, `GuardrailViolationException`은 화면에 위반 목록.
 
 ## 12. 불변식과 필수 테스트 (TDD 대상)
 
 `core.guardrail`·`core.automation`·`core.eventlog`·`core.lease`는 테스트를 먼저 쓴다. 최소 목록:
 
 **Money / Quantity**
-- KRW는 소수 0자리, USD는 2자리로 HALF_EVEN. 통화 불일치 연산은 `CurrencyMismatch`.
+- KRW는 소수 0자리, USD는 2자리로 HALF_EVEN. 통화 불일치 연산은 `CurrencyMismatchException`.
 - `Money.convert`는 `from` 통화 검증. 환율은 양수.
 
 **AutoBuyExposure**
@@ -451,7 +451,7 @@ public final class SecretMissing extends DomainException {}
 - 시장별 독립: 국내 1000만원 꽉 찬 상태에서 해외 자동 매수는 통과.
 
 **DepositFloor**
-- 하한 설정: 설정 시점 예수금의 **정확히 50% → 허용**, 그 미만 → `InvalidValue`.
+- 하한 설정: 설정 시점 예수금의 **정확히 50% → 허용**, 그 미만 → `InvalidValueException`.
 - 주문 후 예수금 = 하한 → 통과, 하한 − 1원 → 거부.
 
 **AutoSellQuota**
@@ -466,9 +466,9 @@ public final class SecretMissing extends DomainException {}
 
 **ClientOrderId.deterministic** — 같은 입력 → 같은 값, 회차만 달라도 다른 값.
 
-**OrderIntent 불변식 / MarketOrderScope** (F1 예외) — MARKET+KR → `InvalidValue`; MARKET+US+SELL+정수 수량 → 거부; MARKET+US+SELL+소수점 → 통과(정규장 종료 59분 전 통과, 60분 전 경계 포함 여부는 토스 규격대로 "1시간 전까지" = 60분 전 통과, 59분 전 거부 [확인 필요]); MARKET+US+BUY+orderAmount → 통과; AUTO_BUY + MARKET → 거부.
+**OrderIntent 불변식 / MarketOrderScope** (F1 예외) — MARKET+KR → `InvalidValueException`; MARKET+US+SELL+정수 수량 → 거부; MARKET+US+SELL+소수점 → 통과(정규장 종료 59분 전 통과, 60분 전 경계 포함 여부는 토스 규격대로 "1시간 전까지" = 60분 전 통과, 59분 전 거부 [확인 필요]); MARKET+US+BUY+orderAmount → 통과; AUTO_BUY + MARKET → 거부.
 
-**OrderAmendment / BrokerOrder.canAmend·canCancel** (F14) — 둘 다 비면 `InvalidValue`, US + 수량 → `InvalidValue`. 상태 10종 × 출처 3종 표 전체: `PENDING_CANCEL`은 둘 다 false, `AUTO_BUY`+`PENDING`은 cancel만 true.
+**OrderAmendment / BrokerOrder.canAmend·canCancel** (F14) — 둘 다 비면 `InvalidValueException`, US + 수량 → `InvalidValueException`. 상태 10종 × 출처 3종 표 전체: `PENDING_CANCEL`은 둘 다 false, `AUTO_BUY`+`PENDING`은 cancel만 true.
 
 **TradingWindow** — 미국: `America/New_York` 서머타임 전환 주간에 KST 22:30~07:00 창과의 교집합이 맞는지(3월·11월 고정 시계로).
 
@@ -484,3 +484,9 @@ public final class SecretMissing extends DomainException {}
 - **lot 소진 순서 FIFO** [확정 2026-09-25, 토스 "잔고(선입선출)"]
 - `Percent`를 비율로 저장하는 결정(0.9) — 프론트 표시 변환 규칙과 함께 `protocol/`에 명시 [제안]
 - `Conclusion` 열거값이 세 테마를 다 덮는지(산업 동향은 OVERWEIGHT/UNDERWEIGHT) — 토론 설계와 맞춰 확정 [제안]
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | 예외 클래스 이름에 접미어 `Exception` 적용(11장과 본문 언급) |

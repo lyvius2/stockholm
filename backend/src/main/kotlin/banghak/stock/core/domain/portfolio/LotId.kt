@@ -1,13 +1,13 @@
 package banghak.stock.core.domain.portfolio
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.identity.Ulid
 
 /** 매수 건(lot) 식별자. ULID. */
 @JvmInline
 value class LotId(val value: String) {
     init {
-        if (!PATTERN.matches(value)) throw InvalidValue("LotId 형식이 아님: '$value'")
+        if (!PATTERN.matches(value)) throw InvalidValueException("LotId 형식이 아님: '$value'")
     }
 
     override fun toString(): String = value

@@ -1,6 +1,6 @@
 package banghak.stock.core.domain.market
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.money.Currency
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -12,8 +12,10 @@ class SymbolTest {
     @DisplayName("국내 종목은 숫자 6자리")
     fun koreanCodeIsSixDigits() {
         assertThat(Symbol(Market.KR, "005930").code).isEqualTo("005930")
-        assertThatThrownBy { Symbol(Market.KR, "5930") }.isInstanceOf(InvalidValue::class.java)
-        assertThatThrownBy { Symbol(Market.KR, "00593A") }.isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { Symbol(Market.KR, "5930") }
+            .isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy { Symbol(Market.KR, "00593A") }
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
@@ -21,9 +23,11 @@ class SymbolTest {
     fun usCodeIsUppercaseTickerUpToFive() {
         assertThat(Symbol(Market.US, "NVDA").code).isEqualTo("NVDA")
         assertThat(Symbol(Market.US, "F").code).isEqualTo("F")
-        assertThatThrownBy { Symbol(Market.US, "nvda") }.isInstanceOf(InvalidValue::class.java)
-        assertThatThrownBy { Symbol(Market.US, "TOOLONG") }.isInstanceOf(InvalidValue::class.java)
-        assertThatThrownBy { Symbol(Market.US, "") }.isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { Symbol(Market.US, "nvda") }
+            .isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy { Symbol(Market.US, "TOOLONG") }
+            .isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy { Symbol(Market.US, "") }.isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test

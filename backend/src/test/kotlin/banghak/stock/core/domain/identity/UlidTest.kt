@@ -1,6 +1,6 @@
 package banghak.stock.core.domain.identity
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -31,7 +31,8 @@ class UlidTest {
     @Test
     @DisplayName("엔트로피는 10바이트여야 함")
     fun rejectsEntropyOtherThanTenBytes() {
-        assertThatThrownBy { Ulid.of(time, ByteArray(9)) }.isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { Ulid.of(time, ByteArray(9)) }
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
@@ -41,9 +42,9 @@ class UlidTest {
         assertThat(Ulid.of(max, entropy).value).startsWith("7ZZZZZZZZZ")
         assertThat(Ulid.of(Instant.EPOCH, entropy).value).startsWith("0000000000")
         assertThatThrownBy { Ulid.of(max.plusMillis(1), entropy) }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
         assertThatThrownBy { Ulid.of(Instant.ofEpochMilli(-1), entropy) }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
@@ -51,7 +52,7 @@ class UlidTest {
     fun firstCharIsAtMostSeven() {
         assertThat(Ulid.parse("7ZZZZZZZZZZZZZZZZZZZZZZZZZ").value).startsWith("7")
         assertThatThrownBy { Ulid.parse("8ZZZZZZZZZZZZZZZZZZZZZZZZZ") }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
@@ -60,8 +61,8 @@ class UlidTest {
         assertThat(Ulid.parse("01ARYZ6S41TSV4RRFFQ69G5FAV").value)
             .isEqualTo("01ARYZ6S41TSV4RRFFQ69G5FAV")
         assertThatThrownBy { Ulid.parse("01ARYZ6S41TSV4RRFFQ69G5FA") }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
         assertThatThrownBy { Ulid.parse("01ARYZ6S41TSV4RRFFQ69G5FAI") }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
     }
 }

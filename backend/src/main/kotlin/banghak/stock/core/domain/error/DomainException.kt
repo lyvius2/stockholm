@@ -5,7 +5,7 @@ abstract class DomainException(message: String, cause: Throwable? = null) :
     RuntimeException(message, cause)
 
 /** 값 객체 생성 실패. 입력이 잘못된 것이므로 재시도하지 않음. */
-class InvalidValue(message: String) : DomainException(message)
+class InvalidValueException(message: String) : DomainException(message)
 
 /** 통화가 다른 금액끼리 연산함. 국내·해외 한도를 섞는 코드 오류의 신호. */
-class CurrencyMismatch(message: String) : DomainException(message)
+class CurrencyMismatchException(message: String) : DomainException(message)

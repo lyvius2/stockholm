@@ -1,6 +1,6 @@
 package banghak.stock.core.domain.trading
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.money.Percent
 import java.math.BigDecimal
@@ -20,7 +20,7 @@ value class Quantity private constructor(val value: BigDecimal) : Comparable<Qua
     fun plus(other: Quantity): Quantity = of(value + other.value)
 
     fun minus(other: Quantity): Quantity {
-        if (other.value > value) throw InvalidValue("수량 $value 에서 ${other.value} 를 뺄 수 없음")
+        if (other.value > value) throw InvalidValueException("수량 $value 에서 ${other.value} 를 뺄 수 없음")
         return of(value - other.value)
     }
 
@@ -40,11 +40,11 @@ value class Quantity private constructor(val value: BigDecimal) : Comparable<Qua
         val ZERO: Quantity = of(BigDecimal.ZERO)
 
         fun of(value: BigDecimal): Quantity {
-            if (value.signum() < 0) throw InvalidValue("수량은 음수일 수 없음: $value")
+            if (value.signum() < 0) throw InvalidValueException("수량은 음수일 수 없음: $value")
             val normalized =
                 if (value.signum() == 0) BigDecimal.ZERO else value.stripTrailingZeros()
             if (normalized.scale() > MAX_SCALE)
-                throw InvalidValue("수량은 소수 ${MAX_SCALE}자리까지만 허용함: $value")
+                throw InvalidValueException("수량은 소수 ${MAX_SCALE}자리까지만 허용함: $value")
             return Quantity(if (normalized.scale() < 0) normalized.setScale(0) else normalized)
         }
 

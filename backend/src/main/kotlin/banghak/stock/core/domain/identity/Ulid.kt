@@ -1,6 +1,6 @@
 package banghak.stock.core.domain.identity
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import java.time.Instant
 
 /** ULID. 시각 48비트 + 엔트로피 80비트를 Crockford base32 26자로 적음. 난수·시계는 밖에서 받으므로 core는 순수하고 결정적임. */
@@ -31,10 +31,10 @@ value class Ulid private constructor(val value: String) : Comparable<Ulid> {
 
         fun of(time: Instant, entropy: ByteArray): Ulid {
             if (entropy.size != ENTROPY_BYTES)
-                throw InvalidValue("ULID 엔트로피는 ${ENTROPY_BYTES}바이트여야 함: ${entropy.size}")
+                throw InvalidValueException("ULID 엔트로피는 ${ENTROPY_BYTES}바이트여야 함: ${entropy.size}")
             var millis = time.toEpochMilli()
             if (millis < 0 || millis > MAX_TIME_MILLIS)
-                throw InvalidValue("ULID 시각은 0..2^48-1 밀리초여야 함: $millis")
+                throw InvalidValueException("ULID 시각은 0..2^48-1 밀리초여야 함: $millis")
             val bits = StringBuilder(LENGTH)
             val timeChars = CharArray(TIME_CHARS)
             for (index in TIME_CHARS - 1 downTo 0) {
@@ -47,7 +47,7 @@ value class Ulid private constructor(val value: String) : Comparable<Ulid> {
         }
 
         fun parse(value: String): Ulid {
-            if (!PATTERN.matches(value)) throw InvalidValue("ULID 형식이 아님: '$value'")
+            if (!PATTERN.matches(value)) throw InvalidValueException("ULID 형식이 아님: '$value'")
             return Ulid(value)
         }
 

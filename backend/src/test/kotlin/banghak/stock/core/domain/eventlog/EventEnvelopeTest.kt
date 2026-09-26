@@ -1,6 +1,6 @@
 package banghak.stock.core.domain.eventlog
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
@@ -38,9 +38,9 @@ class EventEnvelopeTest {
     fun validatesSeqAndType() {
         val event = ChartModeChanged(detailed = true)
         assertThatThrownBy { EventEnvelope.of(user, deviceA, 0, t0, event) }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
         assertThatThrownBy { EventEnvelope(user, deviceA, 1, t0, "UserSettingChanged", event) }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
         assertThat(EventEnvelope.of(user, deviceA, 1, t0, event).type).isEqualTo("ChartModeChanged")
     }
 

@@ -1,7 +1,7 @@
 package banghak.stock.core.domain.trading
 
 import banghak.stock.core.domain.automation.StrategyId
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Symbol
@@ -17,7 +17,7 @@ import java.time.LocalDate
 value class ClientOrderId(val value: String) {
     init {
         if (!PATTERN.matches(value))
-            throw InvalidValue("clientOrderId 는 1~36자 [A-Za-z0-9_-] 여야 함: '$value'")
+            throw InvalidValueException("clientOrderId 는 1~36자 [A-Za-z0-9_-] 여야 함: '$value'")
     }
 
     override fun toString(): String = value

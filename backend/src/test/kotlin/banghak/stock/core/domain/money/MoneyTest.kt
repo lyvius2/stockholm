@@ -1,7 +1,7 @@
 package banghak.stock.core.domain.money
 
-import banghak.stock.core.domain.error.CurrencyMismatch
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.CurrencyMismatchException
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.trading.Quantity
 import java.math.BigDecimal
 import java.time.Instant
@@ -35,9 +35,9 @@ class MoneyTest {
         @DisplayName("생성자는 통화 자릿수와 다른 금액을 거부함")
         fun constructorRejectsWrongScale() {
             assertThatThrownBy { Money(BigDecimal("1.5"), Currency.KRW) }
-                .isInstanceOf(InvalidValue::class.java)
+                .isInstanceOf(InvalidValueException::class.java)
             assertThatThrownBy { Money(BigDecimal("1.555"), Currency.USD) }
-                .isInstanceOf(InvalidValue::class.java)
+                .isInstanceOf(InvalidValueException::class.java)
         }
 
         @Test
@@ -62,14 +62,17 @@ class MoneyTest {
         }
 
         @Test
-        @DisplayName("통화가 다르면 CurrencyMismatch")
+        @DisplayName("통화가 다르면 CurrencyMismatchException")
         fun rejectsDifferentCurrency() {
             val krw = Money.of("100", Currency.KRW)
             val usd = Money.of("100", Currency.USD)
-            assertThatThrownBy { krw.plus(usd) }.isInstanceOf(CurrencyMismatch::class.java)
-            assertThatThrownBy { krw.minus(usd) }.isInstanceOf(CurrencyMismatch::class.java)
-            assertThatThrownBy { krw.ratioTo(usd) }.isInstanceOf(CurrencyMismatch::class.java)
-            assertThatThrownBy { krw.compareTo(usd) }.isInstanceOf(CurrencyMismatch::class.java)
+            assertThatThrownBy { krw.plus(usd) }.isInstanceOf(CurrencyMismatchException::class.java)
+            assertThatThrownBy { krw.minus(usd) }
+                .isInstanceOf(CurrencyMismatchException::class.java)
+            assertThatThrownBy { krw.ratioTo(usd) }
+                .isInstanceOf(CurrencyMismatchException::class.java)
+            assertThatThrownBy { krw.compareTo(usd) }
+                .isInstanceOf(CurrencyMismatchException::class.java)
         }
 
         @Test
@@ -104,10 +107,10 @@ class MoneyTest {
         }
 
         @Test
-        @DisplayName("0으로 비율을 구하면 InvalidValue")
+        @DisplayName("0으로 비율을 구하면 InvalidValueException")
         fun ratioToZeroIsInvalid() {
             assertThatThrownBy { Money.of("1", Currency.KRW).ratioTo(Money.zero(Currency.KRW)) }
-                .isInstanceOf(InvalidValue::class.java)
+                .isInstanceOf(InvalidValueException::class.java)
         }
 
         @Test
@@ -141,11 +144,11 @@ class MoneyTest {
         }
 
         @Test
-        @DisplayName("환율의 from 통화가 다르면 CurrencyMismatch")
+        @DisplayName("환율의 from 통화가 다르면 CurrencyMismatchException")
         fun rejectsRateWithOtherFromCurrency() {
             val rate = ExchangeRate(Currency.USD, Currency.KRW, BigDecimal("1350"), asOf)
             assertThatThrownBy { Money.of("1000", Currency.KRW).convert(rate) }
-                .isInstanceOf(CurrencyMismatch::class.java)
+                .isInstanceOf(CurrencyMismatchException::class.java)
         }
     }
 }

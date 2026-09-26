@@ -1,6 +1,6 @@
 package banghak.stock.core.domain.trading
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.money.Percent
 import java.math.RoundingMode
@@ -14,14 +14,15 @@ class QuantityTest {
     @DisplayName("음수는 거부하고 0은 허용함")
     fun rejectsNegativeAllowsZero() {
         assertThat(Quantity.ZERO.isZero).isTrue()
-        assertThatThrownBy { Quantity.of("-1") }.isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { Quantity.of("-1") }.isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
     @DisplayName("소수 7자리부터는 거부함")
     fun rejectsMoreThanSixDecimals() {
         assertThat(Quantity.of("0.000001").value).isEqualByComparingTo("0.000001")
-        assertThatThrownBy { Quantity.of("0.0000001") }.isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { Quantity.of("0.0000001") }
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
@@ -47,7 +48,7 @@ class QuantityTest {
         assertThat(Quantity.of(10).plus(Quantity.of("0.5"))).isEqualTo(Quantity.of("10.5"))
         assertThat(Quantity.of(10).minus(Quantity.of(4))).isEqualTo(Quantity.of(6))
         assertThatThrownBy { Quantity.of(4).minus(Quantity.of(10)) }
-            .isInstanceOf(InvalidValue::class.java)
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test

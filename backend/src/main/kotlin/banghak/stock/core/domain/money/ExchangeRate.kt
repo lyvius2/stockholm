@@ -1,6 +1,6 @@
 package banghak.stock.core.domain.money
 
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -12,7 +12,7 @@ data class ExchangeRate(
     val asOf: Instant,
 ) {
     init {
-        if (from == to) throw InvalidValue("같은 통화 사이의 환율은 없음: $from")
-        if (rate.signum() <= 0) throw InvalidValue("환율은 양수여야 함: $rate")
+        if (from == to) throw InvalidValueException("같은 통화 사이의 환율은 없음: $from")
+        if (rate.signum() <= 0) throw InvalidValueException("환율은 양수여야 함: $rate")
     }
 }

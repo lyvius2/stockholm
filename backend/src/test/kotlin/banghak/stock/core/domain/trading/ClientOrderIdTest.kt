@@ -1,7 +1,7 @@
 package banghak.stock.core.domain.trading
 
 import banghak.stock.core.domain.automation.StrategyId
-import banghak.stock.core.domain.error.InvalidValue
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Market
@@ -23,10 +23,13 @@ class ClientOrderIdTest {
     @DisplayName("토스 제약대로 1~36자 영숫자·하이픈·밑줄만 허용함")
     fun acceptsOnlyTossCompliantFormat() {
         assertThat(ClientOrderId("abc-DEF_123").value).isEqualTo("abc-DEF_123")
-        assertThatThrownBy { ClientOrderId("") }.isInstanceOf(InvalidValue::class.java)
-        assertThatThrownBy { ClientOrderId("a".repeat(37)) }.isInstanceOf(InvalidValue::class.java)
-        assertThatThrownBy { ClientOrderId("has space") }.isInstanceOf(InvalidValue::class.java)
-        assertThatThrownBy { ClientOrderId("dot.not.ok") }.isInstanceOf(InvalidValue::class.java)
+        assertThatThrownBy { ClientOrderId("") }.isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy { ClientOrderId("a".repeat(37)) }
+            .isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy { ClientOrderId("has space") }
+            .isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy { ClientOrderId("dot.not.ok") }
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
