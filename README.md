@@ -191,8 +191,8 @@ cd desktop && npm ci
 npm run typecheck && npm run lint && npm test
 npm run dev
 
-# 한 번에: 데몬 + Electron 개발 실행
-./scripts/dev.sh
+# 한 번에: 데몬 + Electron 개발 실행 (Ctrl+C 로 둘 다 종료)
+cd backend && ./gradlew dev
 
 # 프로토콜 타입 생성 (Kotlin + TypeScript)
 ./protocol/generate.sh
@@ -200,6 +200,8 @@ npm run dev
 # 배포 산출물: bootJar → jlink JRE → dmg (서명 없음)
 ./scripts/dist.sh
 ```
+
+`npm ci` 뒤에 `electron-vite dev`가 "Electron uninstall" 오류를 내면 Electron 바이너리 내려받기가 건너뛰어진 것입니다. `node desktop/node_modules/electron/install.js`를 한 번 실행하면 됩니다.
 
 외부 API 학습 테스트(`@Tag("learning")`)는 기본 빌드에서 제외되며 `./scripts/learning-tests.sh`로만 실행합니다. 키는 환경 변수로 넘기고, 어떤 학습 테스트도 주문 엔드포인트를 부르지 않습니다.
 

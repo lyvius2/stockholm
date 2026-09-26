@@ -1,3 +1,5 @@
+import javax.inject.Inject
+import org.gradle.process.ExecOperations
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -75,6 +77,41 @@ tasks.register<Test>("learningTest") {
 tasks.bootRun {
     // 상주 메모리 목표 400MB 이하. 1단계에서 실측함
     jvmArgs("-Xmx384m")
+}
+
+/** 데몬(engine 프로필)과 Electron 개발 서버를 한 명령으로 띄움. 둘 다 Gradle이 관리하는 프로세스라 Ctrl+C 로 함께 내려감. */
+abstract class DevTask : DefaultTask() {
+    @get:Inject abstract val execOperations: ExecOperations
+    @get:Internal abstract val desktopDir: DirectoryProperty
+    @get:Internal abstract val runtimeClasspath: ConfigurableFileCollection
+    @get:Internal abstract val mainClass: Property<String>
+
+    @TaskAction
+    fun run() {
+        val electron = Thread {
+            execOperations.exec {
+                workingDir = desktopDir.get().asFile
+                commandLine("npm", "run", "dev")
+            }
+        }
+        electron.isDaemon = true
+        electron.start()
+        execOperations.javaexec {
+            classpath = runtimeClasspath
+            mainClass.set(this@DevTask.mainClass)
+            args("--spring.profiles.active=engine")
+            jvmArgs("-Xmx384m")
+        }
+    }
+}
+
+tasks.register<DevTask>("dev") {
+    description = "데몬(engine) + Electron 개발 실행"
+    group = "application"
+    dependsOn(tasks.classes)
+    desktopDir.set(layout.projectDirectory.dir("../desktop"))
+    runtimeClasspath.from(sourceSets.main.get().runtimeClasspath)
+    mainClass.set("banghak.stock.StockholmApplicationKt")
 }
 
 spotless {
