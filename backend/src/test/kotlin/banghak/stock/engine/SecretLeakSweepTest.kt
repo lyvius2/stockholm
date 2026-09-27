@@ -19,12 +19,14 @@ import banghak.stock.support.MutableClock
 import banghak.stock.support.fakes.MemorySecretStore
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.classic.spi.ThrowableProxyUtil
 import ch.qos.logback.core.read.ListAppender
 import com.zaxxer.hikari.HikariDataSource
 import java.nio.file.Files
 import java.time.Duration
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.slf4j.LoggerFactory
@@ -102,7 +104,7 @@ class SecretLeakSweepTest {
         val dump = dumpAllTables()
         val logs =
             captured.list.joinToString("\n") {
-                it.formattedMessage + (it.throwableProxy?.message ?: "")
+                it.formattedMessage + (it.throwableProxy?.let(ThrowableProxyUtil::asString) ?: "")
             }
         for (marker in markers) {
             assertThat(dump).describedAs("DB 덤프에 표식 $marker").doesNotContain(marker)
@@ -130,10 +132,25 @@ class SecretLeakSweepTest {
         }
     }
 
+    private val rootLogger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
+    private val appenders = mutableListOf<ListAppender<ILoggingEvent>>()
+
     private fun captureLogs(): ListAppender<ILoggingEvent> {
         val appender = ListAppender<ILoggingEvent>().also { it.start() }
-        (LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger).addAppender(appender)
+        rootLogger.addAppender(appender)
+        appenders += appender
         return appender
+    }
+
+    // 다른 테스트의 로그가 섞여 들어오거나 표식이 메모리에 남지 않게 붙인 appender 를 떼고 멈춤
+    @AfterEach
+    fun stopCapturing() {
+        appenders.forEach {
+            rootLogger.detachAppender(it)
+            it.stop()
+            it.list.clear()
+        }
+        appenders.clear()
     }
 
     private fun totpCode(userId: UserId, pending: Boolean = false): String {

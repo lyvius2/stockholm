@@ -5,6 +5,7 @@ import banghak.stock.core.domain.account.CredentialFields
 import banghak.stock.core.domain.account.CredentialKind
 import banghak.stock.core.domain.account.SecretValue
 import banghak.stock.core.port.CredentialVerifier
+import banghak.stock.engine.adapter.out.credential.CredentialChecks
 import banghak.stock.shared.config.RuntimeProfiles
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.springframework.context.annotation.Profile
@@ -34,13 +35,13 @@ class FredCredentialVerifier(private val client: FredObservationsClient) : Crede
             400,
             401,
             403 -> CredentialCheck.Rejected("키가 틀렸거나 등록되지 않음")
-            429 -> CredentialCheck.Rejected("호출 한도 초과, 잠시 뒤 다시")
+            429 -> CredentialChecks.rateLimited()
             else -> CredentialCheck.Unreachable("HTTP ${response.code()}")
         }
     }
 
     fun unreachable(fields: Map<String, SecretValue>, cause: Throwable): CredentialCheck =
-        CredentialCheck.Unreachable("연결할 수 없음 (${cause::class.simpleName})")
+        CredentialChecks.unreachable(cause)
 
     companion object {
         private const val SERIES = "SP500"

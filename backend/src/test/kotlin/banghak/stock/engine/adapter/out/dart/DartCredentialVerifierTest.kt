@@ -53,14 +53,14 @@ class DartCredentialVerifierTest {
     private fun verify() = verifier.verify(mapOf("VALUE" to SecretValue.of(marker)))
 
     @Test
-    @DisplayName("DART 상태 코드 000 → Ok, 010·011 → 키 거부, 020 → 한도, 800 → 점검 중")
+    @DisplayName("DART 상태 코드 000 → Ok, 010·011 → 키 거부, 020 한도 초과는 키 문제가 아니라 일시 실패, 800 → 점검 중")
     fun statusMapping() {
         stub("000")
         assertThat(verify().isOk).isTrue()
         stub("010")
         assertThat((verify() as CredentialCheck.Rejected).reason).contains("키")
         stub("020")
-        assertThat((verify() as CredentialCheck.Rejected).reason).contains("한도")
+        assertThat((verify() as CredentialCheck.Unreachable).reason).contains("한도")
         stub("800")
         assertThat(verify()).isInstanceOf(CredentialCheck.Unreachable::class.java)
     }

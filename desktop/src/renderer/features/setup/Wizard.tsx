@@ -1,6 +1,7 @@
+import { useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ApiSetupState } from '@renderer/generated/api-setup-state'
-import { localClient } from '@renderer/data/client/LocalClient'
+import { UNAUTHORIZED_EVENT, localClient } from '@renderer/data/client/LocalClient'
 import { setupApi } from '@renderer/data/api/setup'
 import { AdminStep } from './AdminStep'
 import { ConnectionCheckStep } from './ConnectionCheckStep'
@@ -38,6 +39,13 @@ export function Wizard({ state }: { readonly state: ApiSetupState }) {
     void queryClient.invalidateQueries({ queryKey: ['setup', 'state'] })
     void queryClient.invalidateQueries({ queryKey: ['session', 'has'] })
   }
+  // 마법사 세션(1시간)이 만료되면 main 이 토큰을 잊고 데몬은 401 을 냄 → 세션 유무를 다시 물어 잠금 카드로 돌아감
+  useEffect(() => {
+    const onUnauthorized = () =>
+      void queryClient.invalidateQueries({ queryKey: ['session', 'has'] })
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized)
+  }, [queryClient])
   const current = stepIndex(state.state)
   const needsUnlock = current >= 1 && session.data === false
 

@@ -2,7 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { App } from '@renderer/app/App'
+import { localClient } from '@renderer/data/client/LocalClient'
 import { useSessionStore } from '@renderer/data/store/session'
+import { vi } from 'vitest'
 import { installBridge, ok, status } from './support/bridge'
 
 function renderApp(ui: ReactElement) {
@@ -48,6 +50,25 @@ describe('App 진입 분기', () => {
     renderApp(<App />)
     expect(await screen.findByRole('heading', { name: '마법사 계속' })).toBeDefined()
     expect(screen.queryByRole('heading', { name: '공유 API 키' })).toBeNull()
+  })
+
+  it('마법사 세션이 만료돼 401 을 받으면 잠금 카드로 돌아감', async () => {
+    const bridge = installBridge(({ path }) =>
+      path === '/setup/state'
+        ? ok({ ...notStarted, state: 'ADMIN_CREATED', adminDisplayName: '월터' })
+        : path === '/setup/catalog'
+          ? ok([])
+          : status(401, { code: 'HTTP_401', message: '마법사 세션이 필요함' }),
+    )
+    let hasSession = true
+    bridge.session.hasSession = vi.fn(async () => hasSession)
+    renderApp(<App />)
+    expect(await screen.findByRole('heading', { name: '공유 API 키' })).toBeDefined()
+
+    hasSession = false
+    await localClient.request('POST', '/setup/keys/DART', {}).catch(() => undefined)
+
+    expect(await screen.findByRole('heading', { name: '마법사 계속' })).toBeDefined()
   })
 
   it('마법사가 끝났고 세션이 없으면 흐린 배경 위에 로그인 모달을 보임', async () => {

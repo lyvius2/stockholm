@@ -5,6 +5,7 @@ import banghak.stock.core.domain.account.CredentialFields
 import banghak.stock.core.domain.account.CredentialKind
 import banghak.stock.core.domain.account.SecretValue
 import banghak.stock.core.port.CredentialVerifier
+import banghak.stock.engine.adapter.out.credential.CredentialChecks
 import banghak.stock.shared.config.RuntimeProfiles
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.springframework.context.annotation.Profile
@@ -34,14 +35,14 @@ class DartCredentialVerifier(private val client: DartCompanyClient) : Credential
             "010",
             "011" -> CredentialCheck.Rejected("키가 틀렸거나 사용할 수 없음")
             "012" -> CredentialCheck.Rejected("허용되지 않은 IP")
-            "020" -> CredentialCheck.Rejected("하루 호출 한도 초과")
+            "020" -> CredentialChecks.rateLimited()
             "800" -> CredentialCheck.Unreachable("DART 점검 중")
             else -> CredentialCheck.Unreachable("DART 응답 상태 ${status ?: "없음"}")
         }
     }
 
     fun unreachable(fields: Map<String, SecretValue>, cause: Throwable): CredentialCheck =
-        CredentialCheck.Unreachable("연결할 수 없음 (${cause::class.simpleName})")
+        CredentialChecks.unreachable(cause)
 
     companion object {
         const val SAMSUNG_CORP_CODE = "00126380"

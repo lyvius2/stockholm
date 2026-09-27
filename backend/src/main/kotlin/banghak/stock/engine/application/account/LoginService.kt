@@ -48,7 +48,12 @@ class LoginService(
     @Transactional(readOnly = true)
     override fun users(): List<UserSummary> = users.findAll().map(::summaryOf)
 
-    override fun login(command: LoginCommand): SessionIssued {
+    override fun login(command: LoginCommand): SessionIssued = login(command, SessionKind.NORMAL)
+
+    /** 마법사 재개용. 검증은 로그인과 같고 세션만 짧은 SETUP 종류로 발급함(마법사 밖에서는 쓸 수 없음). */
+    fun loginForSetup(command: LoginCommand): SessionIssued = login(command, SessionKind.SETUP)
+
+    private fun login(command: LoginCommand, kind: SessionKind): SessionIssued {
         val now = clock.instant()
         val account =
             users.findById(command.userId) ?: throw AuthenticationFailedException(GENERIC_FAILURE)
@@ -70,7 +75,7 @@ class LoginService(
         }
         val updated = LoginPolicy.afterSuccess(account, now).let { secondFactor.apply(it) }
         users.save(updated)
-        val issued = issueSession(updated, SessionKind.NORMAL, now)
+        val issued = issueSession(updated, kind, now)
         audit.record(
             AuditEntry(
                 now,

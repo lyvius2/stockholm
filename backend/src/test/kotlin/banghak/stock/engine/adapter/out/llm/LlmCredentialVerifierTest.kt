@@ -41,7 +41,7 @@ class LlmCredentialVerifierTest {
     private fun fields() = mapOf("VALUE" to SecretValue.of(marker))
 
     @Test
-    @DisplayName("OpenAI: 200 이면 모델 수와 함께 Ok, 401 은 Rejected, 429 는 한도 초과")
+    @DisplayName("OpenAI: 200 이면 모델 수와 함께 Ok, 401 은 Rejected, 429 는 키 문제가 아닌 일시 실패")
     fun openAiMapping() {
         val verifier = OpenAiCredentialVerifier(client(OpenAiModelsClient::class.java))
         server.stubFor(
@@ -59,7 +59,7 @@ class LlmCredentialVerifierTest {
         server.stubFor(get(urlEqualTo("/v1/models")).willReturn(aResponse().withStatus(401)))
         assertThat(verifier.verify(fields())).isInstanceOf(CredentialCheck.Rejected::class.java)
         server.stubFor(get(urlEqualTo("/v1/models")).willReturn(aResponse().withStatus(429)))
-        assertThat((verifier.verify(fields()) as CredentialCheck.Rejected).reason).contains("한도")
+        assertThat((verifier.verify(fields()) as CredentialCheck.Unreachable).reason).contains("한도")
     }
 
     @Test
@@ -123,6 +123,16 @@ class LlmCredentialVerifierTest {
                 as CredentialCheck.Ok
         assertThat(empty.detail["warning"]).isEqualTo("설치된 모델 없음")
         assertThat(verifier.verify(mapOf("VALUE" to SecretValue.of("not a url"))))
+            .isInstanceOf(CredentialCheck.Rejected::class.java)
+        // 데몬이 요청을 보내는 주소이므로 계정·쿼리·경로가 붙은 주소는 받지 않음
+        for (bad in
+            listOf(
+                "http://user:pw@127.0.0.1:11434",
+                "http://127.0.0.1:11434/?x=1",
+                "http://127.0.0.1:11434/#f",
+                "http://127.0.0.1:11434/proxy",
+            )) assertThat(verifier.verify(mapOf("VALUE" to SecretValue.of(bad))))
+            .describedAs(bad)
             .isInstanceOf(CredentialCheck.Rejected::class.java)
     }
 

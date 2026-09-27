@@ -47,7 +47,15 @@ export class DaemonApi {
     if (request.body !== undefined) init.body = JSON.stringify(request.body)
     const response = await fetch(`${this.baseUrl}${request.path}`, init)
     const body = await parseBody(response)
+    this.forgetExpiredWizardSession(request.path, response.status)
     return { status: response.status, body: this.absorbTokens(request.path, response.status, body) }
+  }
+
+  /** 마법사 세션은 1시간이라 그 뒤의 /setup 호출은 401 이 됨. 토큰을 잊어 화면이 잠금 카드로 돌아가게 함. */
+  private forgetExpiredWizardSession(path: string, status: number): void {
+    if (status === 401 && this.sessionToken !== null && path.startsWith('/setup/')) {
+      this.sessionToken = null
+    }
   }
 
   private absorbTokens(path: string, status: number, body: unknown): unknown {

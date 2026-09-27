@@ -7,6 +7,7 @@ import banghak.stock.core.domain.account.Device
 import banghak.stock.core.domain.account.LlmPreset
 import banghak.stock.core.domain.account.SecretKey
 import banghak.stock.core.domain.account.SecretValue
+import banghak.stock.core.domain.account.SessionKind
 import banghak.stock.core.domain.account.SetupState
 import banghak.stock.core.domain.account.TossDecision
 import banghak.stock.core.domain.error.IllegalSetupTransitionException
@@ -17,6 +18,7 @@ import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.port.FormatCredentialVerifier
 import banghak.stock.core.usecase.CreateAdminCommand
 import banghak.stock.shared.crypto.UlidGenerator
+import banghak.stock.support.MutableClock
 import banghak.stock.support.fakes.FakePasswordHasher
 import banghak.stock.support.fakes.FakeTokenGenerator
 import banghak.stock.support.fakes.FakeTotpPort
@@ -28,9 +30,8 @@ import banghak.stock.support.fakes.MemoryRecoveryCodePort
 import banghak.stock.support.fakes.MemorySecretStore
 import banghak.stock.support.fakes.MemorySessionPort
 import banghak.stock.support.fakes.MemoryUserAccountPort
-import java.time.Clock
+import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -38,13 +39,14 @@ import org.junit.jupiter.api.Test
 
 /** 마법사 상태 기계를 fake 포트로 끝까지 돌림. 검증 실패 값은 저장되지 않고, 어떤 출력에도 값이 없음. */
 class SetupServiceTest {
-    private val clock = Clock.fixed(Instant.parse("2026-09-27T09:00:00Z"), ZoneOffset.UTC)
+    private val clock = MutableClock(Instant.parse("2026-09-27T09:00:00Z"))
     private val installations = MemoryInstallationPort()
     private val users = MemoryUserAccountPort()
     private val credentials = MemoryCredentialMetaPort()
     private val secrets = MemorySecretStore()
     private val audit = MemoryAuditLogPort()
     private val totp = FakeTotpPort()
+    private val sessions = MemorySessionPort()
     private val service =
         SetupService(
             installations,
@@ -59,7 +61,7 @@ class SetupServiceTest {
             clock,
             LoginService(
                 users,
-                MemorySessionPort(),
+                sessions,
                 localDevice(),
                 MemoryRecoveryCodePort(),
                 FakePasswordHasher(),
@@ -70,6 +72,19 @@ class SetupServiceTest {
             ),
         )
     private val marker = "MARKER-KEY-VALUE-7d3a1"
+
+    @Test
+    @DisplayName("마법사 재개 세션은 짧은 SETUP 종류로 발급되어 마법사 밖에서는 쓸 수 없음")
+    fun reopenedWizardSessionIsSetupKind() {
+        adminCreated()
+        // 같은 30초 구간의 TOTP 코드는 다시 쓸 수 없으므로 다음 구간으로 넘김
+        clock.advance(Duration.ofSeconds(30))
+
+        val token = service.reopenWizardSession("correct-horse-battery".toCharArray(), "123456")
+
+        val session = sessions.sessions.values.single { it.sessionId == "hash:$token" }
+        assertThat(session.kind).isEqualTo(SessionKind.SETUP)
+    }
 
     @Test
     @DisplayName("설치 직후 상태는 NOT_STARTED 이고 admin 이 없음")

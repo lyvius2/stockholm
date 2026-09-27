@@ -35,3 +35,14 @@ resilience4j:
         minimum-number-of-calls: 5
         wait-duration-in-open-state: 30s
         register-health-indicator: false
+      # 키 검증기는 5xx·한도 초과를 Unreachable 값으로 돌려주므로 그 값도 실패로 셈
+      credential-verify:
+        base-config: default
+        record-result-predicate: banghak.stock.engine.adapter.out.credential.UnreachableResultPredicate
+    instances:
+      openai-verify: { base-config: credential-verify }
+      anthropic-verify: { base-config: credential-verify }
+      deepseek-verify: { base-config: credential-verify }
+      ollama-verify: { base-config: credential-verify }
+      dart-verify: { base-config: credential-verify }
+      fred-verify: { base-config: credential-verify }

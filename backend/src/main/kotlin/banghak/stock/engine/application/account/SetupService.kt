@@ -148,7 +148,9 @@ class SetupService(
         installation.setupState.requireAtLeast(SetupState.ADMIN_CREATED)
         requireNotComplete(installation)
         val admin = adminOf(installation)
-        return loginService.login(LoginCommand(admin.userId, password, totpCode, null)).token
+        return loginService
+            .loginForSetup(LoginCommand(admin.userId, password, totpCode, null))
+            .token
     }
 
     override fun registerSharedCredential(

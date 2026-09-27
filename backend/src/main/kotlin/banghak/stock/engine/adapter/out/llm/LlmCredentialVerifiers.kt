@@ -5,8 +5,10 @@ import banghak.stock.core.domain.account.CredentialFields
 import banghak.stock.core.domain.account.CredentialKind
 import banghak.stock.core.domain.account.SecretValue
 import banghak.stock.core.port.CredentialVerifier
+import banghak.stock.engine.adapter.out.credential.CredentialChecks
 import banghak.stock.shared.config.RuntimeProfiles
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
@@ -79,9 +81,11 @@ class OllamaCredentialVerifier(private val client: OllamaTagsClient) : Credentia
     @CircuitBreaker(name = "ollama-verify", fallbackMethod = "unreachable")
     override fun verify(fields: Map<String, SecretValue>): CredentialCheck {
         val address = String(fields.getValue(CredentialFields.VALUE).reveal()).trim().trimEnd('/')
-        val url =
-            "$address/api/tags".toHttpUrlOrNull()
+        val base =
+            address.toHttpUrlOrNull()?.takeIf(::isPlainServerAddress)
                 ?: return CredentialCheck.Rejected("주소 형식이 아님(예: http://127.0.0.1:11434)")
+        // 데몬이 이 주소로 요청을 보내므로 서버 주소 외의 요소(계정·쿼리·조각)는 받지 않음
+        val url = base.newBuilder().addPathSegments("api/tags").build()
         val response = client.tags(url.toString()).execute()
         if (!response.isSuccessful) return CredentialChecks.fromStatus(response)
         val models = response.body()?.models.orEmpty()
@@ -98,6 +102,13 @@ class OllamaCredentialVerifier(private val client: OllamaTagsClient) : Credentia
 
     fun unreachable(fields: Map<String, SecretValue>, cause: Throwable): CredentialCheck =
         CredentialChecks.unreachable(cause)
+
+    private fun isPlainServerAddress(url: HttpUrl): Boolean =
+        url.username.isEmpty() &&
+            url.password.isEmpty() &&
+            url.query == null &&
+            url.fragment == null &&
+            url.pathSegments.all { it.isEmpty() }
 }
 
 private fun modelCount(body: ModelList?): Map<String, String> =

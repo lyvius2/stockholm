@@ -37,4 +37,27 @@ describe('DaemonApi', () => {
     expect(api.hasSession()).toBe(false)
     vi.unstubAllGlobals()
   })
+
+  it('마법사 토큰으로 보낸 /setup 요청이 401 이면 만료된 토큰을 잊음', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'stockholm-'))
+    await writeFile(join(dir, 'local-token'), 'local-secret\n')
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/setup/admin/totp'))
+        return new Response(
+          JSON.stringify({ state: { state: 'ADMIN_CREATED' }, wizardToken: 'w' }),
+          {
+            status: 200,
+          },
+        )
+      return new Response(JSON.stringify({ code: 'x', message: 'expired' }), { status: 401 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const api = new DaemonApi(dir, 'http://daemon')
+
+    await api.request({ method: 'POST', path: '/setup/admin/totp', body: { code: '1' } })
+    expect(api.hasSession()).toBe(true)
+    await api.request({ method: 'POST', path: '/setup/keys/DART', body: {} })
+    expect(api.hasSession()).toBe(false)
+    vi.unstubAllGlobals()
+  })
 })
