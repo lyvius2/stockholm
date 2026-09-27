@@ -23,6 +23,9 @@ class SecretValue(chars: CharArray) {
 
     fun reveal(): CharArray = chars.copyOf()
 
+    /** 형식 검사. 값을 밖으로 내지 않고 여기서 비교함. */
+    fun matches(pattern: Regex): Boolean = pattern.matches(String(chars))
+
     fun wipe() = chars.fill(Char.MIN_VALUE)
 
     override fun toString(): String = "SecretValue(****)"

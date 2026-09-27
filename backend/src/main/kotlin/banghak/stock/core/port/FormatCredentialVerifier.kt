@@ -1,9 +1,8 @@
-package banghak.stock.engine.adapter.out.credential
+package banghak.stock.core.port
 
 import banghak.stock.core.domain.account.CredentialCheck
 import banghak.stock.core.domain.account.CredentialKind
 import banghak.stock.core.domain.account.SecretValue
-import banghak.stock.core.port.CredentialVerifier
 
 /** 형식만 검사하는 임시 검증기. 실제 API 를 부르는 어댑터(2·3단계)가 생기면 그 종류는 이것을 대체함. 외부 호출이 없으므로 주문 엔드포인트를 부를 일도 없음. */
 class FormatCredentialVerifier(override val kind: CredentialKind) : CredentialVerifier {
@@ -25,7 +24,7 @@ class FormatCredentialVerifier(override val kind: CredentialKind) : CredentialVe
         pattern: Regex,
         reason: String,
     ): CredentialCheck {
-        val allValid = fields.values.all { value -> pattern.matches(String(value.reveal())) }
+        val allValid = fields.values.all { value -> value.matches(pattern) }
         return if (allValid) CredentialCheck.Ok(mapOf("verification" to "format-only"))
         else CredentialCheck.Rejected(reason)
     }

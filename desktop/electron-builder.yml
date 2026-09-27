@@ -17,3 +17,5 @@ mac:
       arch: [arm64]
   category: public.app-category.finance
   hardenedRuntime: false
+  # 서명 없음(ad-hoc). 키체인의 개발용 인증서를 자동으로 집어 쓰지 않게 함. 배포 서명은 배포 시점에 결정
+  identity: null

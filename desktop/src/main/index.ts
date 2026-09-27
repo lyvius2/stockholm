@@ -4,6 +4,9 @@ import type { ApiRequest } from '../preload/bridge'
 import { DaemonApi } from './api'
 import { DaemonProcess, probeDaemon } from './daemon'
 
+// 마법사·로그인은 폭 1100 으로 시작하고, 메인이 열리면 넓힘
+const WIZARD_SIZE = { width: 1100, height: 760 }
+const MAIN_SIZE = { width: 1440, height: 900 }
 const WINDOW_MIN_WIDTH = 1100
 const WINDOW_MIN_HEIGHT = 720
 const DAEMON_START_TIMEOUT_MS = 60_000
@@ -14,8 +17,8 @@ const daemonProcess = new DaemonProcess(join(process.resourcesPath, 'daemon'), d
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
-    width: 1440,
-    height: 900,
+    width: WIZARD_SIZE.width,
+    height: WIZARD_SIZE.height,
     minWidth: WINDOW_MIN_WIDTH,
     minHeight: WINDOW_MIN_HEIGHT,
     show: false,
@@ -54,6 +57,15 @@ function registerIpc(): void {
   ipcMain.handle('session:has', () => daemonApi.hasSession())
   ipcMain.handle('session:clear', () => daemonApi.clearSession())
   ipcMain.handle('app:version', () => app.getVersion())
+  ipcMain.handle('app:expand-for-main', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (window === null) return
+    const { width, height } = window.getBounds()
+    if (width < MAIN_SIZE.width || height < MAIN_SIZE.height) {
+      window.setSize(Math.max(width, MAIN_SIZE.width), Math.max(height, MAIN_SIZE.height), true)
+      window.center()
+    }
+  })
 }
 
 void app.whenReady().then(async () => {

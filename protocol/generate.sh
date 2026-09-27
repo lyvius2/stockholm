@@ -13,6 +13,8 @@ find "$KOTLIN_OUT" "$TS_OUT" -type f ! -name .gitkeep -delete
 for schema in $(find "$SCHEMAS" -name '*.schema.json' | sort); do
   name="$(basename "$schema" .schema.json)"
   dir="$(basename "$(dirname "$schema")")"
+  # 밑줄로 시작하는 파일은 $defs 만 있는 공용 정의라 타입을 만들지 않음(다른 스키마가 $ref 로 씀)
+  case "$name" in _*) continue ;; esac
   pascal="$(echo "$name" | perl -pe 's/(^|-)([a-z])/\u$2/g')"
   # Kotlin 은 데몬이 payload 로 쓰는 common·events 만 만듦. api 응답은 컨트롤러 DTO 가 원본이라 TS 만 생성함.
   # quicktype 의 Kotlin 출력은 파일마다 mapper·enum 을 다시 선언하므로 스키마 폴더별 하위 패키지에 둠.

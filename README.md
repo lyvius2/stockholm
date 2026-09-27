@@ -197,11 +197,15 @@ cd backend && ./gradlew dev
 # 프로토콜 타입 생성 (Kotlin + TypeScript)
 ./protocol/generate.sh
 
-# 배포 산출물: bootJar → jlink JRE → dmg (서명 없음)
+# 배포 산출물: bootJar → jdeps → jlink JRE → dmg (서명 없음, desktop/release/)
 ./scripts/dist.sh
 ```
 
 `npm ci` 뒤에 `electron-vite dev`가 "Electron uninstall" 오류를 내면 Electron 바이너리 내려받기가 건너뛰어진 것입니다. `node desktop/node_modules/electron/install.js`를 한 번 실행하면 됩니다.
+
+`./gradlew dev`가 `Could not start 'npm'`으로 실패하면 Gradle을 띄운 환경(IDE, launchd)의 PATH에 npm이 없는 것입니다. 작업은 PATH → nvm → volta → Homebrew 순으로 npm을 스스로 찾으며, 그래도 못 찾으면 `STOCKHOLM_NPM=/path/to/npm` 환경 변수로 지정할 수 있습니다.
+
+dmg는 서명·공증을 하지 않으므로 다른 Mac에서는 처음 열 때 Finder에서 우클릭 → 열기로 허용해야 합니다.
 
 외부 API 학습 테스트(`@Tag("learning")`)는 기본 빌드에서 제외되며 `./scripts/learning-tests.sh`로만 실행합니다. 키는 환경 변수로 넘기고, 어떤 학습 테스트도 주문 엔드포인트를 부르지 않습니다.
 

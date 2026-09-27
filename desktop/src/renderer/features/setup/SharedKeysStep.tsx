@@ -26,11 +26,12 @@ interface SharedKeysStepProps {
   readonly api: ReturnType<typeof setupApi>
   readonly state: ApiSetupState
   readonly catalog: readonly ApiCredentialKind[]
+  readonly catalogError: string | null
   readonly onDone: () => void
 }
 
 /** ② 그룹별 키 목록. "다음"은 LLM 1개 이상 + DART 가 검증됐을 때만 활성. */
-export function SharedKeysStep({ api, state, catalog, onDone }: SharedKeysStepProps) {
+export function SharedKeysStep({ api, state, catalog, catalogError, onDone }: SharedKeysStepProps) {
   const [preset, setPreset] = useState<LlmPreset>('BALANCED')
   const [busy, setBusy] = useState(false)
   const shared = catalog.filter((kind) => kind.scope === 'SHARED')
@@ -53,6 +54,9 @@ export function SharedKeysStep({ api, state, catalog, onDone }: SharedKeysStepPr
         각 키는 "검증"을 눌러야 데몬이 확인하고, 성공한 값만 저장됩니다. 저장된 값은 누구도 다시 볼
         수 없습니다.
       </p>
+      {catalogError !== null && (
+        <p className="error">키 종류 목록을 받지 못했습니다: {catalogError}</p>
+      )}
       {groups.map((group) => (
         <section key={group} className="key-group">
           <h3>{GROUP_LABELS[group] ?? group}</h3>

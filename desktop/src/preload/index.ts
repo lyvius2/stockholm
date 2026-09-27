@@ -12,7 +12,10 @@ const bridge: StockholmBridge = {
     hasSession: () => ipcRenderer.invoke('session:has') as Promise<boolean>,
     clear: () => ipcRenderer.invoke('session:clear') as Promise<void>,
   },
-  app: { version: () => ipcRenderer.invoke('app:version') as Promise<string> },
+  app: {
+    version: () => ipcRenderer.invoke('app:version') as Promise<string>,
+    expandForMain: () => ipcRenderer.invoke('app:expand-for-main') as Promise<void>,
+  },
 }
 
 contextBridge.exposeInMainWorld('stockholm', bridge)

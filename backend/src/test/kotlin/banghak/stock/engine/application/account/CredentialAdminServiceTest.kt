@@ -7,7 +7,7 @@ import banghak.stock.core.domain.account.SecretKey
 import banghak.stock.core.domain.account.SecretValue
 import banghak.stock.core.domain.error.ForbiddenException
 import banghak.stock.core.domain.identity.Role
-import banghak.stock.engine.adapter.out.credential.FormatCredentialVerifier
+import banghak.stock.core.port.FormatCredentialVerifier
 import banghak.stock.engine.adapter.out.credential.StoredCredentialRechecker
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy

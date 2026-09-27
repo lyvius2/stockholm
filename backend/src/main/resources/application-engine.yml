@@ -18,3 +18,20 @@ stockholm:
       json: TEXT
       text: TEXT
       blob: BLOB
+
+  # 외부 API 기본 주소(키는 Keychain). 테스트는 WireMock 주소로 바꿈
+  external:
+    openai-base-url: https://api.openai.com/
+    anthropic-base-url: https://api.anthropic.com/
+    deepseek-base-url: https://api.deepseek.com/
+    dart-base-url: https://opendart.fss.or.kr/
+    fred-base-url: https://api.stlouisfed.org/
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 30s
+        register-health-indicator: false

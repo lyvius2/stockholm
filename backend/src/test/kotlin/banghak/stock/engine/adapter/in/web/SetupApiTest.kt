@@ -7,6 +7,7 @@ import banghak.stock.shared.config.RuntimeProfiles
 import banghak.stock.shared.crypto.Base32
 import banghak.stock.shared.crypto.Totp
 import banghak.stock.shared.web.LocalToken
+import banghak.stock.support.ExternalApiStubs
 import banghak.stock.support.fakes.MemorySecretStore
 import java.net.URI
 import java.net.http.HttpClient
@@ -71,6 +72,9 @@ class SetupApiTest {
     @DisplayName("마법사 ①~④ 를 API 로 완주하면 COMPLETE 가 되고 setup 은 404, 다른 경로는 열림")
     fun fullWizard() {
         assertThat(get("/setup/state").body()).contains("\"state\":\"NOT_STARTED\"")
+        assertThat(get("/setup/catalog").body())
+            .contains("\"kind\":\"DART\"")
+            .contains("\"kind\":\"TOSS\"")
 
         val created =
             post(
@@ -97,7 +101,25 @@ class SetupApiTest {
         assertThat(post("/setup/keys/DART", """{"fields":{"VALUE":"$marker"}}""").statusCode())
             .describedAs("마법사 세션 없이는 401")
             .isEqualTo(401)
-        wizardToken = Regex("\"wizardToken\":\"([^\"]+)\"").find(confirmed)?.groupValues?.get(1)
+        assertThat(get("/setup/catalog").statusCode())
+            .describedAs("카탈로그는 마법사 세션 없이도 열림")
+            .isEqualTo(200)
+        // 앱 재시작을 흉내 냄: 받은 토큰을 버리고 비밀번호 + 다음 TOTP 코드로 마법사 세션을 다시 엶
+        wizardToken = null
+        assertThat(
+                post("/setup/session", """{"password":"wrong-password-123","totpCode":"000000"}""")
+                    .statusCode()
+            )
+            .isEqualTo(401)
+        val nextCode = Totp.generate(Base32.decode(manualKey), Totp.counterAt(clock.instant()) + 1)
+        val reopened =
+            post(
+                "/setup/session",
+                """{"password":"correct-horse-battery","totpCode":"$nextCode"}""",
+            )
+        assertThat(reopened.statusCode()).describedAs(reopened.body()).isEqualTo(200)
+        wizardToken =
+            Regex("\"wizardToken\":\"([^\"]+)\"").find(reopened.body())?.groupValues?.get(1)
 
         assertThat(post("/setup/keys/DART", """{"fields":{"VALUE":"$marker"}}""").body())
             .contains("\"result\":\"OK\"")
@@ -168,6 +190,7 @@ class SetupApiTest {
         @JvmStatic
         @DynamicPropertySource
         fun dataDir(registry: DynamicPropertyRegistry) {
+            ExternalApiStubs.register(registry)
             registry.add("stockholm.data-dir") {
                 Files.createTempDirectory("stockholm-test-").toString()
             }

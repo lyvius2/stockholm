@@ -8,6 +8,7 @@ import banghak.stock.shared.config.RuntimeProfiles
 import banghak.stock.shared.crypto.Base32
 import banghak.stock.shared.crypto.Totp
 import banghak.stock.shared.web.LocalToken
+import banghak.stock.support.ExternalApiStubs
 import banghak.stock.support.MutableClock
 import banghak.stock.support.fakes.MemorySecretStore
 import java.net.URI
@@ -194,6 +195,7 @@ class AuthApiTest {
         @JvmStatic
         @DynamicPropertySource
         fun dataDir(registry: DynamicPropertyRegistry) {
+            ExternalApiStubs.register(registry)
             registry.add("stockholm.data-dir") {
                 Files.createTempDirectory("stockholm-test-").toString()
             }

@@ -1,5 +1,6 @@
 package banghak.stock.learning
 
+import banghak.stock.shared.config.TlsPolicy
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -19,7 +20,10 @@ abstract class LearningTestSupport {
     }
 
     protected fun httpClient(): OkHttpClient =
-        OkHttpClient.Builder().addInterceptor(RefuseOrderEndpoints).build()
+        OkHttpClient.Builder()
+            .connectionSpecs(TlsPolicy.connectionSpecs)
+            .addInterceptor(RefuseOrderEndpoints)
+            .build()
 
     private object RefuseOrderEndpoints : Interceptor {
         private val forbidden = listOf("/orders")

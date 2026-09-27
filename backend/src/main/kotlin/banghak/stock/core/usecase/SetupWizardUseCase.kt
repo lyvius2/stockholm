@@ -25,6 +25,9 @@ interface SetupWizardUseCase {
     /** ADMIN_CREATED 이후 ②~④ 에 붙일 짧은 세션 토큰. 토큰 원문은 이 응답에만 있음. */
     fun issueWizardSession(): String
 
+    /** 앱을 껐다 켜서 마법사 세션이 없을 때, admin 비밀번호와 TOTP 로 다시 여는 경로. 실패 정책은 로그인과 같음. */
+    fun reopenWizardSession(password: CharArray, totpCode: String): String
+
     /** 공유 키 검증 후 성공한 값만 저장. ADMIN_CREATED 이후 COMPLETE 전까지. */
     fun registerSharedCredential(
         kind: CredentialKind,

@@ -12,6 +12,7 @@ class OkHttpConfig {
         OkHttpClient.Builder()
             .connectTimeout(http.connectTimeout)
             .readTimeout(http.readTimeout)
+            .connectionSpecs(TlsPolicy.connectionSpecs)
             .addInterceptor { chain ->
                 chain.proceed(
                     chain.request().newBuilder().header("User-Agent", http.userAgent).build()

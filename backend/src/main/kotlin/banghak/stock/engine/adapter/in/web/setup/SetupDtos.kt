@@ -122,3 +122,5 @@ data class CredentialKindInfo(
             )
     }
 }
+
+data class WizardSessionRequest(val password: String, val totpCode: String)

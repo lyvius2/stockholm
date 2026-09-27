@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/common/_values.schema.json",
+  "title": "Values",
+  "description": "이벤트·API 가 공유하는 값 객체 표기. 금액·수량·환율은 문자열(decimal), 시각은 ISO-8601 UTC.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {},
+  "$defs": {
+    "decimal": { "type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$", "description": "BigDecimal 의 평문 표기. 지수 표기 없음" },
+    "instant": { "type": "string", "format": "date-time", "description": "ISO-8601 UTC" },
+    "ulid": { "type": "string", "pattern": "^[0-7][0-9A-HJKMNP-TV-Z]{25}$" },
+    "currency": { "type": "string", "enum": ["KRW", "USD"] },
+    "market": { "type": "string", "enum": ["KR", "US"] },
+    "money": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency"],
+      "properties": { "amount": { "$ref": "#/$defs/decimal" }, "currency": { "$ref": "#/$defs/currency" } }
+    },
+    "symbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["market", "code"],
+      "properties": { "market": { "$ref": "#/$defs/market" }, "code": { "type": "string" } }
+    },
+    "exchangeRate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "rate", "asOf"],
+      "properties": {
+        "from": { "$ref": "#/$defs/currency" },
+        "to": { "$ref": "#/$defs/currency" },
+        "rate": { "$ref": "#/$defs/decimal" },
+        "asOf": { "$ref": "#/$defs/instant" }
+      }
+    }
+  }
+}

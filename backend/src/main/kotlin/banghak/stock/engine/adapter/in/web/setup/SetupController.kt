@@ -21,6 +21,10 @@ class SetupController(private val setup: SetupWizardUseCase) {
     @GetMapping("/state")
     fun state(): SetupStateResponse = SetupStateResponse.from(setup.progress())
 
+    /** ② 화면의 키 종류 목록. 값·상태 없이 종류 메타만이라 마법사 세션 없이 열림. */
+    @GetMapping("/catalog")
+    fun catalog(): List<CredentialKindInfo> = CredentialKind.entries.map(CredentialKindInfo::from)
+
     @PostMapping("/admin")
     fun createAdmin(@RequestBody request: CreateAdminRequest): AdminCreatedResponse {
         val password = request.password.toCharArray()
@@ -44,6 +48,18 @@ class SetupController(private val setup: SetupWizardUseCase) {
     fun confirmTotp(@RequestBody request: TotpCodeRequest): WizardSessionResponse {
         val progress = setup.confirmAdminTotp(request.code)
         return WizardSessionResponse(SetupStateResponse.from(progress), setup.issueWizardSession())
+    }
+
+    /** 앱 재시작 등으로 마법사 세션이 없을 때 admin 비밀번호 + TOTP 로 다시 엶. */
+    @PostMapping("/session")
+    fun reopenSession(@RequestBody request: WizardSessionRequest): WizardSessionResponse {
+        val password = request.password.toCharArray()
+        try {
+            val token = setup.reopenWizardSession(password, request.totpCode)
+            return WizardSessionResponse(SetupStateResponse.from(setup.progress()), token)
+        } finally {
+            password.fill(Char.MIN_VALUE)
+        }
     }
 
     @PostMapping("/keys/{kind}")

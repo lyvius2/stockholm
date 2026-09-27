@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import type { ApiUser } from '@renderer/generated/api-user'
 import { localClient } from '@renderer/data/client/LocalClient'
 import { sessionApi } from '@renderer/data/api/session'
@@ -11,6 +12,11 @@ import { TopBar } from './TopBar'
 export function MainShell({ user }: { readonly user: ApiUser | null }) {
   const queryClient = useQueryClient()
   const signOut = useSessionStore((s) => s.signOut)
+
+  // 마법사 폭(1100)에서 메인으로 넘어오면 창을 넓힘
+  useEffect(() => {
+    void window.stockholm.app.expandForMain()
+  }, [])
 
   async function logout() {
     // 화면 상태를 먼저 비우고 나서 모달을 띄움. 흐려진 배경에 직전 사용자의 숫자가 남지 않게

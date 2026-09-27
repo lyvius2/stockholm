@@ -12,7 +12,7 @@ export function installBridge(route: Route, daemonReachable = true): StockholmBr
     theme: { current: vi.fn(async () => 'light' as const) },
     api: { request: vi.fn(async (request: ApiRequest) => route(request)) },
     session: { hasSession: vi.fn(async () => false), clear: vi.fn(async () => undefined) },
-    app: { version: vi.fn(async () => '0.1.0-test') },
+    app: { version: vi.fn(async () => '0.1.0-test'), expandForMain: vi.fn(async () => undefined) },
   }
   Object.defineProperty(window, 'stockholm', { configurable: true, value: bridge })
   return bridge

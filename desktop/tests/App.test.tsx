@@ -37,6 +37,19 @@ describe('App 진입 분기', () => {
     expect(screen.getByRole('button', { name: '다음' })).toHaveProperty('disabled', true)
   })
 
+  it('①이 끝난 뒤 앱을 다시 켜 세션이 없으면 비밀번호·TOTP 확인 카드를 먼저 보임', async () => {
+    installBridge(({ path }) =>
+      path === '/setup/state'
+        ? ok({ ...notStarted, state: 'ADMIN_CREATED', adminDisplayName: '월터' })
+        : path === '/setup/catalog'
+          ? ok([])
+          : status(404),
+    )
+    renderApp(<App />)
+    expect(await screen.findByRole('heading', { name: '마법사 계속' })).toBeDefined()
+    expect(screen.queryByRole('heading', { name: '공유 API 키' })).toBeNull()
+  })
+
   it('마법사가 끝났고 세션이 없으면 흐린 배경 위에 로그인 모달을 보임', async () => {
     installBridge(({ path }) =>
       path === '/setup/state'

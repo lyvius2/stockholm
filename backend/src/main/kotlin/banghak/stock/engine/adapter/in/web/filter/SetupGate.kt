@@ -52,6 +52,6 @@ class SetupGate(private val setup: SetupWizardUseCase, private val login: LoginU
 
     companion object {
         const val SETUP_PREFIX = "/setup"
-        private val OPEN_SETUP_PATHS = setOf("/state", "/catalog")
+        private val OPEN_SETUP_PATHS = setOf("/state", "/catalog", "/session")
     }
 }

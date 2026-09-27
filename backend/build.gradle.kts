@@ -71,16 +71,19 @@ dependencies {
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.archunit.junit5)
+    testImplementation(libs.json.schema.validator)
+    testImplementation(libs.wiremock)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.withType<Test>().configureEach {
-    useJUnitPlatform {
-        // 학습 테스트는 외부 API를 부르므로 기본 빌드에서 제외함. scripts/learning-tests.sh로만 실행함
-        excludeTags("learning")
-    }
     // JDK 25에서 Mockito 등 동적 에이전트 붙일 때 경고를 오류로 올리지 않음
     jvmArgs("-XX:+EnableDynamicAgentLoading")
+}
+
+tasks.test {
+    // 학습 테스트는 외부 API를 부르므로 기본 빌드에서 제외함. scripts/learning-tests.sh로만 실행함
+    useJUnitPlatform { excludeTags("learning") }
 }
 
 tasks.register<Test>("learningTest") {
@@ -88,7 +91,10 @@ tasks.register<Test>("learningTest") {
     group = "verification"
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
+    // withType<Test> 블록에서 excludeTags 를 걸면 이 task 에도 붙어 학습 테스트가 0건이 됨
     useJUnitPlatform { includeTags("learning") }
+    // 외부 서버 상태가 바뀔 수 있으므로 캐시된 결과를 쓰지 않고 매번 실행함
+    outputs.upToDateWhen { false }
     shouldRunAfter(tasks.test)
 }
 
@@ -106,10 +112,16 @@ abstract class DevTask : DefaultTask() {
 
     @TaskAction
     fun run() {
+        val npm = NpmLocator.locate()
         val electron = Thread {
             execOperations.exec {
                 workingDir = desktopDir.get().asFile
-                commandLine("npm", "run", "dev")
+                // npm 스크립트가 `node` 를 찾을 수 있게 같은 폴더를 PATH 앞에 둠
+                environment(
+                    "PATH",
+                    npm.parentFile.absolutePath + File.pathSeparator + System.getenv("PATH"),
+                )
+                commandLine(npm.absolutePath, "run", "dev")
             }
         }
         electron.isDaemon = true
@@ -121,6 +133,49 @@ abstract class DevTask : DefaultTask() {
             jvmArgs("-Xmx384m")
         }
     }
+}
+
+/**
+ * npm 실행 파일을 찾음. IDE 나 launchd 에서 띄운 Gradle 은 셸의 `.zshrc` 를 거치지 않아 nvm 이 넣어 준 PATH 가 없음. 순서: 환경 변수
+ * STOCKHOLM_NPM → PATH → nvm(가장 높은 버전) → volta → Homebrew → /usr/local.
+ */
+object NpmLocator {
+    fun locate(): File {
+        val candidates = buildList {
+            System.getenv("STOCKHOLM_NPM")?.let { add(File(it)) }
+            addAll(onPath())
+            addAll(nvmInstalls())
+            val home = File(System.getProperty("user.home"))
+            add(File(home, ".volta/bin/npm"))
+            add(File("/opt/homebrew/bin/npm"))
+            add(File("/usr/local/bin/npm"))
+        }
+        return candidates.firstOrNull { it.isFile && it.canExecute() }
+            ?: throw GradleException(
+                "npm 을 찾지 못함. 찾아본 곳: " +
+                    candidates.joinToString() +
+                    ". STOCKHOLM_NPM 환경 변수로 npm 경로를 지정하면 됨"
+            )
+    }
+
+    private fun onPath(): List<File> =
+        (System.getenv("PATH") ?: "")
+            .split(File.pathSeparator)
+            .filter { it.isNotBlank() }
+            .map { File(it, "npm") }
+
+    private fun nvmInstalls(): List<File> {
+        val versions = File(System.getProperty("user.home"), ".nvm/versions/node")
+        return (versions.listFiles() ?: emptyArray())
+            .sortedByDescending { versionOrder(it.name) }
+            .map { File(it, "bin/npm") }
+    }
+
+    /** `v22.17.1` 같은 폴더 이름을 정렬 가능한 수로 바꿈. 각 자리는 1000 미만으로 봄 */
+    private fun versionOrder(name: String): Long =
+        name.removePrefix("v").split('.').take(3).fold(0L) { acc, part ->
+            acc * 1000 + (part.toLongOrNull() ?: 0)
+        }
 }
 
 tasks.register<DevTask>("dev") {

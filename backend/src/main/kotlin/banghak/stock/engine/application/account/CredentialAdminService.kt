@@ -17,6 +17,7 @@ import banghak.stock.core.port.AuditLogPort
 import banghak.stock.core.port.CredentialMetaPort
 import banghak.stock.core.port.CredentialRecheckPort
 import banghak.stock.core.port.CredentialVerifier
+import banghak.stock.core.port.FormatCredentialVerifier
 import banghak.stock.core.port.SecretStorePort
 import banghak.stock.core.usecase.CredentialAdminUseCase
 import banghak.stock.shared.config.RuntimeProfiles
@@ -38,6 +39,10 @@ class CredentialAdminService(
     private val clock: Clock,
 ) : CredentialAdminUseCase {
     private val verifierByKind = verifiers.associateBy { it.kind }
+
+    // 실제 API 검증기가 아직 없는 종류는 형식만 검사함
+    private fun verifierFor(kind: CredentialKind): CredentialVerifier =
+        verifierByKind[kind] ?: FormatCredentialVerifier(kind)
 
     @Transactional(readOnly = true)
     override fun sharedCredentials(admin: Principal): List<CredentialMeta> {
@@ -116,7 +121,7 @@ class CredentialAdminService(
         owner: UserId?,
         fields: Map<String, SecretValue>,
     ): CredentialCheck {
-        val verifier = verifierByKind[kind] ?: throw InvalidValueException("$kind 검증기가 없음")
+        val verifier = verifierFor(kind)
         val now = clock.instant()
         val check = verifier.verify(fields)
         if (check is CredentialCheck.Ok) {

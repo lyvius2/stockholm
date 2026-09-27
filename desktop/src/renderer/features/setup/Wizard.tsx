@@ -6,6 +6,7 @@ import { AdminStep } from './AdminStep'
 import { ConnectionCheckStep } from './ConnectionCheckStep'
 import { SharedKeysStep } from './SharedKeysStep'
 import { TossStep } from './TossStep'
+import { WizardUnlock } from './WizardUnlock'
 
 const STEPS = ['admin 비밀번호', '공유 API 키', '토스증권 키', '연결 확인'] as const
 
@@ -28,8 +29,17 @@ export function Wizard({ state }: { readonly state: ApiSetupState }) {
   const api = setupApi(localClient)
   const queryClient = useQueryClient()
   const catalog = useQuery({ queryKey: ['setup', 'catalog'], queryFn: api.catalog })
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['setup', 'state'] })
+  // ① 뒤 단계는 마법사 세션이 있어야 함. 앱을 껐다 켜면 main 의 토큰이 사라지므로 다시 연다
+  const session = useQuery({
+    queryKey: ['session', 'has'],
+    queryFn: () => window.stockholm.session.hasSession(),
+  })
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: ['setup', 'state'] })
+    void queryClient.invalidateQueries({ queryKey: ['session', 'has'] })
+  }
   const current = stepIndex(state.state)
+  const needsUnlock = current >= 1 && session.data === false
 
   return (
     <div className="wizard" data-step={current}>
@@ -48,12 +58,27 @@ export function Wizard({ state }: { readonly state: ApiSetupState }) {
         </ol>
       </aside>
       <section className="wizard-card">
-        {current === 0 && <AdminStep api={api} onDone={refresh} />}
-        {current === 1 && (
-          <SharedKeysStep api={api} state={state} catalog={catalog.data ?? []} onDone={refresh} />
+        {needsUnlock && (
+          <WizardUnlock
+            api={api}
+            adminDisplayName={state.adminDisplayName ?? 'admin'}
+            onUnlocked={refresh}
+          />
         )}
-        {current === 2 && <TossStep api={api} state={state} onDone={refresh} />}
-        {current === 3 && <ConnectionCheckStep api={api} state={state} onDone={refresh} />}
+        {current === 0 && <AdminStep api={api} onDone={refresh} />}
+        {!needsUnlock && current === 1 && (
+          <SharedKeysStep
+            api={api}
+            state={state}
+            catalog={catalog.data ?? []}
+            catalogError={catalog.error instanceof Error ? catalog.error.message : null}
+            onDone={refresh}
+          />
+        )}
+        {!needsUnlock && current === 2 && <TossStep api={api} state={state} onDone={refresh} />}
+        {!needsUnlock && current === 3 && (
+          <ConnectionCheckStep api={api} state={state} onDone={refresh} />
+        )}
       </section>
     </div>
   )

@@ -28,6 +28,16 @@ const FIELD_LABELS: Record<string, string> = {
   CLIENT_SECRET: 'client secret',
 }
 
+/** 로컬 서비스는 흔한 기본 주소를 미리 채워 두어 바로 "검증"할 수 있게 함. 비밀값에는 기본값이 없음. */
+const DEFAULT_VALUES: Record<string, Record<string, string>> = {
+  OLLAMA: { VALUE: 'http://127.0.0.1:11434' },
+  CACHE_SERVER: { VALUE: 'redis://127.0.0.1:6379' },
+}
+
+function defaultsFor(kind: string): Record<string, string> {
+  return { ...(DEFAULT_VALUES[kind] ?? {}) }
+}
+
 type Credential = ApiSetupState['credentials'][number]
 
 interface CredentialRowProps {
@@ -39,10 +49,20 @@ interface CredentialRowProps {
 
 /** 키 한 줄: 이름 · 필수 칩 · 입력(마스킹) · 검증 · 상태 칩. 성공하면 입력 칸을 비움. */
 export function CredentialRow({ kind, meta, verify, onVerified }: CredentialRowProps) {
-  const [fields, setFields] = useState<Record<string, string>>({})
+  const [fields, setFields] = useState<Record<string, string>>(() => defaultsFor(kind.kind))
+  const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
   const filled = kind.fields.every((field) => (fields[field] ?? '').trim().length > 0)
+  // 검증된 항목은 잠금. 값은 이 화면에 있는 동안만 남고, 다시 열면 끝 4자리만 보임
+  const locked = meta?.status === 'VERIFIED' && !editing
+
+  /** 재입력: 값을 모두 지우고 잠금을 풀어 처음 상태로. 저장된 값은 새 값이 검증될 때까지 유지됨. */
+  function reenter() {
+    setFields(defaultsFor(kind.kind))
+    setFailure(null)
+    setEditing(true)
+  }
 
   async function run() {
     setBusy(true)
@@ -50,7 +70,7 @@ export function CredentialRow({ kind, meta, verify, onVerified }: CredentialRowP
     try {
       const check = await verify(fields)
       if (check.result === 'OK') {
-        setFields({})
+        setEditing(false)
         onVerified()
       } else {
         setFailure(check.reason ?? '검증 실패')
@@ -75,19 +95,36 @@ export function CredentialRow({ kind, meta, verify, onVerified }: CredentialRowP
           <input
             key={field}
             type={kind.isSecret ? 'password' : 'text'}
-            placeholder={FIELD_LABELS[field] ?? field}
+            placeholder={
+              lockedPlaceholder(locked, meta) ??
+              DEFAULT_VALUES[kind.kind]?.[field] ??
+              FIELD_LABELS[field] ??
+              field
+            }
+            disabled={locked}
             autoComplete="off"
             value={fields[field] ?? ''}
             onChange={(e) => setFields((prev) => ({ ...prev, [field]: e.target.value }))}
           />
         ))}
       </div>
-      <button type="button" disabled={busy || !filled} onClick={() => void run()}>
-        검증
-      </button>
+      {locked ? (
+        <button type="button" onClick={reenter}>
+          재입력
+        </button>
+      ) : (
+        <button type="button" disabled={busy || !filled} onClick={() => void run()}>
+          검증
+        </button>
+      )}
       <span className="status-chip">{statusLabel(meta, failure)}</span>
     </div>
   )
+}
+
+function lockedPlaceholder(locked: boolean, meta: Credential | undefined): string | undefined {
+  if (!locked) return undefined
+  return meta?.last4 !== null && meta?.last4 !== undefined ? `저장됨 ···${meta.last4}` : '저장됨'
 }
 
 function statusLabel(meta: Credential | undefined, failure: string | null): string {

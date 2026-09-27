@@ -10,6 +10,7 @@ const LOCAL_TOKEN_FILE = 'local-token'
 const TOKEN_BEARING_PATHS: ReadonlyMap<string, 'session' | 'wizard'> = new Map([
   ['/session/login', 'session'],
   ['/setup/admin/totp', 'wizard'],
+  ['/setup/session', 'wizard'],
 ])
 
 interface TokenBearingBody {

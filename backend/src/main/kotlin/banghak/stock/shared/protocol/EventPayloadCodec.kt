@@ -40,6 +40,10 @@ class EventPayloadCodec {
 
     fun encode(event: DomainEvent): String = mapper.writeValueAsString(event)
 
+    /** 스키마 검증 등 JSON 자체를 다룰 때 씀. Jackson 3 트리와 Jackson 2 트리는 호환되지 않아 문자열을 다시 읽음. */
+    fun readTree(json: String): com.fasterxml.jackson.databind.JsonNode =
+        com.fasterxml.jackson.databind.ObjectMapper().readTree(json)
+
     fun decode(type: String, json: String): DomainEvent {
         val kClass = typesByName[type] ?: throw IllegalArgumentException("알 수 없는 이벤트 종류: $type")
         return mapper.readValue(json, kClass.java)

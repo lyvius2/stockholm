@@ -27,5 +27,5 @@ export interface StockholmBridge {
   readonly theme: { current(): Promise<ThemeName> }
   readonly api: { request(request: ApiRequest): Promise<ApiResponse> }
   readonly session: { hasSession(): Promise<boolean>; clear(): Promise<void> }
-  readonly app: { version(): Promise<string> }
+  readonly app: { version(): Promise<string>; expandForMain(): Promise<void> }
 }

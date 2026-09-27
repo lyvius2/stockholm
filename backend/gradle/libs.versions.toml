@@ -17,6 +17,7 @@ spring-ai = "2.0.1"
 zxing = "3.5.4"
 ulid = "8.3.0"
 wiremock = "3.13.2"
+json-schema-validator = "1.5.9"
 bouncycastle = "1.86"
 jackson2 = "2.22.3"
 
@@ -59,6 +60,7 @@ ulid = { module = "de.huxhorn.sulky:de.huxhorn.sulky.ulid", version.ref = "ulid"
 archunit-junit5 = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 wiremock = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }
+json-schema-validator = { module = "com.networknt:json-schema-validator", version.ref = "json-schema-validator" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

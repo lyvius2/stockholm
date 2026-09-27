@@ -11,13 +11,19 @@ body {
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
+/* 버튼 높이는 한 값으로 고정함. 이모지·강조 여부에 따라 줄 높이가 달라져 나란한 버튼의 키가 어긋나는 것을 막음 */
 button {
   font: inherit;
   color: var(--ink);
   background: var(--panel2);
   border: 1px solid var(--line);
   border-radius: 6px;
-  padding: 4px 10px;
+  height: 32px;
+  padding: 0 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 button:disabled {
@@ -28,7 +34,11 @@ button.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
-  padding: 8px 16px;
+  padding: 0 16px;
+}
+button.chip {
+  height: auto;
+  display: inline-block;
 }
 button.danger {
   background: var(--up);
@@ -39,7 +49,9 @@ button.link {
   background: none;
   border: none;
   color: var(--accent);
+  height: auto;
   padding: 0;
+  display: inline;
 }
 input,
 select {
@@ -102,6 +114,10 @@ select {
 .topbar .user-menu {
   -webkit-app-region: no-drag;
 }
+.topbar button {
+  height: 28px;
+  padding: 0 10px;
+}
 .brand {
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -127,6 +143,24 @@ select {
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
   min-width: 180px;
   z-index: 30;
+  transform-origin: top;
+  animation: menu-drop 160ms ease-out;
+}
+/* 위에서 펼쳐지며 내려옴. 높이가 0에서 자라는 대신 살짝 눌린 상태에서 펴지는 방식이라 레이아웃을 건드리지 않음 */
+@keyframes menu-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scaleY(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .user-menu ul {
+    animation: none;
+  }
 }
 .user-menu li {
   padding: 6px 12px;
@@ -177,6 +211,28 @@ select {
 }
 .daemon-state[data-state='unreachable'] {
   color: var(--warn);
+}
+
+/* 창 끌기: 상단 바가 없는 화면에서도 잡을 곳이 있어야 함. 입력·버튼은 no-drag */
+.splash,
+.wizard-steps,
+.login-backdrop {
+  -webkit-app-region: drag;
+}
+.modal,
+.wizard-steps button {
+  -webkit-app-region: no-drag;
+}
+.wizard-card {
+  padding-top: 40px;
+}
+.wizard-card::before {
+  /* 카드 위쪽 띠도 끌기 영역 */
+  content: '';
+  display: block;
+  height: 24px;
+  margin: -40px -48px 16px;
+  -webkit-app-region: drag;
 }
 
 /* 시작 화면 */
@@ -241,6 +297,12 @@ select {
 .lead {
   color: var(--ink2);
   line-height: 1.5;
+}
+/* 비밀번호·코드처럼 짧은 입력만 있는 폼은 입력창과 버튼을 좁게 둠 */
+.form-narrow {
+  max-width: 320px;
+  display: grid;
+  gap: 14px;
 }
 .field {
   display: grid;

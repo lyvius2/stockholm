@@ -46,7 +46,7 @@
 | 웹 | **Spring MVC**(servlet) + 가상 스레드(`spring.threads.virtual.enabled=true`) | Boot 내장 Tomcat | Apache-2.0 | WebFlux 불필요. `127.0.0.1:2609` 바인딩 [포트 확정 2026-09-26] |
 | 병렬·동시성 | 가상 스레드 `Executor` + **`java.util.concurrent.Semaphore`**(도메인별 상한 빈, Kotlin Config) | JDK 25 | — | 예: 토스 MARKET_DATA 15, LLM 병렬 4, 수집 배치 8. 코루틴 금지 |
 | 로컬 WebSocket | **Spring WebSocket**(서버) | Boot 내장 | Apache-2.0 | 시세·체결·토론·알림 스트림 |
-| 외부 HTTP | **Retrofit2 + OkHttp** [확정 2026-09-26] | Retrofit 3.x / OkHttp 5.x(또는 4.12) | Apache-2.0 | 인터페이스(`@GET`·`@POST`…) + `converter-jackson`. 엔드포인트 그룹별 인터페이스·빈(`engine/config/*HttpConfig`). 공통 `OkHttpClient` 하나(타임아웃·연결 풀·마스킹 로깅 인터셉터·User-Agent). 동기 `execute()`를 가상 스레드에서 호출(Call 어댑터 불필요). Spring 관측은 서비스 계층에서 |
+| 외부 HTTP | **Retrofit2 + OkHttp** [확정 2026-09-26] | Retrofit 3.x / OkHttp 5.x(또는 4.12) | Apache-2.0 | 인터페이스(`@GET`·`@POST`…) + `converter-jackson`. 엔드포인트 그룹별 인터페이스·빈(`engine/config/*HttpConfig`). 공통 `OkHttpClient` 하나(타임아웃·연결 풀·마스킹 로깅 인터셉터·User-Agent). TLS 는 `shared/config/TlsPolicy`: 1.2·1.3, 암호 묶음은 JDK 정책이 켜 둔 것 전부(OkHttp 기본 MODERN_TLS 는 DHE 를 빼서 DART 접속 불가). 동기 `execute()`를 가상 스레드에서 호출(Call 어댑터 불필요). Spring 관측은 서비스 계층에서 |
 | 회복성 | **Resilience4j** [확정 2026-09-26] | 2.3.x+ (Boot 4 짝 확인) | Apache-2.0 | `@CircuitBreaker(fallbackMethod)` 필수 · `@RateLimiter`(토스 그룹별 초당 한도) · `@Bulkhead`(SEMAPHORE) · `@Retry`(주문 제외) · `@TimeLimiter`. 대안 검토: Failsafe(경량이나 Spring 통합 없음), Spring Cloud CircuitBreaker(r4j 래퍼, 층만 늘어남) → **Resilience4j 유지 제안** |
 | 외부 WebSocket(토스) | **OkHttp WebSocket**(같은 클라이언트) | OkHttp | Apache-2.0 | 재연결·하트비트·`OPEN` 재동기는 우리 코드 |
 | JSON | **Jackson** | Boot 내장 | Apache-2.0 | `BigDecimal` 문자열 직렬화 설정(`shared/json`). core에는 애너테이션 금지 |
@@ -145,3 +145,11 @@
 4. ~~ZXing~~ → 채택(2026-09-26).
 5. ~~Playwright 도입 시점~~ → 2단계 끝(실주문 검증 전 수동 확인 자동화) (2026-09-26).
 6. GraalVM 배포판: Community(제안, GPLv2+CE로 dmg 재배포 명확) vs Oracle GraalVM(GFTC 재배포 조건 확인).
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | 테스트 의존성 `com.networknt:json-schema-validator` 1.5.9(Apache-2.0) 추가: 이벤트 스키마와 코덱 출력 대조용. 3.0 은 API 가 바뀌어 1.5 계열 고정. 런타임 의존 없음 |
+| 2026-09-27 | WireMock 3.13.2(Apache-2.0)를 테스트에 실제 사용 시작: 외부 API 검증기 매핑과 통합 테스트의 외부 주소 대체 |
+| 2026-09-27 | OkHttp 공용 클라이언트의 TLS 규칙을 `TlsPolicy`로 분리: DART 가 TLS 1.2 DHE 묶음만 받아 OkHttp 기본 규칙으로는 handshake 실패. JDK 정책이 켜 둔 묶음 전부 제시 |

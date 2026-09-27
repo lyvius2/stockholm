@@ -16,7 +16,7 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 
 | 폴더 | 내용 |
 |---|---|
-| `schemas/common/` | 봉투(`envelope`), 식별자, 금액 등 공통 정의 |
+| `schemas/common/` | 봉투(`envelope`)와 공용 값 정의 `_values`(밑줄 시작 = `$defs` 만 있어 타입을 만들지 않고 `$ref` 로만 씀) |
 | `schemas/events/` | 이벤트 로그 payload(동기화 대상) |
 | `schemas/api/` | 로컬 REST/WebSocket 요청·응답 |
 | `schemas/relay/` | relay 경유 메시지(7단계) |

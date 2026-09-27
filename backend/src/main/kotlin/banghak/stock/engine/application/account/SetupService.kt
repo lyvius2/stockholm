@@ -26,6 +26,7 @@ import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.port.AuditLogPort
 import banghak.stock.core.port.CredentialMetaPort
 import banghak.stock.core.port.CredentialVerifier
+import banghak.stock.core.port.FormatCredentialVerifier
 import banghak.stock.core.port.InstallationPort
 import banghak.stock.core.port.PasswordHasherPort
 import banghak.stock.core.port.SecretStorePort
@@ -33,6 +34,7 @@ import banghak.stock.core.port.TotpPort
 import banghak.stock.core.port.UserAccountPort
 import banghak.stock.core.usecase.AdminCreated
 import banghak.stock.core.usecase.CreateAdminCommand
+import banghak.stock.core.usecase.LoginCommand
 import banghak.stock.core.usecase.SetupWizardUseCase
 import banghak.stock.shared.config.RuntimeProfiles
 import banghak.stock.shared.crypto.UlidGenerator
@@ -58,6 +60,10 @@ class SetupService(
     private val loginService: LoginService,
 ) : SetupWizardUseCase {
     private val verifierByKind = verifiers.associateBy { it.kind }
+
+    // 실제 API 검증기가 아직 없는 종류는 형식만 검사함
+    private fun verifierFor(kind: CredentialKind): CredentialVerifier =
+        verifierByKind[kind] ?: FormatCredentialVerifier(kind)
 
     /** 읽기만 함. 설치 행이 없으면 저장하지 않고 NOT_STARTED 로 봄(저장은 쓰기 메서드가 함). */
     @Transactional(readOnly = true)
@@ -137,6 +143,14 @@ class SetupService(
             .token
     }
 
+    override fun reopenWizardSession(password: CharArray, totpCode: String): String {
+        val installation = installationOrNew()
+        installation.setupState.requireAtLeast(SetupState.ADMIN_CREATED)
+        requireNotComplete(installation)
+        val admin = adminOf(installation)
+        return loginService.login(LoginCommand(admin.userId, password, totpCode, null)).token
+    }
+
     override fun registerSharedCredential(
         kind: CredentialKind,
         fields: Map<String, SecretValue>,
@@ -214,8 +228,7 @@ class SetupService(
         fields: Map<String, SecretValue>,
         actor: UserId,
     ): CredentialCheck {
-        val verifier =
-            verifierByKind[kind] ?: throw IllegalSetupTransitionException("$kind 검증기가 없음")
+        val verifier = verifierFor(kind)
         val now = clock.instant()
         val check = verifier.verify(fields)
         val status =

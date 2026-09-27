@@ -14,8 +14,8 @@ import banghak.stock.core.domain.error.TotpRejectedException
 import banghak.stock.core.domain.error.WeakPasswordException
 import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.Ulid
+import banghak.stock.core.port.FormatCredentialVerifier
 import banghak.stock.core.usecase.CreateAdminCommand
-import banghak.stock.engine.adapter.out.credential.FormatCredentialVerifier
 import banghak.stock.shared.crypto.UlidGenerator
 import banghak.stock.support.fakes.FakePasswordHasher
 import banghak.stock.support.fakes.FakeTokenGenerator

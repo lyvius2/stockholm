@@ -7,6 +7,7 @@ import banghak.stock.core.domain.account.SecretValue
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.port.CredentialRecheckPort
 import banghak.stock.core.port.CredentialVerifier
+import banghak.stock.core.port.FormatCredentialVerifier
 import banghak.stock.engine.adapter.out.keychain.SecretReader
 import banghak.stock.shared.config.RuntimeProfiles
 import org.springframework.context.annotation.Profile
@@ -22,7 +23,7 @@ class StoredCredentialRechecker(
     private val verifierByKind = verifiers.associateBy { it.kind }
 
     override fun recheck(kind: CredentialKind, userId: UserId?): CredentialCheck {
-        val verifier = verifierByKind[kind] ?: return CredentialCheck.Rejected("검증기가 없음")
+        val verifier = verifierByKind[kind] ?: FormatCredentialVerifier(kind)
         val fields = mutableMapOf<String, SecretValue>()
         for (field in kind.fields) {
             val key =
