@@ -9,23 +9,25 @@ import org.junit.jupiter.api.Test
 
 class SymbolTest {
     @Test
-    @DisplayName("국내 종목은 숫자 6자리")
-    fun koreanCodeIsSixDigits() {
+    @DisplayName("국내 종목은 영문 대문자·숫자 6자리")
+    fun koreanCodeIsSixAlphanumerics() {
         assertThat(Symbol(Market.KR, "005930").code).isEqualTo("005930")
+        assertThat(Symbol(Market.KR, "0010S0").code).isEqualTo("0010S0")
         assertThatThrownBy { Symbol(Market.KR, "5930") }
             .isInstanceOf(InvalidValueException::class.java)
-        assertThatThrownBy { Symbol(Market.KR, "00593A") }
+        assertThatThrownBy { Symbol(Market.KR, "00593a") }
             .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test
-    @DisplayName("미국 종목은 대문자 티커 1~5자")
-    fun usCodeIsUppercaseTickerUpToFive() {
+    @DisplayName("미국 종목은 대문자로 시작하는 티커이고 점·하이픈을 허용함")
+    fun usCodeIsUppercaseTickerWithDotOrHyphen() {
         assertThat(Symbol(Market.US, "NVDA").code).isEqualTo("NVDA")
         assertThat(Symbol(Market.US, "F").code).isEqualTo("F")
+        assertThat(Symbol(Market.US, "BRK.B").code).isEqualTo("BRK.B")
         assertThatThrownBy { Symbol(Market.US, "nvda") }
             .isInstanceOf(InvalidValueException::class.java)
-        assertThatThrownBy { Symbol(Market.US, "TOOLONG") }
+        assertThatThrownBy { Symbol(Market.US, ".ABC") }
             .isInstanceOf(InvalidValueException::class.java)
         assertThatThrownBy { Symbol(Market.US, "") }.isInstanceOf(InvalidValueException::class.java)
     }
