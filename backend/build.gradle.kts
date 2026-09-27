@@ -188,9 +188,13 @@ tasks.register<DevTask>("dev") {
 }
 
 spotless {
+    // 규칙(한국어 주석 문장 단위 줄바꿈)은 main 대비 바뀐 파일에만 적용함. 옛 파일은 손댈 때 정리됨(사용자 결정)
+    ratchetFrom("main")
     kotlin {
         target("src/**/*.kt")
         ktfmt(libs.versions.ktfmt.get()).kotlinlangStyle()
+        // ktfmt 가 KDoc 을 다시 채우므로 그 뒤에 한국어 주석을 문장 단위 줄바꿈으로 되돌림
+        custom("koreanSentencePerLine", banghak.gradle.KoreanCommentFormatter)
     }
     kotlinGradle {
         target("*.gradle.kts")
