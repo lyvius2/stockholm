@@ -96,3 +96,29 @@ data class CredentialCheckResponse(
 data class FinishSharedKeysRequest(val llmPreset: LlmPreset = LlmPreset.BALANCED)
 
 data class TossDecisionRequest(val decision: TossDecision)
+
+data class WizardSessionResponse(val progress: SetupStateResponse, val wizardToken: String)
+
+/** 마법사 ② 화면의 키 종류 목록. 값·상태 없이 종류 메타만. */
+data class CredentialKindInfo(
+    val kind: CredentialKind,
+    val group: String,
+    val scope: String,
+    val required: Boolean,
+    val fields: List<String>,
+    val isSecret: Boolean,
+    val isLlm: Boolean,
+) {
+    companion object {
+        fun from(kind: CredentialKind) =
+            CredentialKindInfo(
+                kind,
+                kind.group.name,
+                kind.scope.name,
+                kind.required,
+                kind.fields,
+                kind.isSecret,
+                kind.isLlm,
+            )
+    }
+}

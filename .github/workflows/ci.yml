@@ -40,6 +40,9 @@ jobs:
           cache-dependency-path: desktop/package-lock.json
       - working-directory: desktop
         run: npm ci
+      - name: protocol 타입 생성 (quicktype)
+        working-directory: desktop
+        run: npm run generate
       - working-directory: desktop
         run: npm run typecheck
       - working-directory: desktop

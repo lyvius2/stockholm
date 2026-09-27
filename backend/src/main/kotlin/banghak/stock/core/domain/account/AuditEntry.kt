@@ -14,6 +14,20 @@ enum class AuditAction {
     KEY_VERIFY,
     KEY_SET,
     KEY_DELETE,
+    LOGIN_OK,
+    LOGIN_FAIL,
+    LOCKED,
+    LOGOUT,
+    STEP_UP,
+    PASSWORD_CHANGED,
+    TOTP_REENROLLED,
+    RECOVERY_REISSUED,
+    RECOVERY_USED,
+    REGISTRATION_CODE_ISSUED,
+    MEMBER_REGISTERED,
+    MEMBER_SUSPENDED,
+    MEMBER_RESUMED,
+    ADMIN_TRANSFERRED,
 }
 
 /** 감사 한 줄. `detail` 에 키 값·계좌번호·응답 원문을 넣지 않음. */

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-user.schema.json",
+  "title": "ApiUser",
+  "description": "로그인 모달·회원 관리가 보는 사용자 요약. 비밀·키 값 없음.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["userId", "displayName", "role", "status", "isTotpEnrolled", "tossKeyDecision"],
+  "properties": {
+    "userId": { "type": "string" },
+    "displayName": { "type": "string" },
+    "role": { "type": "string", "enum": ["ADMIN", "MEMBER"] },
+    "status": { "type": "string", "enum": ["ACTIVE", "SUSPENDED"] },
+    "isTotpEnrolled": { "type": "boolean" },
+    "tossKeyDecision": { "type": "string", "enum": ["NONE", "REGISTERED", "LATER"] },
+    "lockedUntil": { "type": ["string", "null"] }
+  }
+}

@@ -51,6 +51,7 @@ class SetupApiTest {
     @Autowired private lateinit var clock: Clock
 
     private val http = HttpClient.newHttpClient()
+    private var wizardToken: String? = null
     private val marker = "MARKER-API-KEY-9c1e"
 
     @Test
@@ -91,8 +92,12 @@ class SetupApiTest {
 
         assertThat(post("/setup/admin/totp", """{"code":"000000"}""").statusCode()).isEqualTo(401)
         val code = Totp.generate(Base32.decode(manualKey), Totp.counterAt(clock.instant()))
-        assertThat(post("/setup/admin/totp", """{"code":"$code"}""").body())
-            .contains("\"state\":\"ADMIN_CREATED\"")
+        val confirmed = post("/setup/admin/totp", """{"code":"$code"}""").body()
+        assertThat(confirmed).contains("\"state\":\"ADMIN_CREATED\"").contains("wizardToken")
+        assertThat(post("/setup/keys/DART", """{"fields":{"VALUE":"$marker"}}""").statusCode())
+            .describedAs("마법사 세션 없이는 401")
+            .isEqualTo(401)
+        wizardToken = Regex("\"wizardToken\":\"([^\"]+)\"").find(confirmed)?.groupValues?.get(1)
 
         assertThat(post("/setup/keys/DART", """{"fields":{"VALUE":"$marker"}}""").body())
             .contains("\"result\":\"OK\"")
@@ -152,6 +157,7 @@ class SetupApiTest {
         val port = environment.getRequiredProperty("local.server.port")
         val builder = HttpRequest.newBuilder(URI.create("http://127.0.0.1:$port$path"))
         if (withToken) builder.header(LocalToken.HEADER, Files.readString(localToken.file))
+        wizardToken?.let { builder.header("Authorization", "Bearer $it") }
         return builder
     }
 

@@ -186,8 +186,8 @@ cd backend && ./gradlew build
 # 백엔드: 데몬 실행 (127.0.0.1:2609, 상주 메모리 -Xmx384m)
 cd backend && ./gradlew bootRun --args='--spring.profiles.active=engine'
 
-# 데스크톱: 의존성 설치 후 검사·테스트·개발 실행
-cd desktop && npm ci
+# 데스크톱: 의존성 설치 → 프로토콜 타입 생성 → 검사·테스트·개발 실행
+cd desktop && npm ci && npm run generate
 npm run typecheck && npm run lint && npm test
 npm run dev
 

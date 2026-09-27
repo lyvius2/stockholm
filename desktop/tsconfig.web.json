@@ -8,5 +8,6 @@
     "baseUrl": ".",
     "paths": { "@renderer/*": ["src/renderer/*"] }
   },
-  "include": ["src/renderer/**/*", "src/preload/bridge.ts", "src/preload/index.d.ts", "tests/**/*"]
+  "include": ["src/renderer/**/*", "src/preload/bridge.ts", "src/preload/index.d.ts", "tests/**/*"],
+  "exclude": ["tests/main/**"]
 }

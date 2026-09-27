@@ -3,6 +3,7 @@ package banghak.stock.engine.application.account
 import banghak.stock.core.domain.account.CredentialCheck
 import banghak.stock.core.domain.account.CredentialKind
 import banghak.stock.core.domain.account.CredentialStatus
+import banghak.stock.core.domain.account.Device
 import banghak.stock.core.domain.account.LlmPreset
 import banghak.stock.core.domain.account.SecretKey
 import banghak.stock.core.domain.account.SecretValue
@@ -11,15 +12,21 @@ import banghak.stock.core.domain.account.TossDecision
 import banghak.stock.core.domain.error.IllegalSetupTransitionException
 import banghak.stock.core.domain.error.TotpRejectedException
 import banghak.stock.core.domain.error.WeakPasswordException
+import banghak.stock.core.domain.identity.DeviceId
+import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.usecase.CreateAdminCommand
 import banghak.stock.engine.adapter.out.credential.FormatCredentialVerifier
 import banghak.stock.shared.crypto.UlidGenerator
 import banghak.stock.support.fakes.FakePasswordHasher
+import banghak.stock.support.fakes.FakeTokenGenerator
 import banghak.stock.support.fakes.FakeTotpPort
 import banghak.stock.support.fakes.MemoryAuditLogPort
 import banghak.stock.support.fakes.MemoryCredentialMetaPort
+import banghak.stock.support.fakes.MemoryDevicePort
 import banghak.stock.support.fakes.MemoryInstallationPort
+import banghak.stock.support.fakes.MemoryRecoveryCodePort
 import banghak.stock.support.fakes.MemorySecretStore
+import banghak.stock.support.fakes.MemorySessionPort
 import banghak.stock.support.fakes.MemoryUserAccountPort
 import java.time.Clock
 import java.time.Instant
@@ -50,6 +57,17 @@ class SetupServiceTest {
             audit,
             UlidGenerator(clock),
             clock,
+            LoginService(
+                users,
+                MemorySessionPort(),
+                localDevice(),
+                MemoryRecoveryCodePort(),
+                FakePasswordHasher(),
+                totp,
+                FakeTokenGenerator(),
+                audit,
+                clock,
+            ),
         )
     private val marker = "MARKER-KEY-VALUE-7d3a1"
 
@@ -91,7 +109,7 @@ class SetupServiceTest {
                 )
             )
         assertThat(service.progress().state).isEqualTo(SetupState.NOT_STARTED)
-        assertThat(totp.enrolled).containsExactly(created.userId)
+        assertThat(totp.pending).containsExactly(created.userId)
         assertThatThrownBy { service.confirmAdminTotp("000000") }
             .isInstanceOf(TotpRejectedException::class.java)
         val progress = service.confirmAdminTotp("123456")
@@ -224,6 +242,20 @@ class SetupServiceTest {
                 "SETUP_KEYS_DONE",
             )
     }
+
+    private fun localDevice() =
+        MemoryDevicePort().apply {
+            save(
+                Device(
+                    DeviceId.from(Ulid.of(clock.instant(), ByteArray(10))),
+                    "pk",
+                    "mac",
+                    null,
+                    clock.instant(),
+                    null,
+                )
+            )
+        }
 
     private fun adminCreated() {
         service.createAdmin(

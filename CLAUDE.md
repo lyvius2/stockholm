@@ -234,7 +234,7 @@ npm --prefix desktop run typecheck                   # TS 타입 검사(main·pr
 npm --prefix desktop run lint                        # ESLint
 npm --prefix desktop run format                      # Prettier
 npm --prefix desktop test                            # Vitest
-./protocol/generate.sh                               # JSON Schema → Kotlin·TS 타입 생성(커밋 안 함)
+./protocol/generate.sh                               # JSON Schema → Kotlin(common·events)·TS 타입 생성(커밋 안 함). desktop typecheck 전에 필요
 cd backend && ./gradlew dev                          # 데몬 + Electron 개발 서버 함께 실행(Ctrl+C로 둘 다 종료)
 ./scripts/dist.sh                                    # bootJar + jlink JRE + dmg 산출
 ```

@@ -12,6 +12,7 @@ import banghak.stock.core.domain.account.PasswordPolicy
 import banghak.stock.core.domain.account.SecretKey
 import banghak.stock.core.domain.account.SecretScope
 import banghak.stock.core.domain.account.SecretValue
+import banghak.stock.core.domain.account.SessionKind
 import banghak.stock.core.domain.account.SetupProgress
 import banghak.stock.core.domain.account.SetupState
 import banghak.stock.core.domain.account.TossDecision
@@ -54,6 +55,7 @@ class SetupService(
     private val audit: AuditLogPort,
     private val ulids: UlidGenerator,
     private val clock: Clock,
+    private val loginService: LoginService,
 ) : SetupWizardUseCase {
     private val verifierByKind = verifiers.associateBy { it.kind }
 
@@ -117,13 +119,22 @@ class SetupService(
         val admin = adminOf(installation)
         val now = clock.instant()
         val counter =
-            totp.verify(admin.userId, code, now) ?: throw TotpRejectedException("TOTP 코드가 맞지 않음")
+            totp.confirmEnrollment(admin.userId, code, now)
+                ?: throw TotpRejectedException("TOTP 코드가 맞지 않음")
         users.save(admin.copy(totpEnrolledAt = now, totpLastCounter = counter, updatedAt = now))
         installations.save(installation.advance(SetupState.ADMIN_CREATED, now))
         audit.record(
             AuditEntry(now, admin.userId, null, AuditAction.SETUP_TOTP_CONFIRMED, null, "OK")
         )
         return progress()
+    }
+
+    override fun issueWizardSession(): String {
+        val installation = installationOrNew()
+        installation.setupState.requireAtLeast(SetupState.ADMIN_CREATED)
+        return loginService
+            .issueSession(adminOf(installation), SessionKind.SETUP, clock.instant())
+            .token
     }
 
     override fun registerSharedCredential(

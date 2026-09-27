@@ -157,3 +157,9 @@ admin 자신에 대해서는 정지·삭제가 비활성이다(admin이 0명이 
 2. 이메일은 **선택** 항목(relay 전까지 쓰임 없음).
 3. **admin 이관 기능 둔다**(확인 창 두 번).
 4. 패스키는 1단계에서 **자리만**.
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | 8번 구현. 6장 로컬 API 중 `/me`·`/me/password`·`/me/totp`(2단계)·`/me/recovery-codes`·`/me/credentials/toss`·`/admin/members/*`(등록 코드·정지·해제·토스 키 삭제·admin 이관)·`/admin/credentials/*`(교체·삭제·재검증) 완료. `/session/*`(users·login·logout·step-up·register) 추가. 알림 설정·금융결제원 동의·데이터 파기·디바이스 폐기는 미구현 |

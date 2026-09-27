@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-totp-enrollment.schema.json",
+  "title": "ApiTotpEnrollment",
+  "description": "POST /setup/admin · /session/register · /me/totp 응답. QR PNG(base64)와 수동 키.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["totpQrPngBase64", "totpManualKey"],
+  "properties": {
+    "userId": { "type": "string" },
+    "totpQrPngBase64": { "type": "string" },
+    "totpManualKey": { "type": "string" }
+  }
+}

@@ -1,6 +1,9 @@
 # protocol — 데몬·셸·relay가 주고받는 메시지의 단일 정의
 
-JSON Schema(draft 2020-12)가 원본이고, Kotlin·TypeScript 타입은 `generate.sh`가 quicktype으로 만든다. **양쪽 타입을 손으로 따로 쓰지 않는다.** 생성물은 커밋하지 않는다(`backend/build/generated/protocol/kotlin`, `desktop/src/renderer/generated`).
+JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype으로 만든다. 생성물은 커밋하지 않는다(`backend/build/generated/protocol/kotlin`, `desktop/src/renderer/generated`).
+
+- **TypeScript**는 모든 스키마에서 만들고 렌더러는 이것만 쓴다(손으로 중복 정의하지 않는다).
+- **Kotlin**은 `common`·`events`(데몬이 payload로 직렬화하는 것)만 만들고 폴더별 하위 패키지(`banghak.stock.shared.protocol.common` …)에 둔다. `api` 응답은 컨트롤러 DTO(Kotlin)가 원본이고 스키마는 그것을 옮겨 적은 것이라, 스키마를 바꾸면 DTO도 같이 고친다(테스트 `AuthApiTest`·`SetupApiTest`가 응답 형태를 검사함).
 
 ## 규약
 
@@ -23,3 +26,9 @@ JSON Schema(draft 2020-12)가 원본이고, Kotlin·TypeScript 타입은 `genera
 ```bash
 ./protocol/generate.sh          # Kotlin + TypeScript 동시 생성
 ```
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | `schemas/api/*` 7개 추가(setup-state·credential-kind·credential-check·user·login·totp-enrollment·error). Kotlin 생성 범위를 common·events로 한정, TS 이름은 `--acronym-style original` |

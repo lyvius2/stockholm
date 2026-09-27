@@ -39,9 +39,12 @@ class SetupController(private val setup: SetupWizardUseCase) {
         }
     }
 
+    /** TOTP 확인이 끝나면 ②~④ 에 쓸 마법사 세션 토큰을 함께 돌려줌. */
     @PostMapping("/admin/totp")
-    fun confirmTotp(@RequestBody request: TotpCodeRequest): SetupStateResponse =
-        SetupStateResponse.from(setup.confirmAdminTotp(request.code))
+    fun confirmTotp(@RequestBody request: TotpCodeRequest): WizardSessionResponse {
+        val progress = setup.confirmAdminTotp(request.code)
+        return WizardSessionResponse(SetupStateResponse.from(progress), setup.issueWizardSession())
+    }
 
     @PostMapping("/keys/{kind}")
     fun registerSharedKey(

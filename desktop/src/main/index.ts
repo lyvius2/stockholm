@@ -1,9 +1,16 @@
 import { join } from 'node:path'
 import { BrowserWindow, app, ipcMain, nativeTheme, shell } from 'electron'
-import { probeDaemon } from './daemon'
+import type { ApiRequest } from '../preload/bridge'
+import { DaemonApi } from './api'
+import { DaemonProcess, probeDaemon } from './daemon'
 
 const WINDOW_MIN_WIDTH = 1100
 const WINDOW_MIN_HEIGHT = 720
+const DAEMON_START_TIMEOUT_MS = 60_000
+
+const dataDir = process.env['STOCKHOLM_DATA_DIR'] ?? join(app.getPath('appData'), 'Stockholm')
+const daemonApi = new DaemonApi(dataDir)
+const daemonProcess = new DaemonProcess(join(process.resourcesPath, 'daemon'), dataDir)
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -43,17 +50,28 @@ function createMainWindow(): BrowserWindow {
 function registerIpc(): void {
   ipcMain.handle('daemon:status', () => probeDaemon())
   ipcMain.handle('theme:current', () => (nativeTheme.shouldUseDarkColors ? 'dark' : 'light'))
+  ipcMain.handle('api:request', (_event, request: ApiRequest) => daemonApi.request(request))
+  ipcMain.handle('session:has', () => daemonApi.hasSession())
+  ipcMain.handle('session:clear', () => daemonApi.clearSession())
+  ipcMain.handle('app:version', () => app.getVersion())
 }
 
-void app.whenReady().then(() => {
+void app.whenReady().then(async () => {
   registerIpc()
   createMainWindow()
+  const outcome = await daemonProcess.startIfNeeded()
+  if (outcome === 'spawned') {
+    daemonApi.forgetLocalToken()
+    void (await import('./daemon')).waitForDaemon(DAEMON_START_TIMEOUT_MS)
+  }
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow()
   })
 })
 
-// TODO(1단계 9번): 창을 닫으면 메뉴바 트레이로 상주. 지금은 마지막 창을 닫으면 종료함
+app.on('before-quit', () => daemonProcess.stop())
+
+// TODO(1단계 9번 후속): 창을 닫으면 메뉴바 트레이로 상주. 지금은 마지막 창을 닫으면 종료함
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })

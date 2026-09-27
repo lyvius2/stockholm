@@ -10,7 +10,10 @@ import org.springframework.data.repository.query.Param
 
 interface InstallationRepository : JpaRepository<InstallationEntity, String>
 
-interface AppUserRepository : JpaRepository<AppUserEntity, String>
+interface AppUserRepository : JpaRepository<AppUserEntity, String> {
+    @Query("select u from AppUserEntity u where u.displayName = :displayName")
+    fun findByDisplayName(@Param("displayName") displayName: String): AppUserEntity?
+}
 
 interface CredentialMetaRepository : JpaRepository<CredentialMetaEntity, String> {
     @Query("select c from CredentialMetaEntity c where c.userId is null")

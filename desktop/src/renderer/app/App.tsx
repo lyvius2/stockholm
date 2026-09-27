@@ -1,29 +1,49 @@
+import { useQuery } from '@tanstack/react-query'
+import { ApiError } from '@renderer/data/client/Client'
+import { localClient } from '@renderer/data/client/LocalClient'
+import { setupApi } from '@renderer/data/api/setup'
 import { useDaemonStatus } from '@renderer/data/daemon/useDaemonStatus'
+import { useSessionStore } from '@renderer/data/store/session'
+import { Wizard } from '@renderer/features/setup/Wizard'
+import { MainShell } from '@renderer/layout/MainShell'
 
-/** 1단계 골격: 상단 바와 데몬 연결 상태만 있음. 마법사·로그인·네 영역은 뒤이어 채움. */
+const SETUP_COMPLETE = 'COMPLETE'
+
+/**
+ * 진입 분기: 데몬 대기 → 마법사(SetupState 가 COMPLETE 아님) → 메인 + 로그인 모달.
+ * COMPLETE 뒤에는 /setup/state 가 404 라 그것을 완료로 봄.
+ */
 export function App() {
   const daemon = useDaemonStatus()
-  return (
-    <div className="shell">
-      <header className="topbar">
-        <span className="brand">Stockholm</span>
-      </header>
-      <main className="workspace">
-        <p className="daemon-state" data-state={daemon.state}>
-          {daemonLabel(daemon.state)}
-        </p>
-      </main>
-    </div>
-  )
+  const user = useSessionStore((s) => s.user)
+  const setup = useQuery({
+    queryKey: ['setup', 'state'],
+    enabled: daemon.state === 'connected',
+    retry: false,
+    queryFn: async () => {
+      try {
+        return await setupApi(localClient).state()
+      } catch (e) {
+        if (e instanceof ApiError && e.status === 404) return null
+        throw e
+      }
+    },
+  })
+
+  if (daemon.state !== 'connected' || setup.isPending) {
+    return <Splash message={daemon.state === 'unreachable' ? '데몬 기동 중…' : '준비 중…'} />
+  }
+  if (setup.isError) return <Splash message="데몬 응답을 읽을 수 없습니다. 앱을 다시 시작하세요." />
+  if (setup.data !== null && setup.data.state !== SETUP_COMPLETE)
+    return <Wizard state={setup.data} />
+  return <MainShell user={user} />
 }
 
-function daemonLabel(state: ReturnType<typeof useDaemonStatus>['state']): string {
-  switch (state) {
-    case 'connected':
-      return '데몬 연결됨'
-    case 'unreachable':
-      return '데몬에 연결할 수 없음 (127.0.0.1:2609)'
-    case 'checking':
-      return '데몬 연결 확인 중…'
-  }
+function Splash({ message }: { readonly message: string }) {
+  return (
+    <div className="splash">
+      <span className="brand">Stockholm</span>
+      <p className="daemon-state">{message}</p>
+    </div>
+  )
 }

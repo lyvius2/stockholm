@@ -235,4 +235,4 @@ Electron 기동 → 데몬 기동 대기 → GET /setup/state
 
 | 날짜 | 변경 |
 |---|---|
-| 2026-09-27 | 7번 구현. API는 `GET /setup/state`, `POST /setup/admin`(TOTP QR·수동 키 반환) → `/setup/admin/totp`(확인 뒤 ADMIN_CREATED), `/setup/keys/{kind}`, `/setup/keys/done`(LLM 프리셋), `/setup/toss/keys`, `/setup/toss`(REGISTERED·LATER), `/setup/complete`. 키 검증은 형식 검사 수준(실제 호출 어댑터는 2·3단계). ① 뒤 마법사 세션은 8번 |
+| 2026-09-27 | 7번 구현. API는 `GET /setup/state`, `POST /setup/admin`(TOTP QR·수동 키 반환) → `/setup/admin/totp`(확인 뒤 ADMIN_CREATED), `/setup/keys/{kind}`, `/setup/keys/done`(LLM 프리셋), `/setup/toss/keys`, `/setup/toss`(REGISTERED·LATER), `/setup/complete`. 키 검증은 형식 검사 수준(실제 호출 어댑터는 2·3단계). ① 뒤 마법사 세션은 8번 || 2026-09-27 | ① 뒤 마법사 세션 구현: `POST /setup/admin/totp` 가 `wizardToken`(SETUP 세션, 1시간)을 돌려주고 ②~④ 호출은 이 토큰 없이는 401. TOTP 는 대기 시드→확인 뒤 활성 승격. 같은 30초 구간 코드 재사용 거부라 마법사 확인 직후 로그인은 다음 코드가 필요함(로그인 모달에 안내 필요) |

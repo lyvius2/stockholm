@@ -78,6 +78,11 @@ class JpaUserAccountAdapter(private val repository: AppUserRepository) : UserAcc
     override fun findById(userId: UserId): UserAccount? =
         repository.findById(userId.value).orElse(null)?.toDomain()
 
+    override fun findAll(): List<UserAccount> = repository.findAll().map { it.toDomain() }
+
+    override fun findByDisplayName(displayName: String): UserAccount? =
+        repository.findByDisplayName(displayName)?.toDomain()
+
     override fun save(account: UserAccount) {
         val row =
             repository.findById(account.userId.value).orElse(null)

@@ -18,7 +18,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"tests/**/*.{ts,tsx}\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dist": "electron-vite build && electron-builder --mac --arm64 --config electron-builder.yml"
+    "dist": "electron-vite build && electron-builder --mac --arm64 --config electron-builder.yml",
+    "generate": "bash ../protocol/generate.sh"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.103.2",

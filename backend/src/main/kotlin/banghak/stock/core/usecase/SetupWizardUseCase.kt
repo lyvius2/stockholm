@@ -22,6 +22,9 @@ interface SetupWizardUseCase {
     /** admin 의 첫 TOTP 코드 확인. 맞으면 ADMIN_CREATED. */
     fun confirmAdminTotp(code: String): SetupProgress
 
+    /** ADMIN_CREATED 이후 ②~④ 에 붙일 짧은 세션 토큰. 토큰 원문은 이 응답에만 있음. */
+    fun issueWizardSession(): String
+
     /** 공유 키 검증 후 성공한 값만 저장. ADMIN_CREATED 이후 COMPLETE 전까지. */
     fun registerSharedCredential(
         kind: CredentialKind,

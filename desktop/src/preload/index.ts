@@ -1,9 +1,18 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DaemonStatus, StockholmBridge, ThemeName } from './bridge'
+import type { ApiRequest, ApiResponse, DaemonStatus, StockholmBridge, ThemeName } from './bridge'
 
 const bridge: StockholmBridge = {
   daemon: { status: () => ipcRenderer.invoke('daemon:status') as Promise<DaemonStatus> },
   theme: { current: () => ipcRenderer.invoke('theme:current') as Promise<ThemeName> },
+  api: {
+    request: (request: ApiRequest) =>
+      ipcRenderer.invoke('api:request', request) as Promise<ApiResponse>,
+  },
+  session: {
+    hasSession: () => ipcRenderer.invoke('session:has') as Promise<boolean>,
+    clear: () => ipcRenderer.invoke('session:clear') as Promise<void>,
+  },
+  app: { version: () => ipcRenderer.invoke('app:version') as Promise<string> },
 }
 
 contextBridge.exposeInMainWorld('stockholm', bridge)

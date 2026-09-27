@@ -1,10 +1,14 @@
 package banghak.stock.shared.web
 
+import banghak.stock.core.domain.error.AuthenticationFailedException
 import banghak.stock.core.domain.error.CurrencyMismatchException
 import banghak.stock.core.domain.error.DomainException
+import banghak.stock.core.domain.error.ForbiddenException
 import banghak.stock.core.domain.error.IllegalSetupTransitionException
 import banghak.stock.core.domain.error.InvalidValueException
+import banghak.stock.core.domain.error.RegistrationCodeInvalidException
 import banghak.stock.core.domain.error.SecretStoreFailureException
+import banghak.stock.core.domain.error.SessionInvalidException
 import banghak.stock.core.domain.error.TooManyUsersException
 import banghak.stock.core.domain.error.TotpRejectedException
 import banghak.stock.core.domain.error.WeakPasswordException
@@ -24,7 +28,11 @@ class ErrorAdvice {
                 is InvalidValueException,
                 is WeakPasswordException,
                 is CurrencyMismatchException -> HttpStatus.BAD_REQUEST
-                is TotpRejectedException -> HttpStatus.UNAUTHORIZED
+                is TotpRejectedException,
+                is AuthenticationFailedException,
+                is SessionInvalidException -> HttpStatus.UNAUTHORIZED
+                is ForbiddenException -> HttpStatus.FORBIDDEN
+                is RegistrationCodeInvalidException -> HttpStatus.BAD_REQUEST
                 is IllegalSetupTransitionException,
                 is TooManyUsersException -> HttpStatus.CONFLICT
                 is SecretStoreFailureException -> HttpStatus.SERVICE_UNAVAILABLE

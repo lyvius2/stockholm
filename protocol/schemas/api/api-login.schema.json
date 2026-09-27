@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-login.schema.json",
+  "title": "ApiLogin",
+  "description": "POST /session/login 응답. 토큰은 셸의 main 프로세스가 보관하고 렌더러에는 사용자만 전달됨.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["expiresAt", "user"],
+  "properties": {
+    "token": { "type": "string" },
+    "expiresAt": { "type": "string" },
+    "user": { "$ref": "api-user.schema.json" }
+  }
+}

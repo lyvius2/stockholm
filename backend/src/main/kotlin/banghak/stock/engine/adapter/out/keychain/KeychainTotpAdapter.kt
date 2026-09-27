@@ -18,7 +18,10 @@ import java.time.Instant
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
-/** TOTP 시드를 Keychain(`stockholm/user/{userId}/TOTP_SEED`)에 두고 여기서만 읽음. */
+/**
+ * TOTP 시드를 Keychain 에 두고 여기서만 읽음. 활성 시드 `TOTP_SEED`, 등록 중인 시드 `TOTP_SEED_PENDING`. 확인이 끝나야 활성으로
+ * 승격함.
+ */
 @Component
 @Profile(RuntimeProfiles.ENGINE)
 class KeychainTotpAdapter(
@@ -29,16 +32,35 @@ class KeychainTotpAdapter(
     override fun enroll(userId: UserId, accountLabel: String): TotpEnrollment {
         val seed = ulids.randomBytes(Totp.SECRET_BYTES)
         val manualKey = Base32.encode(seed)
-        secrets.put(seedKey(userId), SecretValue.of(manualKey))
+        secrets.put(pendingKey(userId), SecretValue.of(manualKey))
         val uri = Totp.otpauthUri(ISSUER, accountLabel, seed)
         seed.fill(0)
         return TotpEnrollment(qrPng(uri), manualKey)
     }
 
+    override fun confirmEnrollment(userId: UserId, code: String, now: Instant): Long? {
+        val pending = reader.read(pendingKey(userId)) ?: return null
+        val counter = matching(pending, code, now)
+        if (counter != null) {
+            secrets.put(activeKey(userId), pending)
+            secrets.delete(pendingKey(userId))
+        }
+        pending.wipe()
+        return counter
+    }
+
     override fun verify(userId: UserId, code: String, now: Instant): Long? {
-        val stored = reader.read(seedKey(userId)) ?: return null
+        val stored = reader.read(activeKey(userId)) ?: return null
+        return matching(stored, code, now).also { stored.wipe() }
+    }
+
+    override fun remove(userId: UserId) {
+        secrets.delete(activeKey(userId))
+        secrets.delete(pendingKey(userId))
+    }
+
+    private fun matching(stored: SecretValue, code: String, now: Instant): Long? {
         val seed = Base32.decode(String(stored.reveal()))
-        stored.wipe()
         return try {
             Totp.matchingCounter(seed, code, now)
         } finally {
@@ -46,7 +68,9 @@ class KeychainTotpAdapter(
         }
     }
 
-    private fun seedKey(userId: UserId) = SecretKey.user(userId, SEED_NAME)
+    private fun activeKey(userId: UserId) = SecretKey.user(userId, SEED_NAME)
+
+    private fun pendingKey(userId: UserId) = SecretKey.user(userId, PENDING_SEED_NAME)
 
     private fun qrPng(content: String): ByteArray {
         val matrix = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
@@ -57,6 +81,7 @@ class KeychainTotpAdapter(
 
     companion object {
         const val SEED_NAME = "TOTP_SEED"
+        const val PENDING_SEED_NAME = "TOTP_SEED_PENDING"
         private const val ISSUER = "Stockholm"
         private const val QR_SIZE = 240
     }

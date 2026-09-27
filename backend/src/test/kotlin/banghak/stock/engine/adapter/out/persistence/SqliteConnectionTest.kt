@@ -49,7 +49,13 @@ class SqliteConnectionTest : EngineDatabaseTest() {
             .hasMessageContaining("readonly")
         val writable = TransactionTemplate(engineTransactionManager)
         writable.executeWithoutResult { routed.update(INSERT_DEVICE, "d_write") }
-        assertThat(read.queryForObject("select count(*) from device", Int::class.java)).isEqualTo(1)
+        assertThat(
+                read.queryForObject(
+                    "select count(*) from device where device_id = 'd_write'",
+                    Int::class.java,
+                )
+            )
+            .isEqualTo(1)
     }
 
     @Test

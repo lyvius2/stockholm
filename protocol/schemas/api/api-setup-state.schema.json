@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-setup-state.schema.json",
+  "title": "ApiSetupState",
+  "description": "GET /setup/state 응답. 마법사 진행 상태와 등록된 키의 메타.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["state", "tossDecision", "canFinishSharedKeys", "credentials"],
+  "properties": {
+    "state": { "type": "string", "enum": ["NOT_STARTED", "ADMIN_CREATED", "SHARED_KEYS_DONE", "TOSS_DECIDED", "COMPLETE"] },
+    "adminDisplayName": { "type": ["string", "null"] },
+    "tossDecision": { "type": "string", "enum": ["NONE", "REGISTERED", "LATER"] },
+    "llmPreset": { "type": ["string", "null"], "enum": ["BALANCED", "QUALITY", "COST", "LOCAL", null] },
+    "canFinishSharedKeys": { "type": "boolean" },
+    "credentials": { "type": "array", "items": { "$ref": "#/$defs/credentialSummary" } }
+  },
+  "$defs": {
+    "credentialSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "group", "scope", "required", "fields", "status", "detail"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["OPENAI","ANTHROPIC","DEEPSEEK","OLLAMA","DART","KRX","MASSIVE","NAVER","ODCLOUD","SEC_CONTACT_EMAIL","FRED","SLACK","KFTC_APP","CACHE_SERVER","TOSS"] },
+        "group": { "type": "string" },
+        "scope": { "type": "string", "enum": ["SHARED", "USER"] },
+        "required": { "type": "boolean" },
+        "fields": { "type": "array", "items": { "type": "string" } },
+        "status": { "type": "string", "enum": ["UNREGISTERED", "VERIFIED", "REJECTED", "UNREACHABLE"] },
+        "last4": { "type": ["string", "null"] },
+        "verifiedAt": { "type": ["string", "null"] },
+        "statusDetail": { "type": ["string", "null"] },
+        "detail": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    }
+  }
+}
