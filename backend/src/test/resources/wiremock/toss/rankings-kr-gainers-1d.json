@@ -1,0 +1,61 @@
+{
+  "result" : {
+    "rankedAt" : "2026-09-23T19:59:59.988+09:00",
+    "rankings" : [ {
+      "rank" : 1,
+      "symbol" : "0010S0",
+      "currency" : "KRW",
+      "price" : {
+        "lastPrice" : "45700",
+        "basePrice" : "12000",
+        "changeRate" : "2.8083"
+      },
+      "tradingVolume" : "26080671",
+      "tradingAmount" : "1108909285550"
+    }, {
+      "rank" : 2,
+      "symbol" : "131100",
+      "currency" : "KRW",
+      "price" : {
+        "lastPrice" : "3120",
+        "basePrice" : "2400",
+        "changeRate" : "0.3"
+      },
+      "tradingVolume" : "137268",
+      "tradingAmount" : "416861612"
+    }, {
+      "rank" : 3,
+      "symbol" : "109670",
+      "currency" : "KRW",
+      "price" : {
+        "lastPrice" : "11400",
+        "basePrice" : "8770",
+        "changeRate" : "0.2998"
+      },
+      "tradingVolume" : "898662",
+      "tradingAmount" : "9423872575"
+    }, {
+      "rank" : 4,
+      "symbol" : "900100",
+      "currency" : "KRW",
+      "price" : {
+        "lastPrice" : "1041",
+        "basePrice" : "801",
+        "changeRate" : "0.2996"
+      },
+      "tradingVolume" : "788659",
+      "tradingAmount" : "808029713"
+    }, {
+      "rank" : 5,
+      "symbol" : "396300",
+      "currency" : "KRW",
+      "price" : {
+        "lastPrice" : "6010",
+        "basePrice" : "4625",
+        "changeRate" : "0.2994"
+      },
+      "tradingVolume" : "12897056",
+      "tradingAmount" : "71363086667"
+    } ]
+  }
+}

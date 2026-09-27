@@ -80,6 +80,21 @@ API 규격은 바뀐다. 어댑터를 구현할 때는 이 문서가 아니라 *
 
 공통: 금액·수량·비율은 모두 **문자열**(비율은 소수, 0.1077 = 10.77%), 시각은 ISO 8601 **KST**, enum은 "unknown 값을 허용하도록 구현"하라고 명시 → 어댑터는 모르는 enum을 `UNKNOWN`으로 받는다.
 
+**학습 테스트 실측(`backend/src/test/kotlin/banghak/stock/learning/TossLearningTest.kt`, 읽기 전용 8건, 주문 미호출)** — 규격과 다르거나 규격만으로 모르던 것:
+
+| 항목 | 실측 |
+|---|---|
+| 호출 한도 헤더 | `X-RateLimit-Limit`/`Remaining`/`Reset` 이 그룹별로 옴. 실측 Limit: accounts 1 · holdings 5 · buying-power·commissions 6 · stocks·warnings·rankings 5 · stocks/all 1 · prices 15 · candles 20 · market-indicators 10 · market-calendar·exchange-rate 3 |
+| 캔들 timestamp | 일봉은 그 날 `00:00+09:00`, 1분봉은 **봉 종료 시각**(애프터마켓 마지막 봉이 `20:00`). `nextBefore` 는 마지막 봉 이전 봉의 시각(inclusive) |
+| 현재가 timestamp | 마지막 체결 시각(장 마감 뒤에는 `19:59:59`). 시장 지표(KOSPI·KOSDAQ)는 장 밖에서 `timestamp: null` 에 값만 옴 |
+| 장 달력 | KR 은 휴일·주말에 `today.integrated: null`. US 는 `dayMarket 09:00~17:00`·`preMarket 17:00~22:30`·`regularMarket 22:30~05:00`·`afterMarket 05:00~08:50`(규격 예시의 16:50·07:00 과 다름 — 실측 값을 씀) |
+| 환율 | `validFrom`~`validUntil` 약 5분 창. `rateChangeType` EQUAL/UP/DOWN |
+| 랭킹 | `TOP_GAINERS` + `realtime` 은 400. 국내 랭킹 종목 코드에 `0010S0` 같은 영문 혼합 6자리가 옴 → `Symbol` 국내 규칙을 `[0-9A-Z]{6}` 로 |
+| 보유 | 합계 `marketValue.amount.{krw, usd}` 확인. 보유 0건이라 항목 형태는 규격으로만 확인 |
+| 예수금 | `buying-power` 응답 필드는 `currency`·`cashBuyingPower` 둘뿐(D+1/D+2 없음 확정) |
+| WebSocket | Bearer 헤더 접속 → 선언 배열 한 번에 `trade:kr`·`orderbook:kr`·`personal:order:{accountSeq}` 가 `subscriptions` ack 로 확정, 텍스트 `PING` 에 `{"type":"pong"}` |
+| 픽스처 | 개인 정보 없는 응답 12건을 `backend/src/test/resources/wiremock/toss/` 에 저장(토큰은 `***`). 계좌·보유·예수금 원문은 `backend/build/learning/toss/`(계좌번호 끝 4자리만) |
+
 ### 1.2 금융결제원 오픈API — 본인인증·자산 조회 [확인 필요]
 
 포트: `IdentityPort`, `AssetPort`. 포털: https://openapi.kftc.or.kr · 개발자 사이트: https://developers.kftc.or.kr
@@ -340,3 +355,9 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 - [네이버 검색 API AI 활용 금지 보도(한국데이터경제신문, 2026-09)](https://www.dataeconomy.co.kr/news/articleView.html?idxno=42307)
 - [네이버 검색 API → API HUB 이관 안내(와플보드)](https://waffleboard.io/blog/naver-search-api-hub-migration-guide)
 - [StockTwits 공식 MCP 서버](https://github.com/stocktwits/stocktwits-mcp)
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-27 | 토스 학습 테스트 실측 표 추가(한도 헤더·캔들 timestamp·장 달력 실측 시간·랭킹 코드 형식·WebSocket ack) |

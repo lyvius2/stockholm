@@ -1,0 +1,48 @@
+{
+  "result" : {
+    "today" : {
+      "date" : "2026-09-27",
+      "integrated" : null
+    },
+    "previousBusinessDay" : {
+      "date" : "2026-09-23",
+      "integrated" : {
+        "preMarket" : {
+          "startTime" : "2026-09-23T08:00:00.000+09:00",
+          "singlePriceAuctionStartTime" : "2026-09-23T08:50:00.000+09:00",
+          "endTime" : "2026-09-23T09:00:00.000+09:00"
+        },
+        "regularMarket" : {
+          "startTime" : "2026-09-23T09:00:00.000+09:00",
+          "singlePriceAuctionStartTime" : "2026-09-23T15:20:00.000+09:00",
+          "endTime" : "2026-09-23T15:30:00.000+09:00"
+        },
+        "afterMarket" : {
+          "startTime" : "2026-09-23T15:30:00.000+09:00",
+          "singlePriceAuctionEndTime" : "2026-09-23T15:40:00.000+09:00",
+          "endTime" : "2026-09-23T20:00:00.000+09:00"
+        }
+      }
+    },
+    "nextBusinessDay" : {
+      "date" : "2026-09-28",
+      "integrated" : {
+        "preMarket" : {
+          "startTime" : "2026-09-28T08:00:00.000+09:00",
+          "singlePriceAuctionStartTime" : "2026-09-28T08:50:00.000+09:00",
+          "endTime" : "2026-09-28T09:00:00.000+09:00"
+        },
+        "regularMarket" : {
+          "startTime" : "2026-09-28T09:00:00.000+09:00",
+          "singlePriceAuctionStartTime" : "2026-09-28T15:20:00.000+09:00",
+          "endTime" : "2026-09-28T15:30:00.000+09:00"
+        },
+        "afterMarket" : {
+          "startTime" : "2026-09-28T15:30:00.000+09:00",
+          "singlePriceAuctionEndTime" : "2026-09-28T15:40:00.000+09:00",
+          "endTime" : "2026-09-28T20:00:00.000+09:00"
+        }
+      }
+    }
+  }
+}

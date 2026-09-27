@@ -1,0 +1,61 @@
+{
+  "result" : {
+    "rankedAt" : "2026-09-26T08:59:42.689+09:00",
+    "rankings" : [ {
+      "rank" : 1,
+      "symbol" : "IBN",
+      "currency" : "USD",
+      "price" : {
+        "lastPrice" : "27.92",
+        "basePrice" : "27.88",
+        "changeRate" : "0.0014"
+      },
+      "tradingVolume" : "1536261",
+      "tradingAmount" : "58333366431"
+    }, {
+      "rank" : 2,
+      "symbol" : "REGN",
+      "currency" : "USD",
+      "price" : {
+        "lastPrice" : "788.04",
+        "basePrice" : "796.02",
+        "changeRate" : "-0.01"
+      },
+      "tradingVolume" : "51842",
+      "tradingAmount" : "55560834028"
+    }, {
+      "rank" : 3,
+      "symbol" : "QRVO",
+      "currency" : "USD",
+      "price" : {
+        "lastPrice" : "117.97",
+        "basePrice" : "116.34",
+        "changeRate" : "0.014"
+      },
+      "tradingVolume" : "271303",
+      "tradingAmount" : "43527582017"
+    }, {
+      "rank" : 4,
+      "symbol" : "MU",
+      "currency" : "USD",
+      "price" : {
+        "lastPrice" : "1082.28",
+        "basePrice" : "1080.53",
+        "changeRate" : "0.0016"
+      },
+      "tradingVolume" : "20230",
+      "tradingAmount" : "29776537000"
+    }, {
+      "rank" : 5,
+      "symbol" : "HUBG",
+      "currency" : "USD",
+      "price" : {
+        "lastPrice" : "30.34",
+        "basePrice" : "30.03",
+        "changeRate" : "0.0103"
+      },
+      "tradingVolume" : "646198",
+      "tradingAmount" : "26663421876"
+    } ]
+  }
+}

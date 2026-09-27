@@ -1,0 +1,11 @@
+{
+  "result" : [ {
+    "symbol" : "KOSPI",
+    "timestamp" : null,
+    "lastPrice" : "7080.92"
+  }, {
+    "symbol" : "KOSDAQ",
+    "timestamp" : null,
+    "lastPrice" : "844.48"
+  } ]
+}
