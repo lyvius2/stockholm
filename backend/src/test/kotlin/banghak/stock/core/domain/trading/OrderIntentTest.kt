@@ -69,17 +69,22 @@ class OrderIntentTest {
         }
 
         @Test
-        @DisplayName("통화와 수량 자릿수가 시장에 맞아야 함")
+        @DisplayName("통화가 시장에 맞아야 하고 지정가 수량은 정수 주수여야 함")
         fun currencyAndScaleMustMatchMarket() {
             assertThatThrownBy { limitBuy(price = usd("70")) }
                 .isInstanceOf(InvalidValueException::class.java)
             assertThatThrownBy { limitBuy(quantity = Quantity.of("1.5")) }
                 .isInstanceOf(InvalidValueException::class.java)
-            assertThat(
+            // 소수점 수량은 미국 시장가 매도에만 허용되므로 미국 지정가도 정수 주수만
+            assertThatThrownBy {
                     limitBuy(symbol = nvidia, price = usd("120.50"), quantity = Quantity.of("1.5"))
+                }
+                .isInstanceOf(InvalidValueException::class.java)
+            assertThat(
+                    limitBuy(symbol = nvidia, price = usd("120.50"), quantity = Quantity.of(2))
                         .notional()
                 )
-                .isEqualTo(usd("180.75"))
+                .isEqualTo(usd("241.00"))
         }
     }
 

@@ -1,6 +1,7 @@
 package banghak.stock.core.domain.portfolio
 
 import banghak.stock.core.domain.error.InvalidValueException
+import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.ExchangeRate
@@ -15,6 +16,7 @@ import java.time.Instant
  * 수수료·세금은 체결 전체 값이며 lot 별로 수량 비례 배분함.
  */
 data class Sale(
+    val userId: UserId,
     val brokerOrderId: String,
     val symbol: Symbol,
     val quantity: Quantity,
@@ -34,6 +36,12 @@ data class DisposalResult(val disposals: List<LotDisposal>, val lotsAfter: List<
  */
 object FifoLotMatcher {
     fun dispose(lots: List<Lot>, sale: Sale): DisposalResult {
+        // 다른 사용자의 lot 이 섞인 목록은 호출자 오류이므로 걸러내지 않고 거부함(사용자 간 경계)
+        lots
+            .firstOrNull { it.userId != sale.userId }
+            ?.let {
+                throw InvalidValueException("${sale.userId} 의 매도에 다른 사용자의 lot 이 섞임: ${it.id}")
+            }
         val queue = lots.filter { it.isOpen && it.symbol == sale.symbol }.sortedBy { it.boughtAt }
         val held = queue.fold(Quantity.ZERO) { sum, lot -> sum.plus(lot.remainingQuantity) }
         if (sale.quantity.isGreaterThan(held))

@@ -56,7 +56,9 @@ class TossLearningTest : LearningTestSupport() {
             .execute()
             .use { response ->
                 val json = mapper.readTree(response.body.string())
-                assertThat(response.code).describedAs(json.toString()).isEqualTo(200)
+                assertThat(response.code)
+                    .describedAs("토큰 발급 HTTP ${response.code} error=${json.path("error").asText()}")
+                    .isEqualTo(200)
                 assertThat(json.path("token_type").asText()).isEqualTo("Bearer")
                 assertThat(json.path("expires_in").asLong()).isPositive()
                 accessToken = json.path("access_token").asText()
@@ -291,13 +293,26 @@ class TossLearningTest : LearningTestSupport() {
         Thread.sleep(3000)
         socket.close(1000, "learning done")
         val messages = synchronized(received) { received.toList() }
-        println(
-            "학습: WebSocket 수신 ${messages.size}건 → " +
-                messages.take(4).joinToString(" | ") { it.take(300) }
-        )
+        // personal:order 메시지에는 주문 정보가 실리므로 원문은 남기지 않고 종류·토픽만 기록함
+        val summaries = messages.map(::summarizeFrame)
+        println("학습: WebSocket 수신 ${messages.size}건 → " + summaries.joinToString(" | "))
         val ackText = messages.first { it.contains("\"subscriptions\"") }
         assertThat(ackText).contains("trade:kr:005930").contains("personal:order:$accountSeq")
-        Files.writeString(rawDir().resolve("websocket-messages.txt"), messages.joinToString("\n"))
+        Files.writeString(rawDir().resolve("websocket-frames.txt"), summaries.joinToString("\n"))
+    }
+
+    private fun summarizeFrame(text: String): String {
+        if (text.startsWith("FAILURE")) return text
+        val json =
+            runCatching { mapper.readTree(text) }.getOrNull() ?: return "text:${text.take(20)}"
+        val type = json.path("type").asText()
+        return when (type) {
+            "subscriptions" ->
+                "subscriptions subscribed=${json.path("subscribed")} rejected=${json.path("rejected").size()}"
+            "message" -> "message topic=${json.path("topic").asText()}"
+            "error" -> "error code=${json.path("error").path("code").asText()}"
+            else -> type
+        }
     }
 
     private fun get(
@@ -313,7 +328,13 @@ class TossLearningTest : LearningTestSupport() {
         client.newCall(request).execute().use { response ->
             val text = response.body.string()
             val json = mapper.readTree(text)
-            assertThat(response.code).describedAs("$path → $text").isEqualTo(200)
+            // 실패해도 본문은 남기지 않음(계좌·주문 정보가 들어 있을 수 있음).
+            // 오류 코드만 봄
+            assertThat(response.code)
+                .describedAs(
+                    "$path → HTTP ${response.code} code=${json.path("error").path("code").asText()}"
+                )
+                .isEqualTo(200)
             println(
                 "학습: $path limit=${response.header("X-RateLimit-Limit")} remaining=${response.header("X-RateLimit-Remaining")} requestId=${response.header("X-Request-Id")?.take(8)}…"
             )
@@ -336,13 +357,14 @@ class TossLearningTest : LearningTestSupport() {
         )
     }
 
+    // 커밋된 픽스처가 실행마다 바뀌지 않게 파일이 없을 때만 씀.
+    // 갱신하려면 지우고 다시 돌림
     private fun savePublicFixture(name: String, json: JsonNode) {
         val dir = Path.of("src/test/resources/wiremock/toss")
         Files.createDirectories(dir)
-        Files.writeString(
-            dir.resolve("$name.json"),
-            mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json),
-        )
+        val target = dir.resolve("$name.json")
+        if (Files.exists(target)) return
+        Files.writeString(target, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json))
     }
 
     private fun redact(json: JsonNode): JsonNode {

@@ -1,11 +1,14 @@
 package banghak.stock.core.domain.portfolio
 
 import banghak.stock.core.domain.error.InvalidValueException
+import banghak.stock.core.domain.identity.Ulid
+import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.portfolio.PortfolioFixtures.fx
 import banghak.stock.core.domain.portfolio.PortfolioFixtures.lot
 import banghak.stock.core.domain.portfolio.PortfolioFixtures.now
 import banghak.stock.core.domain.trading.Quantity
+import banghak.stock.core.domain.trading.TradingFixtures
 import banghak.stock.core.domain.trading.TradingFixtures.krw
 import banghak.stock.core.domain.trading.TradingFixtures.nvidia
 import banghak.stock.core.domain.trading.TradingFixtures.samsung
@@ -37,6 +40,7 @@ class FifoLotMatcherTest {
     fun disposesOldestFirstAndSplitsCosts() {
         val sale =
             Sale(
+                TradingFixtures.user,
                 "B-9",
                 samsung,
                 Quantity.of(15),
@@ -67,6 +71,28 @@ class FifoLotMatcherTest {
     }
 
     @Test
+    @DisplayName("다른 사용자의 lot 이 섞인 목록으로는 매도를 배분하지 않음")
+    fun rejectsLotsOfAnotherUser() {
+        val other =
+            older.copy(userId = UserId.from(Ulid.of(now, ByteArray(10) { 7 })), id = newer.id)
+        val sale =
+            Sale(
+                TradingFixtures.user,
+                "B-11",
+                samsung,
+                Quantity.of(1),
+                krw("80000"),
+                krw("0"),
+                krw("0"),
+                null,
+                now,
+            )
+
+        assertThatThrownBy { FifoLotMatcher.dispose(listOf(older, other), sale) }
+            .isInstanceOf(InvalidValueException::class.java)
+    }
+
+    @Test
     @DisplayName("해외 매도의 원화 실현손익 = 매매손익(외화 손익 × 매도 환율) + 환차손익(매입원가 × 환율 차)")
     fun foreignRealizedSplitsIntoTradeAndFxPnl() {
         val usLot =
@@ -79,6 +105,7 @@ class FifoLotMatcherTest {
             )
         val sale =
             Sale(
+                TradingFixtures.user,
                 "B-10",
                 nvidia,
                 Quantity.of(3),

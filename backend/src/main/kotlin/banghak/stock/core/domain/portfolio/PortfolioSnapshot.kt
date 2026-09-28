@@ -43,9 +43,11 @@ data class PortfolioSnapshot(
 ) {
     init {
         positions
-            .firstOrNull { it.symbol.market != market }
+            .firstOrNull { it.symbol.market != market || it.userId != userId }
             ?.let {
-                throw InvalidValueException("$market 스냅샷에 ${it.symbol} 포지션이 섞임")
+                throw InvalidValueException(
+                    "$userId/$market 스냅샷에 ${it.userId}/${it.symbol} 포지션이 섞임"
+                )
             }
     }
 

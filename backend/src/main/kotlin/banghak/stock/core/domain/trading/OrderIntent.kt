@@ -55,12 +55,14 @@ data class OrderIntent(
                 )
         }
 
+    // 토스 규격: 소수점 수량은 미국 시장가 매도에만 허용되므로 지정가는 정수 주수만 받음
     private fun requireLimitShape() {
         val price = limitPrice ?: throw InvalidValueException("지정가 주문에는 가격이 필요함")
         val shares = quantity ?: throw InvalidValueException("지정가 주문에는 수량이 필요함")
         if (orderAmount != null) throw InvalidValueException("지정가 주문에는 주문 금액을 쓰지 않음")
         requirePositivePrice(price)
         requireTradableQuantity(shares)
+        if (!shares.isWholeShares) throw InvalidValueException("지정가 주문 수량은 정수 주수여야 함: $shares")
     }
 
     // 토스 규격: 시장가는 미국만, 소수점 수량은 시장가 매도에만, 금액 주문은 시장가 매수에만

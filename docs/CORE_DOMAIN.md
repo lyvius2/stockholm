@@ -491,3 +491,4 @@ public final class SecretMissingException extends DomainException {}
 |---|---|
 | 2026-09-27 | 예외 클래스 이름에 접미어 `Exception` 적용(11장과 본문 언급) |
 | 2026-09-27 | 4·5장을 Kotlin 으로 구현. 구현에서 정한 것: `OrderIntent.origin` 은 `OrderOrigin`(매도 주문 포함), `DepositBalance` 는 통화별 buying-power 맵(PORTFOLIO_PANEL 5장), `OrderRejectedException` 의 tickSize·nearestPrices 는 BigDecimal(error→money 순환 방지), `LotDisposal.realizedKrw` = 매매손익 + 환차손익으로 정의, `StartStockResolver` 는 후보(`StartStockCandidates`)를 받는 순수 함수이고 2초 상한 조회는 engine 몫, 시장가 매도의 정수 수량 판정은 가드레일 `MarketOrderScope` 에 둠 |
+| 2026-09-29 | 코드 리뷰 반영: `Position` 은 `userId` 를 갖고 다른 사용자의 lot 을 거부, `Sale.userId`, 지정가 주문은 정수 주수만, `Position.marketValue` 는 현지 통화 |

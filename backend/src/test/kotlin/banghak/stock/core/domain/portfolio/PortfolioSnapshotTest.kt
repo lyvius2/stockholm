@@ -34,7 +34,7 @@ class PortfolioSnapshotTest {
                 PortfolioSnapshot(
                     user,
                     Market.US,
-                    listOf(Position(lot().symbol, listOf(lot()))),
+                    listOf(Position(user, lot().symbol, listOf(lot()))),
                     deposit,
                     emptyList(),
                     emptyList(),

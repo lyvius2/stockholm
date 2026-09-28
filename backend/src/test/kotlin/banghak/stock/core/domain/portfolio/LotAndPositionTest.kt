@@ -1,10 +1,13 @@
 package banghak.stock.core.domain.portfolio
 
 import banghak.stock.core.domain.error.InvalidValueException
+import banghak.stock.core.domain.identity.Ulid
+import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.portfolio.PortfolioFixtures.fx
 import banghak.stock.core.domain.portfolio.PortfolioFixtures.lot
 import banghak.stock.core.domain.portfolio.PortfolioFixtures.now
 import banghak.stock.core.domain.trading.Quantity
+import banghak.stock.core.domain.trading.TradingFixtures
 import banghak.stock.core.domain.trading.TradingFixtures.krw
 import banghak.stock.core.domain.trading.TradingFixtures.nvidia
 import banghak.stock.core.domain.trading.TradingFixtures.samsung
@@ -46,10 +49,22 @@ class LotAndPositionTest {
     }
 
     @Test
+    @DisplayName("다른 사용자의 lot 이 섞이면 포지션을 만들지 않음")
+    fun rejectsLotsOfAnotherUser() {
+        val other = lot(seed = 9).copy(userId = UserId.from(Ulid.of(now, ByteArray(10) { 7 })))
+
+        assertThatThrownBy { Position(TradingFixtures.user, samsung, listOf(lot(), other)) }
+            .isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy { Position.fromLots(TradingFixtures.user, listOf(lot(), other)) }
+            .isInstanceOf(InvalidValueException::class.java)
+    }
+
+    @Test
     @DisplayName("포지션 수량·평균 단가·출처별 수량은 열린 lot 에서 계산함")
     fun positionAggregatesOpenLots() {
         val position =
             Position(
+                TradingFixtures.user,
                 samsung,
                 listOf(
                     lot(
@@ -70,12 +85,14 @@ class LotAndPositionTest {
         assertThat(position.quantity()).isEqualTo(Quantity.of(15))
         assertThat(position.averageCost()).isEqualTo(krw("68000"))
         assertThat(position.quantityFrom(BuyOrigin.AUTO_BUY)).isEqualTo(Quantity.of(5))
-        assertThat(position.valuation(krw("80000"))).isEqualTo(krw("1200000"))
-        assertThat(Position(samsung, emptyList()).averageCost()).isEqualTo(krw("0"))
-        assertThatThrownBy { Position(samsung, listOf(lot(remaining = "0"))) }
+        assertThat(position.marketValue(krw("80000"))).isEqualTo(krw("1200000"))
+        assertThat(Position(TradingFixtures.user, samsung, emptyList()).averageCost())
+            .isEqualTo(krw("0"))
+        assertThatThrownBy { Position(TradingFixtures.user, samsung, listOf(lot(remaining = "0"))) }
             .isInstanceOf(InvalidValueException::class.java)
         assertThat(
                 Position.fromLots(
+                    TradingFixtures.user,
                     listOf(
                         lot(seed = 1),
                         lot(remaining = "0", seed = 2),
@@ -85,7 +102,7 @@ class LotAndPositionTest {
                             fxAtBuy = fx("1400"),
                             seed = 3,
                         ),
-                    )
+                    ),
                 )
             )
             .extracting<Int> { it.openLots.size }
