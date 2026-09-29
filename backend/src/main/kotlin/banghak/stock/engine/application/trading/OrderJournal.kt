@@ -13,16 +13,23 @@ import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.trading.BrokerOrder
 import banghak.stock.core.domain.trading.BrokerOrderRecord
+import banghak.stock.core.domain.trading.FillIncrement
+import banghak.stock.core.domain.trading.FillSummary
+import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.OrderSubmission
 import banghak.stock.core.domain.trading.Quantity
+import banghak.stock.core.domain.trading.RecordedOrder
 import banghak.stock.core.domain.trading.SubmissionRecord
 import banghak.stock.core.domain.trading.SubmissionState
 import banghak.stock.core.port.BrokerOrderStorePort
 import banghak.stock.core.port.EventStore
+import banghak.stock.core.port.FillQueuePort
 import banghak.stock.core.port.SubmissionStorePort
 import banghak.stock.shared.config.RuntimeProfiles
 import java.time.Clock
+import java.time.Instant
+import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -38,6 +45,7 @@ class OrderJournal(
     private val events: EventStore,
     private val submissions: SubmissionStorePort,
     private val orders: BrokerOrderStorePort,
+    private val fills: FillQueuePort,
     private val clock: Clock,
 ) {
     @Transactional
@@ -136,7 +144,9 @@ class OrderJournal(
     fun recordBrokerProgress(deviceId: DeviceId, userId: UserId, record: BrokerOrderRecord) {
         val before = orders.findRecorded(userId, record.brokerOrderId)
         if (before != null && before.progress.isAheadOf(record)) return
-        orders.applyBrokerRecord(userId, record, clock.instant())
+        val now = clock.instant()
+        orders.applyBrokerRecord(userId, record, now)
+        enqueueNewFill(userId, before, record, now)
         if (
             before == null || !before.isPlacedByStockholm || before.progress.status == record.status
         )
@@ -147,6 +157,27 @@ class OrderJournal(
             listOf(OrderStatusChanged(record.brokerOrderId, before.progress.status, record.status)),
             clock.instant(),
         )
+    }
+
+    // 새로 체결된 몫은 같은 트랜잭션에서 대기열에 넣어 lot 처리가 실패해도 잃지 않음.
+    // 증분은 이미 넣은 요약과의 차이라, 금액이 늦게 채워진 체결도 금액이 생긴 뒤 빠짐없이 들어감.
+    // 처음 보는 주문은 밖에서 낸 것이라 수동 출처임
+    private fun enqueueNewFill(
+        userId: UserId,
+        before: RecordedOrder?,
+        record: BrokerOrderRecord,
+        now: Instant,
+    ) {
+        val queued = before?.queuedFill ?: FillSummary.zero(record.symbol.market.currency)
+        val increment =
+            FillIncrement.between(userId, queued, record, before?.origin ?: OrderOrigin.MANUAL, now)
+        if (increment == null) {
+            if (record.filledQuantity.isGreaterThan(queued.quantity))
+                log.warn("체결 금액이 아직 없어 lot 반영을 다음 기록까지 미룸")
+            return
+        }
+        fills.enqueue(increment, now)
+        orders.markFillQueued(userId, record.brokerOrderId, queued.plus(increment))
     }
 
     /** 요청 기록이 없는 조작(취소)의 흔적을 남김. */
@@ -175,5 +206,9 @@ class OrderJournal(
 
     private fun append(deviceId: DeviceId, submission: OrderSubmission, event: DomainEvent) {
         events.append(submission.intent.userId, deviceId, listOf(event), clock.instant())
+    }
+
+    companion object {
+        private val log = LoggerFactory.getLogger(OrderJournal::class.java)
     }
 }

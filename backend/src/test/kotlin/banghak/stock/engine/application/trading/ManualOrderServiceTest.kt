@@ -30,6 +30,7 @@ import banghak.stock.support.MutableClock
 import banghak.stock.support.fakes.FakeTradingPort
 import banghak.stock.support.fakes.MemoryBrokerOrderStore
 import banghak.stock.support.fakes.MemoryEventStore
+import banghak.stock.support.fakes.MemoryFillQueue
 import banghak.stock.support.fakes.MemorySubmissionStore
 import banghak.stock.support.fakes.MemoryUserAccountPort
 import banghak.stock.support.fakes.ScriptedGuardrail
@@ -49,7 +50,8 @@ class ManualOrderServiceTest {
     private val submissions = MemorySubmissionStore()
     private val orders = MemoryBrokerOrderStore()
     private val users = MemoryUserAccountPort()
-    private val journal = OrderJournal(events, submissions, orders, clock)
+    private val fills = MemoryFillQueue()
+    private val journal = OrderJournal(events, submissions, orders, fills, clock)
     private val service =
         ManualOrderService(guardrail, trading, SubmissionDispatcher(journal, submissions, clock))
     private val resolver = PendingSubmissionResolver(trading, journal, submissions, users, clock)

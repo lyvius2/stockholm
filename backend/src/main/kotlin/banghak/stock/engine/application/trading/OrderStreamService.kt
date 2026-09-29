@@ -69,7 +69,7 @@ class OrderStreamService(
     // 연결이 살아 있으면 재동기 계기가 없으므로, 놓친 이벤트는 재동기 대기열에 올려 되찾음
     override fun onOrderEvent(event: OrderEvent) {
         try {
-            apply(localDevice(), event.userId, event.record)
+            apply(devices.localDevice(), event.userId, event.record)
         } catch (e: RuntimeException) {
             log.warn("주문 이벤트 반영 실패({}). 재동기로 맞춤", e::class.simpleName)
             resyncPending += event.userId
@@ -115,7 +115,7 @@ class OrderStreamService(
 
     // 미체결 → 종료 주문(끊긴 사이 생기고 끝난 주문 포함) → 그래도 로컬에만 열린 주문의 상세 순서로 맞춤
     private fun reconcile(owner: UserId) {
-        val device = localDevice()
+        val device = devices.localDevice()
         val open = Market.entries.flatMap { trading.openOrders(owner, it) }
         open.forEach { apply(device, owner, it) }
         reconcileClosedOrders(device, owner)
@@ -125,7 +125,7 @@ class OrderStreamService(
             try {
                 apply(device, owner, trading.lookupOrder(owner, brokerOrderId))
             } catch (e: InvalidValueException) {
-                log.warn("주문 {} 을 토스에서 찾지 못함. 로컬 상태를 그대로 둠", brokerOrderId)
+                log.warn("로컬에 열린 주문 하나를 토스에서 찾지 못함. 로컬 상태를 그대로 둠")
             }
         }
     }
@@ -157,7 +157,7 @@ class OrderStreamService(
                 journal.recordBrokerProgress(device, owner, record)
                 return
             } catch (e: OptimisticLockingFailureException) {
-                log.info("주문 {} 을 동시에 고쳐 다시 반영함", record.brokerOrderId)
+                log.info("같은 주문을 동시에 고쳐 다시 반영함")
             }
         }
         journal.recordBrokerProgress(device, owner, record)
@@ -176,12 +176,6 @@ class OrderStreamService(
             }
             .toSet()
     }
-
-    // 단독 모드에서는 이 설치의 디바이스가 하나뿐임.
-    // 여러 디바이스(8단계)에서는 lease 보유 디바이스로 바꿀 것
-    private fun localDevice(): DeviceId =
-        devices.findAll().firstOrNull { it.revokedAt == null }?.deviceId
-            ?: error("이 설치의 디바이스가 등록되지 않음")
 
     companion object {
         private val log = LoggerFactory.getLogger(OrderStreamService::class.java)

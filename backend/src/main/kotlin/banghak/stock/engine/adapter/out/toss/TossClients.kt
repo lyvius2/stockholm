@@ -60,6 +60,7 @@ interface TossMarketInfoClient {
         @Tag caller: TossCaller,
         @Query("baseCurrency") baseCurrency: String,
         @Query("quoteCurrency") quoteCurrency: String,
+        @Query("dateTime") dateTime: String?,
     ): Call<TossEnvelope<TossExchangeRate>>
 
     @GET("api/v1/market-calendar/KR")

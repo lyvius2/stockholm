@@ -15,7 +15,13 @@ data class OrderProgress(val status: OrderStatus, val filledQuantity: Quantity) 
 }
 
 /**
- * 로컬에 기록된 주문 한 건의 진행과 출처 구분.
+ * 로컬에 기록된 주문 한 건의 진행과 출처 구분, 대기열에 넣은 체결 요약.
  * 상태 변경 이벤트는 Stockholm 이 낸 주문에만 남김(밖에서 낸 주문은 기록만 함).
+ * 대기열에 넣은 요약([queuedFill])이 새로 체결된 몫([FillIncrement])을 구하는 기준임.
  */
-data class RecordedOrder(val progress: OrderProgress, val isPlacedByStockholm: Boolean)
+data class RecordedOrder(
+    val progress: OrderProgress,
+    val isPlacedByStockholm: Boolean,
+    val origin: OrderOrigin,
+    val queuedFill: FillSummary,
+)

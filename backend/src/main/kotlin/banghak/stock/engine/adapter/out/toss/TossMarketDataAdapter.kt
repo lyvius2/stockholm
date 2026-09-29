@@ -19,6 +19,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
@@ -116,20 +117,48 @@ class TossMarketDataAdapter(
 
     @RateLimiter(name = "toss-market-info")
     @CircuitBreaker(name = "toss-market-info", fallbackMethod = "exchangeRateUnavailable")
-    override fun exchangeRate(from: Currency, to: Currency): ExchangeRate {
-        val rate =
+    override fun exchangeRate(from: Currency, to: Currency): ExchangeRate =
+        rateOf(
+            from,
+            to,
             TossResponses.marketResultOf(
-                marketInfo.exchangeRate(callers.publicMarketCaller(), from.name, to.name).execute()
-            )
+                marketInfo
+                    .exchangeRate(callers.publicMarketCaller(), from.name, to.name, null)
+                    .execute()
+            ),
+        )
+
+    fun exchangeRateUnavailable(from: Currency, to: Currency, cause: Throwable): ExchangeRate =
+        TossResponses.marketFallback(cause)
+
+    @RateLimiter(name = "toss-market-info")
+    @CircuitBreaker(name = "toss-market-info", fallbackMethod = "exchangeRateAtUnavailable")
+    override fun exchangeRateAt(from: Currency, to: Currency, at: Instant): ExchangeRate =
+        rateOf(
+            from,
+            to,
+            TossResponses.marketResultOf(
+                marketInfo
+                    .exchangeRate(callers.publicMarketCaller(), from.name, to.name, toKst(at))
+                    .execute()
+            ),
+        )
+
+    fun exchangeRateAtUnavailable(
+        from: Currency,
+        to: Currency,
+        at: Instant,
+        cause: Throwable,
+    ): ExchangeRate = TossResponses.marketFallback(cause)
+
+    // 요청과 다른 통화쌍이 오면 잘못 환산되므로 조회 실패로 봄
+    private fun rateOf(from: Currency, to: Currency, rate: TossExchangeRate): ExchangeRate {
         if (rate.baseCurrency != from.name || rate.quoteCurrency != to.name)
             throw MarketDataUnavailableException(
                 "요청한 환율 ${from}→${to} 와 다른 ${rate.baseCurrency}→${rate.quoteCurrency} 가 옴"
             )
         return ExchangeRate(from, to, rate.rate, parseInstant(rate.validFrom))
     }
-
-    fun exchangeRateUnavailable(from: Currency, to: Currency, cause: Throwable): ExchangeRate =
-        TossResponses.marketFallback(cause)
 
     // 시각이 없는 현재가는 가장 오래된 시각으로 둬 신선도 검사에서 걸러지게 함
     private fun toQuote(symbol: Symbol, price: TossPrice): Quote =
@@ -172,11 +201,13 @@ class TossMarketDataAdapter(
             CandleInterval.DAY_1 -> "1d"
         }
 
-    private fun toKst(instant: Instant): String = instant.atOffset(KST).toString()
+    // OffsetDateTime.toString() 은 0초를 생략하므로(23:30+09:00) 초를 늘 쓰는 ISO 형식으로 보냄(RFC 3339)
+    private fun toKst(instant: Instant): String = ISO_WITH_SECONDS.format(instant.atOffset(KST))
 
     private fun parseInstant(text: String): Instant = OffsetDateTime.parse(text).toInstant()
 
     companion object {
         private val KST: ZoneOffset = ZoneOffset.ofHours(9)
+        private val ISO_WITH_SECONDS: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
     }
 }

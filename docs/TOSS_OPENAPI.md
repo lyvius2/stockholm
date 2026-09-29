@@ -340,6 +340,7 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | `/stocks/all` 은 코드·이름·종류·보통주 여부·ISIN 만, 시장별 전량(실측: KOSPI 2,477 · KOSDAQ 1,825 · KR_ETC 0 · NYSE 2,304 · NASDAQ 4,440 · AMEX 3,897 · US_ETC 455). 신주인수권은 8자리 코드(`2109801G`) | `StockMasterSyncService`: 시장별 목록 → `/stocks` 200건씩 → `stock_master` upsert(07:00 KST 이후 첫 확인, 모든 시장 성공 시에만 동기화 시각 기록). 코드 형식이 맞지 않는 행(신주인수권)은 건너뜀. 빈 목록이면 상장폐지 표시를 하지 않음. RateLimiter stock 5 · stock-all 1 |
 | 매수 유의사항에 관리종목·투자주의 없음, 거래정지는 `/stocks` 의 `koreanMarketDetail`(국내만) | `StockFlags`: 유의사항 + KRX·NXT 거래정지(어느 쪽이든 정지면 정지). `nxtTradingSuspended` 의 null 은 규격상 NXT 미지원 종목이라 정지 아님, NXT 지원 종목인데 null 이면 모름. 모르는 유의사항 종류는 `hasUnknownWarning`. 관리종목·미국 거래정지는 null(모름). 캐시 TTL 10초(`stock_warning`) |
 | 호가는 매번 전체 스냅샷, 국내는 KRX·NXT 합산이라 교차돼 보일 수 있음 | `MarketDataPort.orderBook`(MARKET_DATA 그룹), 통화 불일치는 조회 실패 |
+| 환율 `dateTime` 으로 과거 시점 조회, 주문 `execution` 에 환율 없음, 실시간 주문 이벤트에 `execution.filledAt` 없음 | `MarketDataPort.exchangeRateAt`: 해외 체결은 체결 시각 환율로 lot·실현손익 원화 환산. 실시간 채널 체결은 받은 시각을 체결 시각으로 씀. 시각 파라미터(`dateTime`·캔들 `before`)는 초를 늘 넣은 ISO-8601 KST(`OffsetDateTime.toString()` 은 0초를 생략함) |
 | 어뷰징 제한(단시간 대량 주문) | 가드레일 분당 자동 주문 상한(PROJECT 8.1, 기본 5회/분) |
 | 1분봉 합 ≠ 일봉 | 3·5·10·30·60분·주·월·년 집계는 1분봉으로, 일봉은 토스 일봉 그대로(재구성하지 않음) |
 | 미국 시세 NBBO 아님 | 가격 표시·가드레일은 참고 시세로 다루고 체결가는 주문 상세 기준 |
@@ -358,3 +359,4 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | 2026-09-29 | 13장: 정정·취소 적용 메모 |
 | 2026-09-29 | 13장: 재동기에 종료 주문 포함, 이벤트 반영 실패 복구 |
 | 2026-09-29 | 13장: 정정 결과 확인 방식(원주문 상태), 국내 정정 수량의 근거 |
+| 2026-09-29 | 13장: 체결 시각 환율, 시각 파라미터 형식 |

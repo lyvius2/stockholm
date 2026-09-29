@@ -51,11 +51,7 @@ class PendingSubmissionResolver(
         try {
             if (original != null) resolveAmendment(record, original) else resolveNewOrder(record)
         } catch (e: DomainException) {
-            log.warn(
-                "주문 요청 {} 확인용 조회 실패({}). 다음에 다시 확인함",
-                record.clientOrderId,
-                e::class.simpleName,
-            )
+            log.warn("주문 요청 확인용 조회 실패({}). 다음에 다시 확인함", e::class.simpleName)
         }
     }
 
@@ -96,11 +92,7 @@ class PendingSubmissionResolver(
             )
         val closed = trading.closedOrderPages(intent.userId, query, MAX_CLOSED_PAGES)
         if (closed.isTruncated) {
-            log.warn(
-                "주문 요청 {} 확인: 종료 주문이 {}쪽을 넘어 이번에는 판정하지 않음",
-                record.clientOrderId,
-                MAX_CLOSED_PAGES,
-            )
+            log.warn("주문 요청 확인: 종료 주문이 {}쪽을 넘어 이번에는 판정하지 않음", MAX_CLOSED_PAGES)
             return
         }
         val candidates = trading.openOrders(intent.userId, intent.market) + closed.orders
@@ -119,7 +111,7 @@ class PendingSubmissionResolver(
 
     private fun giveUp(record: SubmissionRecord, reason: String) {
         journal.recordNeedsReview(record, "$reason. 토스에서 직접 확인할 것")
-        log.warn("주문 요청 {} 의 결과를 확인하지 못함. 사람이 확인해야 함", record.clientOrderId)
+        log.warn("주문 요청 하나의 결과를 확인하지 못함. 사람이 확인해야 함")
     }
 
     companion object {

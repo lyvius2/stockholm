@@ -20,6 +20,8 @@ CREATE INDEX idx_edgar_ticker_cik ON edgar_ticker (cik);
 CREATE INDEX idx_event_log_type ON event_log (type);
 -- index idx_event_log_user_time
 CREATE INDEX idx_event_log_user_time ON event_log (user_id, occurred_at);
+-- index idx_fill_queue_user_state_time
+CREATE INDEX idx_fill_queue_user_state_time ON fill_queue (user_id, state, executed_at);
 -- index idx_krx_daily_price_date
 CREATE INDEX idx_krx_daily_price_date ON krx_daily_price (bas_dd);
 -- index idx_lot_disposal_lot
@@ -69,7 +71,7 @@ CREATE TABLE app_user ( user_id TEXT NOT NULL PRIMARY KEY, role TEXT NOT NULL, d
 -- table audit_log
 CREATE TABLE audit_log ( audit_id TEXT NOT NULL PRIMARY KEY, occurred_at TEXT NOT NULL, user_id TEXT, device_id TEXT, action TEXT NOT NULL, target TEXT, result TEXT NOT NULL, detail_json TEXT );
 -- table broker_order
-CREATE TABLE broker_order ( broker_order_id TEXT NOT NULL PRIMARY KEY, client_order_id TEXT, replaces_broker_order_id TEXT, user_id TEXT NOT NULL, market TEXT NOT NULL, code TEXT NOT NULL, side TEXT NOT NULL, kind TEXT NOT NULL, time_in_force TEXT NOT NULL, limit_price_amount TEXT, limit_price_currency TEXT, quantity TEXT, order_amount_amount TEXT, order_amount_currency TEXT, status TEXT NOT NULL, filled_quantity TEXT NOT NULL, avg_price_amount TEXT, avg_price_currency TEXT, fee_amount TEXT, tax_amount TEXT, filled_at TEXT, canceled_at TEXT, reject_reason TEXT, origin TEXT NOT NULL, trigger_type TEXT NOT NULL, trigger_json TEXT, remote INTEGER NOT NULL DEFAULT 0, high_value_confirmed INTEGER NOT NULL DEFAULT 0, ordered_at TEXT NOT NULL, updated_at TEXT NOT NULL, fetched_at TEXT NOT NULL , filled_amount_amount TEXT, filled_amount_currency TEXT, version INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE broker_order ( broker_order_id TEXT NOT NULL PRIMARY KEY, client_order_id TEXT, replaces_broker_order_id TEXT, user_id TEXT NOT NULL, market TEXT NOT NULL, code TEXT NOT NULL, side TEXT NOT NULL, kind TEXT NOT NULL, time_in_force TEXT NOT NULL, limit_price_amount TEXT, limit_price_currency TEXT, quantity TEXT, order_amount_amount TEXT, order_amount_currency TEXT, status TEXT NOT NULL, filled_quantity TEXT NOT NULL, avg_price_amount TEXT, avg_price_currency TEXT, fee_amount TEXT, tax_amount TEXT, filled_at TEXT, canceled_at TEXT, reject_reason TEXT, origin TEXT NOT NULL, trigger_type TEXT NOT NULL, trigger_json TEXT, remote INTEGER NOT NULL DEFAULT 0, high_value_confirmed INTEGER NOT NULL DEFAULT 0, ordered_at TEXT NOT NULL, updated_at TEXT NOT NULL, fetched_at TEXT NOT NULL , filled_amount_amount TEXT, filled_amount_currency TEXT, version INTEGER NOT NULL DEFAULT 0, queued_quantity TEXT, queued_amount TEXT, queued_fee TEXT, queued_tax TEXT);
 -- table candle
 CREATE TABLE candle ( market TEXT NOT NULL, code TEXT NOT NULL, interval TEXT NOT NULL, open_time TEXT NOT NULL, open TEXT NOT NULL, high TEXT NOT NULL, low TEXT NOT NULL, close TEXT NOT NULL, currency TEXT NOT NULL, volume TEXT NOT NULL, adjusted INTEGER NOT NULL DEFAULT 1, source TEXT NOT NULL, is_final INTEGER NOT NULL DEFAULT 1, fetched_at TEXT NOT NULL, PRIMARY KEY (market, code, interval, open_time) );
 -- table credential_meta
@@ -86,6 +88,8 @@ CREATE TABLE edgar_ticker ( code TEXT NOT NULL PRIMARY KEY, cik TEXT NOT NULL, e
 CREATE TABLE event_log ( event_no INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, device_id TEXT NOT NULL, seq INTEGER NOT NULL, occurred_at TEXT NOT NULL, type TEXT NOT NULL, payload_version INTEGER NOT NULL DEFAULT 1, payload_json TEXT NOT NULL, sync_scope TEXT NOT NULL, received_at TEXT );
 -- table exchange_rate
 CREATE TABLE exchange_rate ( fx_from TEXT NOT NULL, fx_to TEXT NOT NULL, fx_as_of TEXT NOT NULL, fx_rate TEXT NOT NULL, source TEXT NOT NULL, PRIMARY KEY (fx_from, fx_to, fx_as_of) );
+-- table fill_queue
+CREATE TABLE fill_queue ( fill_id TEXT NOT NULL PRIMARY KEY, user_id TEXT NOT NULL, broker_order_id TEXT NOT NULL, market TEXT NOT NULL, code TEXT NOT NULL, side TEXT NOT NULL, quantity TEXT NOT NULL, amount TEXT NOT NULL, fee TEXT NOT NULL, tax TEXT NOT NULL, currency TEXT NOT NULL, order_origin TEXT NOT NULL, executed_at TEXT NOT NULL, state TEXT NOT NULL, reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL );
 -- table installation
 CREATE TABLE installation ( installation_id TEXT NOT NULL PRIMARY KEY, setup_state TEXT NOT NULL, admin_user_id TEXT, llm_preset TEXT, last_public_ip TEXT, stock_master_synced_at TEXT, last_login_user_id TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL );
 -- table krx_daily_price
@@ -95,9 +99,11 @@ CREATE TABLE krx_etf_daily ( code TEXT NOT NULL, bas_dd TEXT NOT NULL, close TEX
 -- table krx_index_daily
 CREATE TABLE krx_index_daily ( idx_class TEXT NOT NULL, idx_name TEXT NOT NULL, bas_dd TEXT NOT NULL, open TEXT, high TEXT, low TEXT, close TEXT, volume TEXT, value TEXT, mktcap TEXT, fetched_at TEXT NOT NULL, PRIMARY KEY (idx_class, idx_name, bas_dd) );
 -- table lot
-CREATE TABLE lot ( lot_id TEXT NOT NULL PRIMARY KEY, user_id TEXT NOT NULL REFERENCES app_user (user_id) ON DELETE CASCADE, market TEXT NOT NULL, code TEXT NOT NULL, bought_quantity TEXT NOT NULL, remaining_quantity TEXT NOT NULL, unit_cost_amount TEXT NOT NULL, unit_cost_currency TEXT NOT NULL, fx_from TEXT, fx_to TEXT, fx_rate TEXT, fx_as_of TEXT, bought_at TEXT NOT NULL, origin TEXT NOT NULL, broker_order_id TEXT, recommendation_id TEXT, aged_out_at TEXT, closed_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL );
+CREATE TABLE lot ( lot_id TEXT NOT NULL PRIMARY KEY, user_id TEXT NOT NULL REFERENCES app_user (user_id) ON DELETE CASCADE, market TEXT NOT NULL, code TEXT NOT NULL, bought_quantity TEXT NOT NULL, remaining_quantity TEXT NOT NULL, unit_cost_amount TEXT NOT NULL, unit_cost_currency TEXT NOT NULL, fx_from TEXT, fx_to TEXT, fx_rate TEXT, fx_as_of TEXT, bought_at TEXT NOT NULL, origin TEXT NOT NULL, broker_order_id TEXT, recommendation_id TEXT, aged_out_at TEXT, closed_at TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL , opening INTEGER NOT NULL DEFAULT 0);
 -- table lot_disposal
 CREATE TABLE "lot_disposal" ( disposal_id TEXT NOT NULL PRIMARY KEY, user_id TEXT NOT NULL, lot_id TEXT NOT NULL, broker_order_id TEXT NOT NULL, market TEXT NOT NULL, code TEXT NOT NULL, quantity TEXT NOT NULL, sell_price_amount TEXT NOT NULL, sell_price_currency TEXT NOT NULL, buy_unit_cost_amount TEXT NOT NULL, buy_unit_cost_currency TEXT NOT NULL, fee_amount TEXT NOT NULL, tax_amount TEXT NOT NULL, fx_from TEXT, fx_to TEXT, fx_rate TEXT, fx_as_of TEXT, realized_amount TEXT NOT NULL, realized_currency TEXT NOT NULL, realized_krw TEXT, fx_pnl_krw TEXT, holding_days INTEGER NOT NULL, lot_origin TEXT NOT NULL, disposed_at TEXT NOT NULL, created_at TEXT NOT NULL, FOREIGN KEY (lot_id, user_id) REFERENCES lot (lot_id, user_id) ON DELETE CASCADE );
+-- table lot_ledger
+CREATE TABLE lot_ledger ( user_id TEXT NOT NULL PRIMARY KEY, started_at TEXT NOT NULL, created_at TEXT NOT NULL );
 -- table market_calendar
 CREATE TABLE market_calendar ( market TEXT NOT NULL, trading_date TEXT NOT NULL, sessions_json TEXT NOT NULL, is_holiday INTEGER NOT NULL DEFAULT 0, fetched_at TEXT NOT NULL, PRIMARY KEY (market, trading_date) );
 -- table market_index_quote

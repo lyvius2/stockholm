@@ -4,6 +4,8 @@ import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.money.Currency
+import banghak.stock.core.domain.trading.FillSummary
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderProgress
 import banghak.stock.core.domain.trading.OrderStatus
@@ -125,6 +127,29 @@ class TradingStoresPersistenceTest : EngineDatabaseTest() {
         assertThat(rows.last()["filled_amount_amount"]).isEqualTo("700000")
         assertThatThrownBy { orders.applyBrokerRecord(other, filled, placedAt) }
             .isInstanceOf(InvalidValueException::class.java)
+    }
+
+    @Test
+    @DisplayName("체결 대기열에 넣은 요약을 남기고 다시 읽으며, 남긴 적 없으면 0 으로 읽음")
+    fun queuedFillSummaryRoundTrip() {
+        orders.applyBrokerRecord(
+            user,
+            TradingFixtures.brokerRecord(brokerOrderId = "APP-1"),
+            placedAt,
+        )
+        assertThat(orders.findRecorded(user, "APP-1")?.queuedFill)
+            .isEqualTo(FillSummary.zero(Currency.KRW))
+        val queued =
+            FillSummary(
+                Quantity.of(4),
+                TradingFixtures.krw("280000"),
+                TradingFixtures.krw("42"),
+                TradingFixtures.krw("0"),
+            )
+
+        orders.markFillQueued(user, "APP-1", queued)
+
+        assertThat(orders.findRecorded(user, "APP-1")?.queuedFill).isEqualTo(queued)
     }
 
     @Test

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.absent
 import com.github.tomakehurst.wiremock.client.WireMock.containing
 import com.github.tomakehurst.wiremock.client.WireMock.equalTo
 import com.github.tomakehurst.wiremock.client.WireMock.get
@@ -182,7 +183,7 @@ class TossMarketAdaptersTest {
         assertThat(day.candles.first().close).isEqualTo(Money.of("286500", Currency.KRW))
         server.verify(
             getRequestedFor(urlPathEqualTo("/api/v1/candles"))
-                .withQueryParam("before", equalTo("2026-09-24T00:00+09:00"))
+                .withQueryParam("before", equalTo("2026-09-24T00:00:00+09:00"))
         )
     }
 
@@ -195,6 +196,26 @@ class TossMarketAdaptersTest {
 
         assertThat(rate.rate).isEqualByComparingTo(BigDecimal("1362.6"))
         assertThat(rate.asOf).isEqualTo(kst("2026-09-27T23:57:36"))
+    }
+
+    @Test
+    @DisplayName("과거 시점 환율은 dateTime 을 KST 오프셋의 ISO-8601 로 보내고, 현재 환율은 보내지 않음")
+    fun sendsDateTimeForPastRate() {
+        stubResult("/api/v1/exchange-rate", "exchange-rate-usdkrw")
+
+        marketData.exchangeRateAt(Currency.USD, Currency.KRW, Instant.parse("2026-09-29T14:30:00Z"))
+        marketData.exchangeRate(Currency.USD, Currency.KRW)
+
+        server.verify(
+            1,
+            getRequestedFor(urlPathEqualTo("/api/v1/exchange-rate"))
+                .withQueryParam("dateTime", equalTo("2026-09-29T23:30:00+09:00")),
+        )
+        server.verify(
+            1,
+            getRequestedFor(urlPathEqualTo("/api/v1/exchange-rate"))
+                .withQueryParam("dateTime", absent()),
+        )
     }
 
     @Test

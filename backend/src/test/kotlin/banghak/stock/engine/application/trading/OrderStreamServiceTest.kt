@@ -15,6 +15,7 @@ import banghak.stock.core.domain.trading.FeedStatus
 import banghak.stock.core.domain.trading.FeedTopic
 import banghak.stock.core.domain.trading.OrderEvent
 import banghak.stock.core.domain.trading.OrderEventType
+import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.TradingFixtures
@@ -26,6 +27,7 @@ import banghak.stock.support.fakes.MemoryBrokerOrderStore
 import banghak.stock.support.fakes.MemoryCredentialMetaPort
 import banghak.stock.support.fakes.MemoryDevicePort
 import banghak.stock.support.fakes.MemoryEventStore
+import banghak.stock.support.fakes.MemoryFillQueue
 import banghak.stock.support.fakes.MemoryInstallationPort
 import banghak.stock.support.fakes.MemorySubmissionStore
 import banghak.stock.support.fakes.MemoryUserAccountPort
@@ -48,12 +50,13 @@ class OrderStreamServiceTest {
     private val users = MemoryUserAccountPort()
     private val credentials = MemoryCredentialMetaPort()
     private val devices = MemoryDevicePort()
+    private val fills = MemoryFillQueue()
     private val service =
         OrderStreamService(
             feed,
             FeedSubscriptionService(feed),
             trading,
-            OrderJournal(events, MemorySubmissionStore(), orders, clock),
+            OrderJournal(events, MemorySubmissionStore(), orders, fills, clock),
             orders,
             installations,
             users,
@@ -111,6 +114,51 @@ class OrderStreamServiceTest {
 
             assertThat(orders.findProgress(user, "APP-1")?.status).isEqualTo(OrderStatus.PENDING)
             assertThat(statusChanges()).isEmpty()
+        }
+
+        @Test
+        @DisplayName("체결 수량이 늘면 늘어난 몫을 우리 주문의 출처와 함께 체결 대기열에 넣음")
+        fun enqueuesFillIncrement() {
+            orders.recordAccepted(TradingFixtures.brokerOrder(brokerOrderId = "B-1"), false)
+            val partial =
+                record("B-1", OrderStatus.PARTIALLY_FILLED, filled = 4)
+                    .copy(filledAmount = TradingFixtures.krw("280000"))
+            val filled =
+                record("B-1", OrderStatus.FILLED, filled = 10)
+                    .copy(filledAmount = TradingFixtures.krw("700000"))
+
+            service.onOrderEvent(event(partial))
+            service.onOrderEvent(event(filled))
+
+            assertThat(fills.items.map { it.fill.quantity })
+                .containsExactly(Quantity.of(4), Quantity.of(6))
+            assertThat(fills.items.last().fill.amount).isEqualTo(TradingFixtures.krw("420000"))
+            assertThat(fills.items.map { it.fill.orderOrigin }.distinct())
+                .containsExactly(OrderOrigin.MANUAL)
+        }
+
+        @Test
+        @DisplayName("체결 금액이 늦게 오면 그때까지 기다렸다가, 금액이 채워진 기록에서 넣지 못한 수량 전체를 넣음")
+        fun enqueuesWhenAmountArrivesLater() {
+            orders.recordAccepted(TradingFixtures.brokerOrder(brokerOrderId = "B-1"), false)
+            val withoutAmount = record("B-1", OrderStatus.PARTIALLY_FILLED, filled = 4)
+            val amountLater =
+                record("B-1", OrderStatus.PARTIALLY_FILLED, filled = 4)
+                    .copy(filledAmount = TradingFixtures.krw("280000"))
+            val moreFilled =
+                record("B-1", OrderStatus.FILLED, filled = 10)
+                    .copy(filledAmount = TradingFixtures.krw("703000"))
+
+            service.onOrderEvent(event(withoutAmount))
+            assertThat(fills.items).isEmpty()
+            service.onOrderEvent(event(amountLater))
+            service.onOrderEvent(event(moreFilled))
+
+            assertThat(fills.items.map { it.fill.quantity to it.fill.amount })
+                .containsExactly(
+                    Quantity.of(4) to TradingFixtures.krw("280000"),
+                    Quantity.of(6) to TradingFixtures.krw("423000"),
+                )
         }
 
         @Test

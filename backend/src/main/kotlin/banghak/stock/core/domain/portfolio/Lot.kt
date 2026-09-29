@@ -15,6 +15,7 @@ import java.time.Instant
  * 매수 한 건.
  * 부분 매도로 [remainingQuantity] 만 줄고 매입 원가·환율·시각은 바뀌지 않음.
  * 해외 lot 은 반드시 매수 시점 환율을 가짐(노출액은 매수 시점 환율로 환산하는 것이 확정 규칙).
+ * [isOpening] 은 원장을 시작할 때 증권사 보유로 만든 기초 lot 이라는 뜻이며, 실제 매수 시각·환율을 몰라 보유 기간을 보이지 않음.
  */
 data class Lot(
     val id: LotId,
@@ -26,6 +27,7 @@ data class Lot(
     val fxAtBuy: ExchangeRate?,
     val boughtAt: Instant,
     val origin: BuyOrigin,
+    val isOpening: Boolean = false,
 ) {
     init {
         if (boughtQuantity.isZero) throw InvalidValueException("lot 수량은 0보다 커야 함")

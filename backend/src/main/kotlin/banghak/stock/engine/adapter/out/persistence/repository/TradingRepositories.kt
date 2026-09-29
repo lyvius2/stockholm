@@ -1,7 +1,10 @@
 package banghak.stock.engine.adapter.out.persistence.repository
 
 import banghak.stock.engine.adapter.out.persistence.entity.BrokerOrderEntity
+import banghak.stock.engine.adapter.out.persistence.entity.FillQueueEntity
+import banghak.stock.engine.adapter.out.persistence.entity.LotDisposalEntity
 import banghak.stock.engine.adapter.out.persistence.entity.LotEntity
+import banghak.stock.engine.adapter.out.persistence.entity.LotLedgerEntity
 import banghak.stock.engine.adapter.out.persistence.entity.OrderSubmissionEntity
 import java.time.Instant
 import org.springframework.data.jpa.repository.JpaRepository
@@ -46,7 +49,31 @@ interface LotRepository : JpaRepository<LotEntity, String> {
         @Param("userId") userId: String,
         @Param("market") market: String,
     ): List<LotEntity>
+
+    @Query("select l from LotEntity l where l.userId = :userId and l.lotId = :lotId")
+    fun findOwned(@Param("userId") userId: String, @Param("lotId") lotId: String): LotEntity?
 }
+
+interface LotDisposalRepository : JpaRepository<LotDisposalEntity, String>
+
+interface FillQueueRepository : JpaRepository<FillQueueEntity, String> {
+    @Query(
+        "select f from FillQueueEntity f where f.userId = :userId and f.state in :states " +
+            "order by f.executedAt, f.fillId"
+    )
+    fun findByUserIdAndStates(
+        @Param("userId") userId: String,
+        @Param("states") states: Collection<String>,
+    ): List<FillQueueEntity>
+
+    @Query("select f from FillQueueEntity f where f.userId = :userId and f.fillId = :fillId")
+    fun findOwned(
+        @Param("userId") userId: String,
+        @Param("fillId") fillId: String,
+    ): FillQueueEntity?
+}
+
+interface LotLedgerRepository : JpaRepository<LotLedgerEntity, String>
 
 interface OrderSubmissionRepository : JpaRepository<OrderSubmissionEntity, String> {
     @Query(

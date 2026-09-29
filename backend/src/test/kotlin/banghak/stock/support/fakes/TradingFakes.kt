@@ -10,8 +10,13 @@ import banghak.stock.core.domain.market.TradingDay
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.ExchangeRate
 import banghak.stock.core.domain.money.Money
+import banghak.stock.core.domain.portfolio.BrokerHolding
 import banghak.stock.core.domain.portfolio.BrokerHoldings
+import banghak.stock.core.domain.portfolio.FillState
 import banghak.stock.core.domain.portfolio.Lot
+import banghak.stock.core.domain.portfolio.LotDisposal
+import banghak.stock.core.domain.portfolio.LotId
+import banghak.stock.core.domain.portfolio.QueuedFill
 import banghak.stock.core.domain.trading.BrokerOrder
 import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.CandleInterval
@@ -20,6 +25,8 @@ import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.ClosedOrdersPage
 import banghak.stock.core.domain.trading.ClosedOrdersQuery
 import banghak.stock.core.domain.trading.FeedTopic
+import banghak.stock.core.domain.trading.FillIncrement
+import banghak.stock.core.domain.trading.FillSummary
 import banghak.stock.core.domain.trading.OrderAmendRequest
 import banghak.stock.core.domain.trading.OrderBook
 import banghak.stock.core.domain.trading.OrderIntent
@@ -33,6 +40,8 @@ import banghak.stock.core.domain.trading.SubmissionRecord
 import banghak.stock.core.domain.trading.SubmissionState
 import banghak.stock.core.port.BrokerOrderStorePort
 import banghak.stock.core.port.FeedListener
+import banghak.stock.core.port.FillQueuePort
+import banghak.stock.core.port.LotLedgerPort
 import banghak.stock.core.port.LotStorePort
 import banghak.stock.core.port.MarketCalendarPort
 import banghak.stock.core.port.MarketDataPort
@@ -114,7 +123,12 @@ class FakeTradingPort : TradingPort {
         return details[brokerOrderId] ?: throw InvalidValueException("토스에 없는 주문: $brokerOrderId")
     }
 
-    override fun holdings(userId: UserId): BrokerHoldings = unused()
+    val holdings = mutableListOf<BrokerHolding>()
+
+    override fun holdings(userId: UserId): BrokerHoldings {
+        accountFailure?.let { throw it }
+        return BrokerHoldings(holdings.toList(), Money.zero(Currency.KRW), Instant.EPOCH)
+    }
 
     private fun unused(): Nothing = error("이 테스트에서 쓰지 않음")
 }
@@ -131,6 +145,14 @@ class FakeMarketData : MarketDataPort {
 
     override fun exchangeRate(from: Currency, to: Currency): ExchangeRate =
         rates[from to to] ?: throw MarketDataUnavailableException("환율 없음")
+
+    val rateRequests = mutableListOf<Instant>()
+
+    // 지정한 환율을 요청 시각의 값으로 돌려줌
+    override fun exchangeRateAt(from: Currency, to: Currency, at: Instant): ExchangeRate {
+        rateRequests += at
+        return rates[from to to]?.copy(asOf = at) ?: throw MarketDataUnavailableException("환율 없음")
+    }
 
     override fun candlePage(
         symbol: Symbol,
@@ -182,8 +204,26 @@ class MemoryBrokerOrderStore : BrokerOrderStorePort {
                 !it.updatedAt.isBefore(since)
         }
 
-    override fun findRecorded(userId: UserId, brokerOrderId: String): RecordedOrder? =
-        findProgress(userId, brokerOrderId)?.let { RecordedOrder(it, brokerOrderId in orders) }
+    val queued = mutableMapOf<String, FillSummary>()
+
+    override fun findRecorded(userId: UserId, brokerOrderId: String): RecordedOrder? {
+        val progress = findProgress(userId, brokerOrderId) ?: return null
+        val currency =
+            (orders[brokerOrderId]?.intent?.symbol
+                    ?: applied.last { it.brokerOrderId == brokerOrderId }.symbol)
+                .market
+                .currency
+        return RecordedOrder(
+            progress = progress,
+            isPlacedByStockholm = brokerOrderId in orders,
+            origin = orders[brokerOrderId]?.intent?.origin ?: OrderOrigin.MANUAL,
+            queuedFill = queued[brokerOrderId] ?: FillSummary.zero(currency),
+        )
+    }
+
+    override fun markFillQueued(userId: UserId, brokerOrderId: String, queued: FillSummary) {
+        this.queued[brokerOrderId] = queued
+    }
 
     fun findProgress(userId: UserId, brokerOrderId: String): OrderProgress? =
         progress[brokerOrderId]?.takeIf { it.first == userId }?.second
@@ -280,9 +320,70 @@ class MemorySubmissionStore : SubmissionStorePort {
 
 class MemoryLotStore : LotStorePort {
     val lots = mutableListOf<Lot>()
+    val lotOrders = mutableMapOf<LotId, String?>()
+    val disposals = mutableListOf<LotDisposal>()
 
     override fun openLots(userId: UserId, market: Market): List<Lot> = lots.filter {
         it.userId == userId && it.symbol.market == market && it.isOpen
+    }
+
+    override fun saveOpened(lot: Lot, brokerOrderId: String?) {
+        lots += lot
+        lotOrders[lot.id] = brokerOrderId
+    }
+
+    override fun saveReduced(lots: List<Lot>, at: Instant) {
+        lots.forEach { changed ->
+            this.lots.replaceAll { if (it.id == changed.id) changed else it }
+        }
+    }
+
+    override fun saveDisposals(
+        userId: UserId,
+        symbol: Symbol,
+        disposals: List<LotDisposal>,
+        at: Instant,
+    ) {
+        this.disposals += disposals
+    }
+}
+
+class MemoryFillQueue : FillQueuePort {
+    val items = mutableListOf<QueuedFill>()
+    private var sequence = 0
+
+    override fun enqueue(fill: FillIncrement, at: Instant) {
+        items += QueuedFill("F-${++sequence}", fill, FillState.PENDING, null)
+    }
+
+    override fun unprocessed(userId: UserId): List<QueuedFill> =
+        items
+            .filter {
+                it.fill.userId == userId && it.state in setOf(FillState.PENDING, FillState.BLOCKED)
+            }
+            .sortedBy { it.fill.executedAt }
+
+    override fun mark(
+        userId: UserId,
+        fillId: String,
+        state: FillState,
+        reason: String?,
+        at: Instant,
+    ) {
+        items.replaceAll { if (it.id == fillId) it.copy(state = state, reason = reason) else it }
+    }
+
+    fun stateOf(brokerOrderId: String): FillState =
+        items.single { it.fill.brokerOrderId == brokerOrderId }.state
+}
+
+class MemoryLotLedger : LotLedgerPort {
+    val started = mutableMapOf<UserId, Instant>()
+
+    override fun startedAt(userId: UserId): Instant? = started[userId]
+
+    override fun start(userId: UserId, at: Instant) {
+        started.putIfAbsent(userId, at)
     }
 }
 

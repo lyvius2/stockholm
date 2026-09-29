@@ -9,10 +9,12 @@ import banghak.stock.core.domain.money.ExchangeRate
 import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.portfolio.BuyOrigin
 import banghak.stock.core.domain.portfolio.Lot
+import banghak.stock.core.domain.portfolio.LotDisposal
 import banghak.stock.core.domain.portfolio.LotId
 import banghak.stock.core.domain.trading.BrokerOrder
 import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.ClientOrderId
+import banghak.stock.core.domain.trading.FillSummary
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.OrderKind
 import banghak.stock.core.domain.trading.OrderOrigin
@@ -25,10 +27,13 @@ import banghak.stock.core.domain.trading.TimeInForce
 import banghak.stock.core.port.BrokerOrderStorePort
 import banghak.stock.core.port.LotStorePort
 import banghak.stock.engine.adapter.out.persistence.entity.BrokerOrderEntity
+import banghak.stock.engine.adapter.out.persistence.entity.LotDisposalEntity
 import banghak.stock.engine.adapter.out.persistence.entity.LotEntity
 import banghak.stock.engine.adapter.out.persistence.repository.BrokerOrderRepository
+import banghak.stock.engine.adapter.out.persistence.repository.LotDisposalRepository
 import banghak.stock.engine.adapter.out.persistence.repository.LotRepository
 import banghak.stock.shared.config.RuntimeProfiles
+import banghak.stock.shared.crypto.UlidGenerator
 import java.math.BigDecimal
 import java.time.Instant
 import org.springframework.context.annotation.Profile
@@ -64,12 +69,7 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
 
     @Transactional(readOnly = true)
     override fun findRecorded(userId: UserId, brokerOrderId: String): RecordedOrder? =
-        repository.findOwned(userId.value, brokerOrderId)?.let {
-            RecordedOrder(
-                OrderProgress(statusOf(it.status), Quantity.of(it.filledQuantity)),
-                isPlacedByStockholm = it.triggerType != TriggerCodec.EXTERNAL,
-            )
-        }
+        repository.findOwned(userId.value, brokerOrderId)?.let(::recordedOf)
 
     @Transactional(readOnly = true)
     override fun findOrigin(userId: UserId, brokerOrderId: String): OrderOrigin? =
@@ -102,6 +102,17 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
         row.updatedAt = at
         row.fetchedAt = at
         repository.save(row)
+    }
+
+    @Transactional
+    override fun markFillQueued(userId: UserId, brokerOrderId: String, queued: FillSummary) {
+        val row =
+            repository.findOwned(userId.value, brokerOrderId)
+                ?: throw InvalidValueException("주문 기록이 없어 체결 대기열 요약을 남길 수 없음")
+        row.queuedQuantity = queued.quantity.value
+        row.queuedAmount = queued.amount.amount
+        row.queuedFee = queued.fee.amount
+        row.queuedTax = queued.tax.amount
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +156,24 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
             updatedAt = at,
             fetchedAt = at,
         )
+
+    // 대기열에 넣은 요약이 없던 행(처음 보는 주문)은 아직 아무것도 넣지 않은 것임
+    private fun recordedOf(row: BrokerOrderEntity): RecordedOrder {
+        val currency = Market.valueOf(row.market).currency
+        val money = { amount: BigDecimal? -> Money.of(amount ?: BigDecimal.ZERO, currency) }
+        return RecordedOrder(
+            progress = OrderProgress(statusOf(row.status), Quantity.of(row.filledQuantity)),
+            isPlacedByStockholm = row.triggerType != TriggerCodec.EXTERNAL,
+            origin = OrderOrigin.valueOf(row.origin),
+            queuedFill =
+                FillSummary(
+                    Quantity.of(row.queuedQuantity ?: BigDecimal.ZERO),
+                    money(row.queuedAmount),
+                    money(row.queuedFee),
+                    money(row.queuedTax),
+                ),
+        )
+    }
 
     private fun statusOf(name: String): OrderStatus =
         OrderStatus.entries.firstOrNull { it.name == name } ?: OrderStatus.UNKNOWN
@@ -227,10 +256,94 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
 
 @Component
 @Profile(RuntimeProfiles.ENGINE)
-class JpaLotStore(private val repository: LotRepository) : LotStorePort {
+class JpaLotStore(
+    private val repository: LotRepository,
+    private val disposals: LotDisposalRepository,
+    private val ulids: UlidGenerator,
+) : LotStorePort {
     @Transactional(readOnly = true)
     override fun openLots(userId: UserId, market: Market): List<Lot> =
         repository.findOpenLots(userId.value, market.name).map(::toDomain)
+
+    @Transactional
+    override fun saveOpened(lot: Lot, brokerOrderId: String?) {
+        repository.save(
+            LotEntity(
+                lotId = lot.id.value,
+                userId = lot.userId.value,
+                market = lot.symbol.market.name,
+                code = lot.symbol.code,
+                boughtQuantity = lot.boughtQuantity.value,
+                remainingQuantity = lot.remainingQuantity.value,
+                unitCostAmount = lot.unitCost.amount,
+                unitCostCurrency = lot.unitCost.currency.name,
+                fxFrom = lot.fxAtBuy?.from?.name,
+                fxTo = lot.fxAtBuy?.to?.name,
+                fxRate = lot.fxAtBuy?.rate,
+                fxAsOf = lot.fxAtBuy?.asOf,
+                boughtAt = lot.boughtAt,
+                origin = lot.origin.name,
+                brokerOrderId = brokerOrderId,
+                recommendationId = null,
+                agedOutAt = null,
+                closedAt = null,
+                createdAt = lot.boughtAt,
+                updatedAt = lot.boughtAt,
+                opening = lot.isOpening,
+            )
+        )
+    }
+
+    @Transactional
+    override fun saveReduced(lots: List<Lot>, at: Instant) {
+        lots.forEach { lot ->
+            val row =
+                repository.findOwned(lot.userId.value, lot.id.value)
+                    ?: throw InvalidValueException("lot ${lot.id} 의 기록이 없음")
+            row.remainingQuantity = lot.remainingQuantity.value
+            if (!lot.isOpen) row.closedAt = at
+            row.updatedAt = at
+        }
+    }
+
+    @Transactional
+    override fun saveDisposals(
+        userId: UserId,
+        symbol: Symbol,
+        disposals: List<LotDisposal>,
+        at: Instant,
+    ) {
+        this.disposals.saveAll(disposals.map { disposalRowOf(userId, symbol, it, at) })
+    }
+
+    private fun disposalRowOf(userId: UserId, symbol: Symbol, disposal: LotDisposal, at: Instant) =
+        LotDisposalEntity(
+            disposalId = ulids.next().value,
+            userId = userId.value,
+            lotId = disposal.lotId.value,
+            brokerOrderId = disposal.brokerOrderId,
+            market = symbol.market.name,
+            code = symbol.code,
+            quantity = disposal.quantity.value,
+            sellPriceAmount = disposal.sellPrice.amount,
+            sellPriceCurrency = disposal.sellPrice.currency.name,
+            buyUnitCostAmount = disposal.buyUnitCost.amount,
+            buyUnitCostCurrency = disposal.buyUnitCost.currency.name,
+            feeAmount = disposal.fee.amount,
+            taxAmount = disposal.tax.amount,
+            fxFrom = disposal.fxAtSell?.from?.name,
+            fxTo = disposal.fxAtSell?.to?.name,
+            fxRate = disposal.fxAtSell?.rate,
+            fxAsOf = disposal.fxAtSell?.asOf,
+            realizedAmount = disposal.realized.amount,
+            realizedCurrency = disposal.realized.currency.name,
+            realizedKrw = disposal.realizedKrw?.amount,
+            fxPnlKrw = disposal.fxPnlKrw?.amount,
+            holdingDays = disposal.holdingDays,
+            lotOrigin = disposal.lotOrigin.name,
+            disposedAt = disposal.disposedAt,
+            createdAt = at,
+        )
 
     private fun toDomain(row: LotEntity): Lot {
         val currency = Currency.valueOf(row.unitCostCurrency)
@@ -244,6 +357,7 @@ class JpaLotStore(private val repository: LotRepository) : LotStorePort {
             fxAtBuy = fxOf(row),
             boughtAt = row.boughtAt,
             origin = BuyOrigin.valueOf(row.origin),
+            isOpening = row.opening,
         )
     }
 

@@ -41,6 +41,12 @@ interface MarketDataPort {
 
     fun exchangeRate(from: Currency, to: Currency): ExchangeRate
 
+    /**
+     * [at] 시점의 환율.
+     * 해외 체결의 원화 환산(매수·매도 시점 환율)에 씀.
+     */
+    fun exchangeRateAt(from: Currency, to: Currency, at: Instant): ExchangeRate
+
     companion object {
         const val MAX_SYMBOLS = 200
         const val MAX_CANDLES = 200
