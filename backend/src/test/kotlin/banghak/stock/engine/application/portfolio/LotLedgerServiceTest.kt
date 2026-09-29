@@ -195,8 +195,9 @@ class LotLedgerServiceTest {
         @Test
         @DisplayName("lot 이 모자라면 매도를 막아 두고 그 종목의 뒤 체결도 기다리게 하며, 다른 종목은 계속 반영함")
         fun shortageBlocksOnlyThatSymbol() {
+            // 뒤 매수(3주)로도 매도(5주)를 덮지 못해 재대조가 풀지 못하는 경우
             enqueue(sell("S-1", qty = 5, amount = "350000", at = later(1)))
-            enqueue(buy("B-1", qty = 5, amount = "350000", at = later(2)))
+            enqueue(buy("B-1", qty = 3, amount = "210000", at = later(2)))
             enqueue(
                 buy(
                     "N-1",
@@ -238,6 +239,125 @@ class LotLedgerServiceTest {
             val lot = lots.lots.single()
             assertThat(lot.fxAtBuy?.asOf).isEqualTo(executedAt)
             assertThat(marketData.rateRequests).contains(executedAt)
+        }
+    }
+
+    @Nested
+    @DisplayName("lot 부족 재대조")
+    inner class Reconcile {
+        @BeforeEach
+        fun startLedger() {
+            ledger.start(user, clock.instant())
+        }
+
+        @Test
+        @DisplayName("빠진 매수는 1분 이상 떨어진 두 번의 대조에서 같은 상태를 볼 때만 채우고, 다음 반영에서 매도를 소진함")
+        fun fillsGapAfterTwoMatchingObservations() {
+            enqueue(sell("S-1", qty = 10, amount = "750000", at = later(1)))
+            trading.holdings += holding(samsung, qty = 3, avg = "65000")
+
+            service.processFills()
+            assertThat(lots.lots).describedAs("첫 대조에서는 채우지 않음").isEmpty()
+            clock.advance(Duration.ofMinutes(1))
+            service.processFills()
+
+            val gap = lots.lots.single()
+            assertThat(gap.remainingQuantity).isEqualTo(Quantity.of(13))
+            assertThat(gap.isOpening).isTrue()
+            assertThat(gap.boughtAt).isBefore(later(1))
+            service.processFills()
+            assertThat(fills.stateOf("S-1")).isEqualTo(FillState.DONE)
+            assertThat(lots.lots.single().remainingQuantity).isEqualTo(Quantity.of(3))
+        }
+
+        @Test
+        @DisplayName("두 대조 사이에 늦게 온 매수 이벤트가 대기열을 바꾸면 기초 lot 을 만들지 않고 그 매수로 풂")
+        fun delayedEventPreventsPhantomLot() {
+            enqueue(sell("S-1", qty = 10, amount = "750000", at = later(1)))
+            trading.holdings += holding(samsung, qty = 3, avg = "65000")
+            service.processFills()
+
+            enqueue(buy("B-LATE", qty = 13, amount = "910000", at = later(5)))
+            clock.advance(Duration.ofMinutes(1))
+            service.processFills()
+            service.processFills()
+
+            assertThat(lots.lots.none { it.isOpening }).isTrue()
+            assertThat(fills.stateOf("S-1")).isEqualTo(FillState.DONE)
+        }
+
+        @Test
+        @DisplayName("보유 조회 중에 대기열이 바뀌면 그 대조는 판정하지 않음")
+        fun queueChangeDuringHoldingsReadSkipsRound() {
+            enqueue(sell("S-1", qty = 10, amount = "750000", at = later(1)))
+            trading.holdings += holding(samsung, qty = 3, avg = "65000")
+            service.processFills()
+            trading.onHoldingsRead = {
+                enqueue(
+                    buy(
+                        "N-1",
+                        qty = 1,
+                        amount = "100",
+                        at = later(2),
+                        symbol = Symbol(samsung.market, "000660"),
+                    )
+                )
+            }
+            clock.advance(Duration.ofMinutes(1))
+
+            service.processFills()
+
+            assertThat(lots.lots.none { it.isOpening }).isTrue()
+        }
+
+        @Test
+        @DisplayName("보정 저장이 실패해도 5분이 아니라 다음 대조(1분 뒤)에서 다시 시도함")
+        fun failedCorrectionRetriesNextRound() {
+            enqueue(sell("S-1", qty = 10, amount = "750000", at = later(1)))
+            trading.holdings += holding(samsung, qty = 3, avg = "65000")
+            service.processFills()
+            lots.saveFailures += IllegalStateException("DB 잠김")
+            clock.advance(Duration.ofMinutes(1))
+            service.processFills()
+            assertThat(lots.lots).isEmpty()
+
+            clock.advance(Duration.ofMinutes(1))
+            service.processFills()
+
+            assertThat(lots.lots.single().remainingQuantity).isEqualTo(Quantity.of(13))
+        }
+
+        @Test
+        @DisplayName("보유와 기록이 맞으면 순서 문제라 매도 뒤의 매수를 바로 먼저 반영한 뒤 매도를 소진함")
+        fun appliesLaterBuyFirst() {
+            enqueue(sell("S-1", qty = 5, amount = "375000", at = later(1)))
+            enqueue(buy("B-1", qty = 5, amount = "350000", at = later(3)))
+
+            service.processFills()
+            assertThat(fills.stateOf("B-1")).isEqualTo(FillState.DONE)
+            service.processFills()
+
+            assertThat(fills.stateOf("S-1")).isEqualTo(FillState.DONE)
+            assertThat(lots.disposals.single().quantity).isEqualTo(Quantity.of(5))
+        }
+
+        @Test
+        @DisplayName("매입가를 알 수 없으면 사람 확인으로 남기고, 보유 조회는 사용자마다 1분에 한 번만 함")
+        fun needsReviewAndThrottles() {
+            enqueue(sell("S-1", qty = 10, amount = "750000", at = later(1)))
+
+            service.processFills()
+            val readsAfterFirst = trading.holdingsReads
+            clock.advance(Duration.ofSeconds(59))
+            service.processFills()
+
+            val item = fills.items.single()
+            assertThat(item.state).isEqualTo(FillState.BLOCKED)
+            assertThat(item.reason).startsWith("사람 확인 필요")
+            assertThat(trading.holdingsReads).isEqualTo(readsAfterFirst)
+            clock.advance(Duration.ofSeconds(1))
+            service.processFills()
+            assertThat(trading.holdingsReads).isEqualTo(readsAfterFirst + 1)
         }
     }
 

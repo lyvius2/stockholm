@@ -532,3 +532,4 @@ public final class SecretMissingException extends DomainException {}
 | 2026-09-29 | 정정 규칙을 `BrokerOrderRecord.requireAmendable` 한 곳으로(쓰지 않던 `BrokerOrder.requireAmendable` 제거, 수량은 잔량까지). `SubmissionRecord.isSameOrderAs`·`isSameAmendmentAs`·`isSameRequestAs`(같은 키 다른 내용은 거부) |
 | 2026-09-29 | lot 반영: `FillIncrement`(주문 누적 체결 요약의 차이, 단가 = 금액 차이 ÷ 수량 차이), `RecordedOrder` 에 출처·누적 체결 금액·수수료·세금, `QueuedFill`/`FillState`, `Lot.isOpening`(기초 lot), `BuyOrigin.of(OrderOrigin)`. 포트 `FillQueuePort`·`LotLedgerPort`, `LotStorePort.saveOpened`·`saveReduced`·`saveDisposals`, `MarketDataPort.exchangeRateAt`, `DevicePort.localDevice`. usecase `ProcessFillsUseCase` |
 | 2026-09-29 | `FillSummary`(대기열에 넣은 누적 요약)와 `RecordedOrder.queuedFill` — 증분은 넣은 요약과의 차이, 금액이 없으면 null. `OpeningLedger`·`OpeningPlan`·`OpeningPosition`(기초 수량 = 보유 − 대기열 순증감). `BrokerOrderStorePort.markFillQueued` |
+| 2026-09-29 | `ShortageReconciliation`(막힌 매도 종목의 보유 대조: `FillGap`·`ApplyBuysFirst`·`NeedsReview`) |

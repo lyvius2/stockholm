@@ -56,6 +56,13 @@ class LotJournal(
         mark(item, FillState.DONE, reason = null)
     }
 
+    /** 보유 재대조로 찾은 빠진 매수를 기초 lot 으로 남김. */
+    @Transactional
+    fun recordGapLot(lot: Lot, deviceId: DeviceId) {
+        lots.saveOpened(lot, brokerOrderId = null)
+        append(lot.userId, deviceId, listOf(openedEventOf(lot)))
+    }
+
     /** [before] 는 매도 전 미청산 lot, [result] 는 선입선출 소진 결과임. */
     @Transactional
     fun recordSell(

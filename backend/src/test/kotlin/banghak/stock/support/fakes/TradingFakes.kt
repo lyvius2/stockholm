@@ -125,8 +125,13 @@ class FakeTradingPort : TradingPort {
 
     val holdings = mutableListOf<BrokerHolding>()
 
+    var holdingsReads = 0
+    var onHoldingsRead: (() -> Unit)? = null
+
     override fun holdings(userId: UserId): BrokerHoldings {
         accountFailure?.let { throw it }
+        holdingsReads++
+        onHoldingsRead?.invoke()
         return BrokerHoldings(holdings.toList(), Money.zero(Currency.KRW), Instant.EPOCH)
     }
 
@@ -327,7 +332,10 @@ class MemoryLotStore : LotStorePort {
         it.userId == userId && it.symbol.market == market && it.isOpen
     }
 
+    val saveFailures = ArrayDeque<RuntimeException>()
+
     override fun saveOpened(lot: Lot, brokerOrderId: String?) {
+        saveFailures.removeFirstOrNull()?.let { throw it }
         lots += lot
         lotOrders[lot.id] = brokerOrderId
     }
