@@ -42,6 +42,7 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 | [KEY_MANAGEMENT.md](KEY_MANAGEMENT.md) | 키 분류(공유/개인), 변경 규칙, Keychain 저장, 다른 디바이스로 전달 | 확정 | 인증·설정·비밀값 작업 전 |
 | [FIRST_RUN_DESIGN.md](FIRST_RUN_DESIGN.md) | 최초 구동 마법사 4단계, `SetupState`, 키 검증 호출, 조회 제한 모드, 로그인 모달, 시작 종목 규칙(F19) | 확정 2026-09-25 | 1~2단계 |
 | [EXTERNAL_APIS.md](EXTERNAL_APIS.md) | 외부 API 카탈로그(토스·금융결제원·DART·EDGAR·KRX·Massive·네이버·NPS·Slack), 한도·제약·약관 | 갱신 중 | 어댑터 작업 전. 구현 기준은 항상 공식 문서 |
+| [TOSS_OPENAPI.md](TOSS_OPENAPI.md) | 토스증권 Open API 정리본: 원문 주소·갱신 방법, 인증·한도·주문·조건주문·시세 성질·오류 코드·웹소켓, Stockholm 적용 메모 | 확정(원문 v1.2.19 기준) | 토스 어댑터 작업 전. 규격이 의심되면 원문 JSON 재수집 |
 | [ORDER_MANAGEMENT_DESIGN.md](ORDER_MANAGEMENT_DESIGN.md) | 체결 현황·미체결 정정·취소, 상태 매핑, 정정 체인, 한도 초과 확인 창(F14) | 확정 | 2단계 주문 |
 | [PORTFOLIO_PANEL_DESIGN.md](PORTFOLIO_PANEL_DESIGN.md) | 보유주식 평가금액 패널(F18) | 확정 | 2단계 |
 | [TRADE_HISTORY_DESIGN.md](TRADE_HISTORY_DESIGN.md) | 거래내역 패널(F20): 손익(F2)·체결내역(F14 주문 내역)·매매내역, 기간 단위, 선입선출 실현손익 계산, `lot_disposal` | 확정 2026-09-25 | 2단계 |
@@ -93,7 +94,7 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 | 단계 | 읽을 문서 |
 |---|---|
 | 1 리포 골격 | CLAUDE, DIRECTORY_STRUCTURE, TECH_STACK, CORE_DOMAIN, DB_SCHEMA 3·4·5장, FIRST_RUN, KEY_MANAGEMENT, ACCOUNT_SETTINGS 3.2 |
-| 2 토스·F1~F4·F14·F16·F18·F19·F20·F21 | EXTERNAL_APIS 1.1·1.2, ORDER_MANAGEMENT, PORTFOLIO_PANEL, TRADE_HISTORY, ASSET, ACCOUNT_SETTINGS, FIRST_RUN, KRX |
+| 2 토스·F1~F4·F14·F16·F18·F19·F20·F21 | TOSS_OPENAPI, EXTERNAL_APIS 1.1·1.2, ORDER_MANAGEMENT, PORTFOLIO_PANEL, TRADE_HISTORY, ASSET, ACCOUNT_SETTINGS, FIRST_RUN, KRX |
 | 3 수집·RAG·F12·F13·F15 | RAG, DART, EDGAR, KRX, NPS, STOCK_INFO, EXTERNAL_APIS 2·3장 |
 | 4 토론·추천·리포트 | LLM_ROUTING, LLM_ROUTE_SETTINGS, DEBATE, MIROFISH 실험 |
 | 5 학습 | PROJECT F10, DEBATE 6장 |
@@ -116,3 +117,4 @@ docs/screens/              화면 설계서 HTML (아티팩트 사본)
 | 날짜 | 변경 |
 |---|---|
 | 2026-09-27 | 문서 변경 이력 규칙 추가 |
+| 2026-09-29 | TOSS_OPENAPI.md 추가 |

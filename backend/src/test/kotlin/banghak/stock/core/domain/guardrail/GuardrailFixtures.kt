@@ -12,7 +12,6 @@ import banghak.stock.core.domain.portfolio.PortfolioSnapshot
 import banghak.stock.core.domain.trading.BrokerOrder
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.OrderIntent
-import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.Quote
 import java.math.BigDecimal
 import java.time.Instant
@@ -122,7 +121,6 @@ object GuardrailFixtures {
         )
 
     fun quote(intent: OrderIntent, last: String, asOf: Instant): Quote {
-        val price = Money.of(last, intent.market.currency)
-        return Quote(intent.symbol, price, price, Quantity.ZERO, asOf)
+        return Quote(intent.symbol, Money.of(last, intent.market.currency), asOf)
     }
 }

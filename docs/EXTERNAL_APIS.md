@@ -15,6 +15,8 @@ API 규격은 바뀐다. 어댑터를 구현할 때는 이 문서가 아니라 *
 
 ### 1.1 토스증권 Open API — 매매·시세·계좌 [확인함]
 
+> **규격·운영 규칙 정리본은 [TOSS_OPENAPI.md](TOSS_OPENAPI.md)** (원문 주소·갱신 방법·엔드포인트·한도·오류 코드·웹소켓·FAQ 사실). 이 절은 Stockholm 기능과의 대응만 다룬다.
+
 유일한 주문 경로이자 1차 시세 소스. 포트: `TradingPort`, `MarketDataPort`, `MarketCalendarPort`.
 
 - 문서: https://developers.tossinvest.com/docs · AI용 색인 https://developers.tossinvest.com/llms.txt
@@ -361,3 +363,4 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 | 날짜 | 변경 |
 |---|---|
 | 2026-09-27 | 토스 학습 테스트 실측 표 추가(한도 헤더·캔들 timestamp·장 달력 실측 시간·랭킹 코드 형식·WebSocket ack) |
+| 2026-09-29 | 토스 규격 정리본 TOSS_OPENAPI.md 로 연결 |

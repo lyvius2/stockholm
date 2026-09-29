@@ -254,6 +254,7 @@ cd backend && ./gradlew dev                          # 데몬 + Electron 개발 
 - [`docs/DIRECTORY_STRUCTURE.md`](docs/DIRECTORY_STRUCTURE.md) — 패키지·폴더 트리와 기능 → 위치 대응. 새 클래스·파일을 어디에 둘지 정할 때 읽는다.
 - [`docs/DB_SCHEMA.md`](docs/DB_SCHEMA.md) — 표 정의(성격 ①이벤트 로그·②projection·③캐시·④상태), 형식 자리표시자, FK 정책(논리는 전부, 물리는 보수적), 인덱스, Flyway 버전 계획, relay DB. 엔티티·마이그레이션 작업 전에 읽는다.
 - [`docs/EXTERNAL_APIS.md`](docs/EXTERNAL_APIS.md) — 외부 API 카탈로그(엔드포인트, 호출 제한, 제약). 어댑터 작업 전에 읽는다. 단, 구현 기준은 항상 각 API의 공식 문서다.
+- [`docs/TOSS_OPENAPI.md`](docs/TOSS_OPENAPI.md) — 토스증권 Open API 정리본(원문 주소·갱신 방법, 인증·한도·주문·조건주문·시세 성질·오류 코드·웹소켓, Stockholm 적용 메모). 토스 어댑터 작업 전에 읽고, 규격이 의심되면 여기 적힌 원문 JSON을 다시 받아 대조한다.
 - [`PROJECT.md`](PROJECT.md) — 프로젝트 기준 문서. 결정이 바뀌면 코드보다 먼저 갱신한다.
 - `docs/` — 보조 문서. 설계 결정의 배경이 길어지면 여기에 ADR로 남기고 PROJECT.md에서 참조한다.
 - **문서 변경 이력 규칙**: 문서를 바꾸거나 더할 때 본문에 확정·변경 날짜를 쓰지 않는다(`[확정 YYYY-MM-DD]` 같은 표기 금지). 대신 문서 맨 끝의 `## Changes` 표(없으면 만든다)에 `| 날짜 | 변경 |` 한 줄로 이력을 남긴다. 본문은 현재 상태만 말한다. HANDOFF.md는 인수인계 일지이므로 예외다.
@@ -265,3 +266,4 @@ cd backend && ./gradlew dev                          # 데몬 + Electron 개발 
 | 2026-09-26 | 테스트 이름 규칙(영문 camelCase + `@DisplayName` 한국어) 확정. 경계 강제 도구를 ArchUnit만으로 변경. 명령어 절을 실제 명령으로 갱신 |
 | 2026-09-27 | 예외 클래스 접미어 `Exception` 규칙. 문서 변경 이력 규칙(본문 날짜 금지, `## Changes` 표) |
 | 2026-09-28 | 한국어 주석은 문장 단위 줄바꿈 규칙. Spotless `koreanSentencePerLine` 단계로 Kotlin에 강제 |
+| 2026-09-29 | 문서 목록에 TOSS_OPENAPI.md 추가 |

@@ -168,3 +168,9 @@ public interface TradingPort {
 **외부 확인**
 1. 정정 API의 `quantity`가 "새 잔량"(예: 50)인지 "새 총 주문 수량"(예: 24 체결 + 50 = 74)인지. 규격은 "변경할 수량"으로만 적혀 있다. 화면은 잔량으로 입력받고 어댑터가 변환하므로 어느 쪽이든 화면은 같다. 확인은 사용자가 지정한 소액 실주문 또는 토스 개발자센터 문의.
 2. `personal:order` 재연결 시 `PENDING_CANCEL` 중이던 주문의 최종 상태가 상세 조회로 확정되는지.
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-29 | 4장 포트: 정정은 `placeAmendment(OrderAmendRequest)`(국내 가격+수량, 미국 가격만을 요청 타입이 검증), 취소는 `cancelOrder`, 둘 다 새 주문 번호의 `OrderReceipt` 를 돌려줌. 상태는 `lookupOrder` 의 `BrokerOrderRecord` 로 확인(CORE_DOMAIN Changes 와 같음) |

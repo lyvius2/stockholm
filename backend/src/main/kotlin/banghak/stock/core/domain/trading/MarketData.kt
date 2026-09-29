@@ -7,15 +7,11 @@ import java.time.Instant
 
 /**
  * 현재가.
- * 등락은 전일 종가 대비로 화면이 계산함.
+ * 토스 현재가 API 는 마지막 체결가와 시각만 줌.
+ * 전일 종가·거래량은 일봉에서 구함.
+ * 시각을 모르는 값은 [asOf] 를 아주 오래된 시각으로 둬 신선도 검사에서 걸러지게 함.
  */
-data class Quote(
-    val symbol: Symbol,
-    val last: Money,
-    val prevClose: Money,
-    val volume: Quantity,
-    val asOf: Instant,
-)
+data class Quote(val symbol: Symbol, val last: Money, val asOf: Instant)
 
 /**
  * 호가.
@@ -31,12 +27,22 @@ data class OrderBook(
 }
 
 /**
+ * 증권사가 주는 봉 단위.
+ * 토스는 1분봉과 일봉만 줌.
+ * 나머지는 데몬이 집계함.
+ */
+enum class CandleInterval(val length: Duration) {
+    MINUTE_1(Duration.ofMinutes(1)),
+    DAY_1(Duration.ofDays(1)),
+}
+
+/**
  * 봉.
  * 토스 1분봉의 timestamp 는 봉 종료 시각이므로 어댑터가 [openTime] 으로 바꿔 넣음.
  */
 data class Candle(
     val symbol: Symbol,
-    val interval: Duration,
+    val interval: CandleInterval,
     val openTime: Instant,
     val open: Money,
     val high: Money,
@@ -44,3 +50,9 @@ data class Candle(
     val close: Money,
     val volume: Quantity,
 )
+
+/**
+ * 봉 한 페이지.
+ * [nextBefore] 를 다음 요청에 그대로 넘기며 null 이면 끝임.
+ */
+data class CandlePage(val candles: List<Candle>, val nextBefore: Instant?)

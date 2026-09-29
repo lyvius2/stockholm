@@ -42,3 +42,9 @@ class MarketDataUnavailableException(message: String, cause: Throwable? = null) 
  */
 class GuardrailViolationException(val violations: List<String>) :
     DomainException("가드레일 위반: " + violations.joinToString("; "))
+
+/**
+ * 증권사가 요청을 거부함(허용 IP 미등록, 키 거부).
+ * 재시도로 풀리지 않으므로 사용자에게 IP 등록·키 확인을 안내함.
+ */
+class BrokerAccessDeniedException(message: String) : DomainException(message)
