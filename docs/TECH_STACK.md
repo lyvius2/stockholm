@@ -153,3 +153,4 @@
 | 2026-09-27 | 테스트 의존성 `com.networknt:json-schema-validator` 1.5.9(Apache-2.0) 추가: 이벤트 스키마와 코덱 출력 대조용. 3.0 은 API 가 바뀌어 1.5 계열 고정. 런타임 의존 없음 |
 | 2026-09-27 | WireMock 3.13.2(Apache-2.0)를 테스트에 실제 사용 시작: 외부 API 검증기 매핑과 통합 테스트의 외부 주소 대체 |
 | 2026-09-27 | OkHttp 공용 클라이언트의 TLS 규칙을 `TlsPolicy`로 분리: DART 가 TLS 1.2 DHE 묶음만 받아 OkHttp 기본 규칙으로는 handshake 실패. JDK 정책이 켜 둔 묶음 전부 제시 |
+| 2026-09-29 | 테스트 의존성 `com.squareup.okhttp3:mockwebserver3` 5.5.0(Apache-2.0) 추가: 토스 웹소켓 어댑터를 실제 웹소켓 왕복으로 검증(WireMock 3 은 웹소켓 미지원). 런타임 의존 없음 |

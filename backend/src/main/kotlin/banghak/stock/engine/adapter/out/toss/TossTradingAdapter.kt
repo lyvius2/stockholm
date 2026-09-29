@@ -15,19 +15,14 @@ import banghak.stock.core.domain.trading.ClosedOrdersQuery
 import banghak.stock.core.domain.trading.OrderAmendRequest
 import banghak.stock.core.domain.trading.OrderKind
 import banghak.stock.core.domain.trading.OrderReceipt
-import banghak.stock.core.domain.trading.OrderSide
-import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.OrderSubmission
 import banghak.stock.core.domain.trading.Quantity
-import banghak.stock.core.domain.trading.TimeInForce
 import banghak.stock.core.port.TradingPort
 import banghak.stock.shared.config.RuntimeProfiles
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter
 import java.math.BigDecimal
 import java.time.Clock
-import java.time.Instant
-import java.time.OffsetDateTime
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
@@ -115,7 +110,7 @@ class TossTradingAdapter(
     @RateLimiter(name = "toss-order-history")
     @CircuitBreaker(name = "toss-order-read", fallbackMethod = "lookupOrderFailed")
     override fun lookupOrder(userId: UserId, brokerOrderId: String): BrokerOrderRecord =
-        recordOf(
+        TossOrderMapping.recordOf(
             TossOrderResponses.readResultOf(
                 orders.order(TossCaller(userId), accountSeqs.accountSeq(userId), brokerOrderId)
             )
@@ -144,7 +139,7 @@ class TossTradingAdapter(
                 )
             )
             .orders
-            .map(::recordOf)
+            .map(TossOrderMapping::recordOf)
             .filter { it.symbol.market == market }
 
     @JvmName("openOrdersFailed")
@@ -170,7 +165,7 @@ class TossTradingAdapter(
                 )
             )
         return ClosedOrdersPage(
-            page.orders.map(::recordOf).filter { it.symbol.market == query.market },
+            page.orders.map(TossOrderMapping::recordOf).filter { it.symbol.market == query.market },
             page.nextCursor,
         )
     }
@@ -239,31 +234,6 @@ class TossTradingAdapter(
 
     private fun confirmationOf(isConfirmed: Boolean): Boolean? = if (isConfirmed) true else null
 
-    private fun recordOf(order: TossOrder): BrokerOrderRecord {
-        val currency = Currency.valueOf(order.currency)
-        val money = { amount: BigDecimal? -> amount?.let { Money.of(it, currency) } }
-        val execution = order.execution
-        return BrokerOrderRecord(
-            brokerOrderId = order.orderId,
-            symbol = Symbol(marketOf(currency), order.symbol),
-            side = OrderSide.valueOf(order.side),
-            kind = OrderKind.valueOf(order.orderType),
-            timeInForce = TimeInForce.valueOf(order.timeInForce),
-            limitPrice = money(order.price),
-            quantity = order.quantity?.let(Quantity::of),
-            orderAmount = money(order.orderAmount),
-            status = statusOf(order.status),
-            filledQuantity = execution?.filledQuantity?.let(Quantity::of) ?: Quantity.ZERO,
-            averageFilledPrice = money(execution?.averageFilledPrice),
-            filledAmount = money(execution?.filledAmount),
-            fee = money(execution?.commission),
-            tax = money(execution?.tax),
-            orderedAt = parse(order.orderedAt),
-            filledAt = execution?.filledAt?.let(::parse),
-            canceledAt = order.canceledAt?.let(::parse),
-        )
-    }
-
     private fun holdingOf(item: TossHoldingItem): BrokerHolding {
         val symbol = Symbol(Market.valueOf(item.marketCountry), item.symbol)
         val currency = Currency.valueOf(item.currency)
@@ -278,33 +248,9 @@ class TossTradingAdapter(
         )
     }
 
-    private fun marketOf(currency: Currency): Market =
-        Market.entries.single { it.currency == currency }
-
-    private fun parse(text: String): Instant = OffsetDateTime.parse(text).toInstant()
-
     companion object {
         private const val OPEN = "OPEN"
         private const val CLOSED = "CLOSED"
         private const val CLOSED_PAGE_SIZE = 100
-
-        /**
-         * 토스 주문 상태 10개 → 도메인 상태.
-         * 모르는 값은 UNKNOWN 으로 받아 조회로 확정하게 함.
-         */
-        fun statusOf(tossStatus: String): OrderStatus =
-            when (tossStatus) {
-                "PENDING" -> OrderStatus.PENDING
-                "PARTIAL_FILLED" -> OrderStatus.PARTIALLY_FILLED
-                "PENDING_CANCEL" -> OrderStatus.PENDING_CANCEL
-                "PENDING_REPLACE" -> OrderStatus.PENDING_AMEND
-                "FILLED" -> OrderStatus.FILLED
-                "CANCELED" -> OrderStatus.CANCELLED
-                "REJECTED" -> OrderStatus.REJECTED
-                "CANCEL_REJECTED" -> OrderStatus.CANCEL_REJECTED
-                "REPLACE_REJECTED" -> OrderStatus.AMEND_REJECTED
-                "REPLACED" -> OrderStatus.REPLACED
-                else -> OrderStatus.UNKNOWN
-            }
     }
 }

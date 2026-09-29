@@ -73,6 +73,8 @@ dependencies {
     testImplementation(libs.archunit.junit5)
     testImplementation(libs.json.schema.validator)
     testImplementation(libs.wiremock)
+    // 토스 웹소켓 어댑터 테스트용. WireMock 3 은 웹소켓을 지원하지 않음
+    testImplementation(libs.okhttp.mockwebserver)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

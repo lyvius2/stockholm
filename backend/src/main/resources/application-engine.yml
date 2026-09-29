@@ -27,6 +27,7 @@ stockholm:
     dart-base-url: https://opendart.fss.or.kr/
     fred-base-url: https://api.stlouisfed.org/
     toss-base-url: https://openapi.tossinvest.com/
+    toss-web-socket-url: wss://openapi-ws.tossinvest.com/ws/v1
 
 resilience4j:
   circuitbreaker:

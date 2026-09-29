@@ -44,5 +44,8 @@ object ExternalApiStubs {
         listOf("openai", "anthropic", "deepseek", "dart", "fred", "toss").forEach {
             registry.add("stockholm.external.$it-base-url", base)
         }
+        registry.add("stockholm.external.toss-web-socket-url") {
+            "ws://127.0.0.1:${server.port()}/ws/v1"
+        }
     }
 }

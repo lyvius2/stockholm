@@ -4,6 +4,7 @@ import banghak.stock.engine.adapter.out.toss.TossAccountClient
 import banghak.stock.engine.adapter.out.toss.TossAuthClient
 import banghak.stock.engine.adapter.out.toss.TossAuthInterceptor
 import banghak.stock.engine.adapter.out.toss.TossChartClient
+import banghak.stock.engine.adapter.out.toss.TossFeedSettings
 import banghak.stock.engine.adapter.out.toss.TossMarketInfoClient
 import banghak.stock.engine.adapter.out.toss.TossOrderClient
 import banghak.stock.engine.adapter.out.toss.TossPriceClient
@@ -63,6 +64,8 @@ class TossHttpConfig(
                 authorizedClient(tokens).newBuilder().retryOnConnectionFailure(false).build(),
             )
             .create(TossOrderClient::class.java)
+
+    @Bean fun tossFeedSettings(): TossFeedSettings = TossFeedSettings()
 
     private fun authorized(tokens: TossTokenCache): Retrofit =
         retrofit.create(endpoints.tossBaseUrl.toHttpUrl(), authorizedClient(tokens))

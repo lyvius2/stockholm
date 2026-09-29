@@ -15,4 +15,5 @@ data class ExternalEndpointProperties(
     val dartBaseUrl: String = "https://opendart.fss.or.kr/",
     val fredBaseUrl: String = "https://api.stlouisfed.org/",
     val tossBaseUrl: String = "https://openapi.tossinvest.com/",
+    val tossWebSocketUrl: String = "wss://openapi-ws.tossinvest.com/ws/v1",
 )

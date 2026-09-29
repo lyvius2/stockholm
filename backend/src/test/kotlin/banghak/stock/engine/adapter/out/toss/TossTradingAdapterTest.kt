@@ -345,7 +345,7 @@ class TossTradingAdapterTest {
                 "SOMETHING_NEW" to OrderStatus.UNKNOWN,
             )
         table.forEach { (toss, domain) ->
-            assertThat(TossTradingAdapter.statusOf(toss)).describedAs(toss).isEqualTo(domain)
+            assertThat(TossOrderMapping.statusOf(toss)).describedAs(toss).isEqualTo(domain)
         }
     }
 

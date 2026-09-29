@@ -377,10 +377,12 @@ public interface MarketDataPort {
 }
 public interface MarketCalendarPort { MarketSession sessionAt(Market m, Instant t); boolean isTradingDay(Market m, LocalDate d); }
 public interface RealtimeFeedPort {                          // 구독은 engine이 lease 보유 시 우선
-  Subscription subscribeTrades(Symbol s, Consumer<Fill> onTrade);
-  Subscription subscribeQuotes(Symbol s, Consumer<Quote> onQuote);
-  Subscription subscribeMyOrders(UserId u, Consumer<BrokerOrder> onChange);
+  void declare(UserId owner, Set<FeedTopic> topics);         // 주인별 구독 전체 교체(최대 100), 빈 집합은 전체 해제
+  void release(UserId owner);
+  void addListener(FeedListener l);                          // onTrade·onOrderBook·onOrderEvent·onState
 }
+// FeedState(owner, status, recovered, accepted, rejected): CONNECTED 는 증권사가 선언을 승인한 뒤에만 옴.
+// 내 주문 스트림은 accepted 에 MyOrders 가 있을 때만 살아 있음(isOrderStreamLive). recovered 면 미체결 재동기.
 public interface DisclosurePort { List<Disclosure> recent(Symbol s, Instant since); }
 public interface FundamentalsPort {                          // [제안] F15. DART(KR) / EDGAR(US). 상세 docs/STOCK_INFO_DESIGN.md 5장
   FinancialStatements statements(Symbol s, ReportPeriod period, ConsolidationBasis basis);
@@ -496,3 +498,5 @@ public final class SecretMissingException extends DomainException {}
 | 2026-09-29 | `GuardrailContext` 에 `clientOrderId`·`todayOrders` 추가와 생성 시 사용자·시장·종목 일치 검사, 고액 판정의 현재가·환율 신선도 조건 |
 | 2026-09-29 | 10장 포트 구현 시작: `MarketDataPort` 는 토스 규격대로 `quotes`(최대 200)·`candlePage(symbol, interval, before, count)`·`exchangeRate`, `MarketCalendarPort` 는 `tradingDay(market, date)`. `Quote` 는 `(symbol, last, asOf)` 로 줄임(토스 현재가에 전일 종가·거래량 없음, 일봉에서 구함). `CandleInterval`(1분·일)·`CandlePage` 추가, `BrokerAccessDeniedException`(403 허용 IP·키 거부) 추가 |
 | 2026-09-29 | **`TradingPort` 계약 변경(사용자 결정)**: 포트는 증권사가 아는 사실만 돌려줌 — `placeOrder(OrderSubmission)`·`placeAmendment(OrderAmendRequest)`·`cancelOrder` → `OrderReceipt`, `lookupOrder`·`openOrders`·`closedOrders(ClosedOrdersQuery)` → `BrokerOrderRecord`, `holdings` → `BrokerHoldings`, `buyingPower`. 토스 접수 응답에 상태가 없고 증권사는 출처·트리거·lot 을 모르기 때문. `BrokerOrder`·`PortfolioSnapshot` 은 engine 이 로컬 주문 기록·lot 과 합쳐 만듦. `fills`·`snapshot` 은 포트에서 뺌(체결은 주문 레코드의 체결 요약) |
+| 2026-09-29 | `RealtimeFeedPort` 를 토스 웹소켓의 선언형 구독에 맞춰 `declare(owner, topics)`(주인별 구독 전체 교체)·`release`·`addListener(FeedListener)` 로 정함. 도메인 `TradeTick`·`OrderEvent`(`OrderEventType`)·`FeedTopic`·`FeedState`(재연결 시 `recovered`) 추가 |
+| 2026-09-29 | `FeedState` 에 승인 결과 `accepted`·`rejected` 와 `isOrderStreamLive` 추가. CONNECTED 는 연결 성공이 아니라 구독 승인 뒤에만 옴. 본문 `RealtimeFeedPort` 스케치를 현재 계약으로 갱신 |
