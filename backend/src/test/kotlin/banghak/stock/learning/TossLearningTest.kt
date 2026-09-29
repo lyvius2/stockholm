@@ -157,6 +157,24 @@ class TossLearningTest : LearningTestSupport() {
     }
 
     @Test
+    @Order(4)
+    @DisplayName("호가·시장별 전체 종목: 호가는 asks 낮은 가격순·bids 높은 가격순, 시장마다 종목 수와 증권 종류 분포")
+    fun orderbookAndBoards() {
+        val book = get("/api/v1/orderbook?symbol=005930", "orderbook-005930", public = true)
+        val asks = book.path("result").path("asks").map { it.path("price").decimalValue() }
+        assertThat(asks).isSorted()
+        assertThat(book.path("result").path("currency").asText()).isEqualTo("KRW")
+        for (board in listOf("KOSPI", "KOSDAQ", "KR_ETC", "NYSE", "NASDAQ", "AMEX", "US_ETC")) {
+            val listed = get("/api/v1/stocks/all?market=$board", "stocks-all-${board.lowercase()}")
+            val types =
+                listed.path("result").groupingBy { it.path("securityType").asText() }.eachCount()
+            println("학습: $board 종목 수 = ${listed.path("result").size()}, 종류 = $types")
+            // STOCK_ALL 은 초당 1회라 간격을 둠
+            Thread.sleep(700)
+        }
+    }
+
+    @Test
     @Order(5)
     @DisplayName("현재가 다건·캔들(1분·일)·시장 지표: timestamp 형식과 nextBefore 페이지네이션")
     fun pricesAndCandles() {

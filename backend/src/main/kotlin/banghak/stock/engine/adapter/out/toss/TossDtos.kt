@@ -72,3 +72,54 @@ data class TossUsDay(
 )
 
 data class TossUsCalendar(val today: TossUsDay = TossUsDay())
+
+data class TossOrderbook(
+    val timestamp: String? = null,
+    val currency: String = "",
+    val asks: List<TossOrderbookEntry> = emptyList(),
+    val bids: List<TossOrderbookEntry> = emptyList(),
+)
+
+data class TossOrderbookEntry(
+    val price: BigDecimal = BigDecimal.ZERO,
+    val volume: BigDecimal = BigDecimal.ZERO,
+)
+
+data class TossListedStock(
+    val symbol: String = "",
+    val name: String = "",
+    val securityType: String = "",
+    val isCommonShare: Boolean = false,
+    val isinCode: String = "",
+)
+
+data class TossStockInfo(
+    val symbol: String = "",
+    val name: String = "",
+    val englishName: String = "",
+    val isinCode: String = "",
+    val market: String = "",
+    val securityType: String = "",
+    val isCommonShare: Boolean = false,
+    val status: String = "",
+    val currency: String = "",
+    val listDate: String? = null,
+    val delistDate: String? = null,
+    val sharesOutstanding: BigDecimal = BigDecimal.ZERO,
+    val leverageFactor: BigDecimal? = null,
+    val koreanMarketDetail: TossKrMarketDetail? = null,
+)
+
+// 필수 필드가 빠지면 거래 가능으로 오인하지 않도록 null 로 받아 어댑터가 거름
+data class TossKrMarketDetail(
+    val liquidationTrading: Boolean? = null,
+    val nxtSupported: Boolean? = null,
+    val krxTradingSuspended: Boolean? = null,
+    val nxtTradingSuspended: Boolean? = null,
+)
+
+data class TossStockWarning(
+    val warningType: String = "",
+    val startDate: String? = null,
+    val endDate: String? = null,
+)

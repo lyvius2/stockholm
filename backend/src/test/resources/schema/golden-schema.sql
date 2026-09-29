@@ -38,6 +38,8 @@ CREATE INDEX idx_notification_user_acked ON notification (user_id, acked_at);
 CREATE INDEX idx_persona_definition_user ON persona_definition (user_id);
 -- index idx_recovery_code_user
 CREATE INDEX idx_recovery_code_user ON recovery_code (user_id);
+-- index idx_stock_master_board
+CREATE INDEX idx_stock_master_board ON stock_master (listing_board);
 -- index idx_stock_master_chosung
 CREATE INDEX idx_stock_master_chosung ON stock_master (chosung);
 -- index idx_stock_master_isin
@@ -109,9 +111,9 @@ CREATE TABLE registration_code ( registration_code_id TEXT NOT NULL PRIMARY KEY,
 -- table shared_setting
 CREATE TABLE shared_setting ( key TEXT NOT NULL PRIMARY KEY, value_json TEXT NOT NULL, updated_by TEXT, updated_at TEXT NOT NULL );
 -- table stock_master
-CREATE TABLE stock_master ( market TEXT NOT NULL, code TEXT NOT NULL, name TEXT NOT NULL, name_abbrev TEXT, name_en TEXT, chosung TEXT, isin TEXT, security_group TEXT, is_preferred INTEGER NOT NULL DEFAULT 0, listed_at TEXT, delisted INTEGER NOT NULL DEFAULT 0, leverage_multiple TEXT, nxt_supported INTEGER NOT NULL DEFAULT 0, sector_code TEXT, sector_name TEXT, market_cap_amount TEXT, market_cap_currency TEXT, source_json TEXT, updated_at TEXT NOT NULL, PRIMARY KEY (market, code) );
+CREATE TABLE stock_master ( market TEXT NOT NULL, code TEXT NOT NULL, name TEXT NOT NULL, name_abbrev TEXT, name_en TEXT, chosung TEXT, isin TEXT, security_group TEXT, is_preferred INTEGER NOT NULL DEFAULT 0, listed_at TEXT, delisted INTEGER NOT NULL DEFAULT 0, leverage_multiple TEXT, nxt_supported INTEGER NOT NULL DEFAULT 0, sector_code TEXT, sector_name TEXT, market_cap_amount TEXT, market_cap_currency TEXT, source_json TEXT, updated_at TEXT NOT NULL, listing_board TEXT, PRIMARY KEY (market, code) );
 -- table stock_warning
-CREATE TABLE stock_warning ( market TEXT NOT NULL, code TEXT NOT NULL, investment_warning INTEGER NOT NULL DEFAULT 0, investment_risk INTEGER NOT NULL DEFAULT 0, administrative INTEGER NOT NULL DEFAULT 0, trading_halted INTEGER NOT NULL DEFAULT 0, vi_static INTEGER NOT NULL DEFAULT 0, vi_dynamic INTEGER NOT NULL DEFAULT 0, overheated INTEGER NOT NULL DEFAULT 0, liquidation INTEGER NOT NULL DEFAULT 0, fetched_at TEXT NOT NULL, PRIMARY KEY (market, code) );
+CREATE TABLE stock_warning ( market TEXT NOT NULL, code TEXT NOT NULL, investment_warning INTEGER NOT NULL, investment_risk INTEGER NOT NULL, administrative INTEGER, trading_halted INTEGER, vi_static INTEGER NOT NULL, vi_dynamic INTEGER NOT NULL, overheated INTEGER NOT NULL, liquidation INTEGER NOT NULL, fetched_at TEXT NOT NULL, unknown_warning INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (market, code) );
 -- table sync_cursor
 CREATE TABLE sync_cursor ( user_id TEXT NOT NULL, source_device_id TEXT NOT NULL, last_seq INTEGER NOT NULL, updated_at TEXT NOT NULL, PRIMARY KEY (user_id, source_device_id) );
 -- table us_ticker_ref

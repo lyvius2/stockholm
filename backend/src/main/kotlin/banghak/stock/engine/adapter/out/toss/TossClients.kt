@@ -5,6 +5,7 @@ import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Tag
 
@@ -32,6 +33,12 @@ interface TossPriceClient {
         @Tag caller: TossCaller,
         @Query("symbols") symbols: String,
     ): Call<TossEnvelope<List<TossPrice>>>
+
+    @GET("api/v1/orderbook")
+    fun orderbook(
+        @Tag caller: TossCaller,
+        @Query("symbol") symbol: String,
+    ): Call<TossEnvelope<TossOrderbook>>
 }
 
 /** MARKET_DATA_CHART 그룹(초당 20). */
@@ -66,4 +73,25 @@ interface TossMarketInfoClient {
         @Tag caller: TossCaller,
         @Query("date") date: String,
     ): Call<TossEnvelope<TossUsCalendar>>
+}
+
+/** STOCK 그룹(초당 5, 종목 정보·매수 유의사항)과 STOCK_ALL 그룹(초당 1, 시장별 전체 종목). */
+interface TossStockClient {
+    @GET("api/v1/stocks")
+    fun stocks(
+        @Tag caller: TossCaller,
+        @Query("symbols") symbols: String,
+    ): Call<TossEnvelope<List<TossStockInfo>>>
+
+    @GET("api/v1/stocks/all")
+    fun listedStocks(
+        @Tag caller: TossCaller,
+        @Query("market") market: String,
+    ): Call<TossEnvelope<List<TossListedStock>>>
+
+    @GET("api/v1/stocks/{symbol}/warnings")
+    fun warnings(
+        @Tag caller: TossCaller,
+        @Path("symbol") symbol: String,
+    ): Call<TossEnvelope<List<TossStockWarning>>>
 }

@@ -5,6 +5,7 @@ import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.ExchangeRate
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.CandlePage
+import banghak.stock.core.domain.trading.OrderBook
 import banghak.stock.core.domain.trading.Quote
 import java.time.Instant
 
@@ -31,6 +32,12 @@ interface MarketDataPort {
         before: Instant?,
         count: Int,
     ): CandlePage
+
+    /**
+     * 호가 전체 스냅샷.
+     * 국내는 KRX·NXT 합산 호가라 매도 1호가가 매수 1호가보다 낮게 보일 수 있음.
+     */
+    fun orderBook(symbol: Symbol): OrderBook
 
     fun exchangeRate(from: Currency, to: Currency): ExchangeRate
 

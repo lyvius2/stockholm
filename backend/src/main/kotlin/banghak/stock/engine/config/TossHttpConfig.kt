@@ -8,6 +8,7 @@ import banghak.stock.engine.adapter.out.toss.TossFeedSettings
 import banghak.stock.engine.adapter.out.toss.TossMarketInfoClient
 import banghak.stock.engine.adapter.out.toss.TossOrderClient
 import banghak.stock.engine.adapter.out.toss.TossPriceClient
+import banghak.stock.engine.adapter.out.toss.TossStockClient
 import banghak.stock.engine.adapter.out.toss.TossTokenAuthenticator
 import banghak.stock.engine.adapter.out.toss.TossTokenCache
 import banghak.stock.shared.config.RetrofitFactory
@@ -47,6 +48,10 @@ class TossHttpConfig(
     @Bean
     fun tossMarketInfoClient(@Lazy tokens: TossTokenCache): TossMarketInfoClient =
         authorized(tokens).create(TossMarketInfoClient::class.java)
+
+    @Bean
+    fun tossStockClient(@Lazy tokens: TossTokenCache): TossStockClient =
+        authorized(tokens).create(TossStockClient::class.java)
 
     @Bean
     fun tossAccountClient(@Lazy tokens: TossTokenCache): TossAccountClient =

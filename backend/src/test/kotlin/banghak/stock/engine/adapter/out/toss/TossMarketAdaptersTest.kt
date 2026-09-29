@@ -318,6 +318,32 @@ class TossMarketAdaptersTest {
         assertThat(handedOut.single().reveal()).containsOnly(Char.MIN_VALUE)
     }
 
+    @Test
+    @DisplayName("호가는 매도 낮은 가격순·매수 높은 가격순 전체 스냅샷을 옮기고 시각을 가짐")
+    fun mapsOrderBook() {
+        stubResult("/api/v1/orderbook", "orderbook-005930")
+
+        val book = marketData.orderBook(samsung)
+
+        assertThat(book.asks).isNotEmpty()
+        assertThat(book.asks.map { it.price.amount }).isSorted()
+        assertThat(book.bids.map { it.price.amount }).isSortedAccordingTo(reverseOrder())
+        assertThat(book.asks.first().price.currency).isEqualTo(Currency.KRW)
+        assertThat(book.asOf).isEqualTo(kst("2026-09-29T16:33:28"))
+    }
+
+    @Test
+    @DisplayName("호가 통화가 종목 통화와 다르면 조회 실패로 봄")
+    fun rejectsOrderBookInOtherCurrency() {
+        stubBody(
+            "/api/v1/orderbook",
+            """{"result":{"timestamp":null,"currency":"USD","asks":[],"bids":[]}}""",
+        )
+
+        assertThatThrownBy { marketData.orderBook(samsung) }
+            .isInstanceOf(MarketDataUnavailableException::class.java)
+    }
+
     private fun stubToken(token: String) {
         server.stubFor(post(urlPathEqualTo("/oauth2/token")).willReturn(tokenBody(token)))
     }

@@ -328,14 +328,16 @@ erDiagram
     string market_cap_currency
     string source_json "출처별 원본 키"
     string updated_at
+    string listing_board "KOSPI|KOSDAQ|KR_ETC|NYSE|NASDAQ|AMEX|US_ETC"
   }
   stock_warning {
     string market PK
     string code PK
     int investment_warning
     int investment_risk
-    int administrative
-    int trading_halted
+    int administrative "NULL = 출처 없음"
+    int trading_halted "NULL = 모름(미국, NXT 값 누락)"
+    int unknown_warning "뜻을 모르는 유의사항"
     int vi_static
     int vi_dynamic
     int overheated
@@ -444,7 +446,8 @@ erDiagram
 ```
 
 - `stock_master`는 일 1회 통째로 갱신하는 **합성 표**(토스 + KRX 종목기본정보 + DART 기업개황 + Massive). 원본은 `krx_issue`를 따로 두지 않고 `source_json`에 출처별 키(KRX `ISU_SRT_CD`, DART `corp_code`, EDGAR `cik`, FIGI)를 담는다. 상장폐지는 행을 지우지 않고 `delisted=1`(과거 lot·토론이 참조).
-- `stock_warning`은 초 단위로 바뀌는 VI·경고 플래그의 **현재값**만 담는 짧은 TTL 캐시(보유·관심·후보 종목만). 이력은 두지 않는다. `StockFlags`의 네 필드는 마스터 동기화 때 `stock_warning`에서 복사하지 않고 항상 이 표에서 읽는다.
+- 지금 마스터는 **토스만으로** 채운다(`/stocks/all` 시장별 목록 → `/stocks` 200건씩): 이름·영문명·초성·ISIN·증권 종류·우선주·상장일·상장폐지·레버리지·NXT·`listing_board`. 약명·업종·시총·`source_json`은 KRX·DART 보강(3단계)이 채우며 토스 upsert는 이 열을 덮어쓰지 않는다. 매일 07:00 KST 이후 첫 확인 때 갱신(스케줄러가 1분마다 확인, 실패 시 30분 뒤 재시도), 모든 시장이 성공해야 `installation.stock_master_synced_at`을 남긴다. 받은 종목 정보가 목록보다 적으면(형식 검증으로 건너뛴 코드는 목록 단계에서 이미 빠짐) 받은 것은 저장하되 그 시장을 실패로 본다. 목록에 없는 종목은 같은 `listing_board` 안에서만 `delisted=1`, 빈 목록이면 표시를 건너뛴다(KR_ETC는 실측 0건).
+- `stock_warning`은 초 단위로 바뀌는 VI·경고 플래그의 **현재값**만 담는 짧은 TTL(10초) 캐시(보유·관심·후보 종목만). 이력은 두지 않는다. `StockFlags`는 마스터 동기화 때 복사하지 않고 항상 이 표에서 읽는다. 거래정지는 장중에도 바뀌어 캐시를 채울 때 종목 정보를 다시 받는다. `administrative`·`trading_halted`는 NULL(모름)을 허용한다 — 토스는 관리종목을 주지 않고 미국 거래정지도 주지 않는다.
 - `candle`은 **토스가 주는 1분봉·일봉만** 저장한다. 3·5·10·30·60분·주·월·년은 조회 시 집계하고 메모리 캐시(파생물 저장 안 함). `is_final=0`은 진행 중인 봉(재연결 시 REST로 덮어씀). 보존: 1분봉 90일, 일봉 영구. KR 일봉은 2022-11-23 이전을 `krx_daily_price`에서 합성하므로 `source`가 다르다.
 - `market_index_quote(index_code PK, value, change_amount, change_ratio, as_of, closed, source, fetched_at)`는 F23 지수 티커의 마지막 값(5분 갱신, 이력 없음, 재시작·리포트용). 일별 종가 이력은 `krx_index_daily`.
 - `exchange_rate`는 토스 환율의 시계열(매수 시점 환율·분기 말 환율 조회용). 최신값은 메모리.
@@ -1373,6 +1376,8 @@ erDiagram
 | V1 | 1 리포 골격 | 4장 전부, 5장 전부, `stock_master`·`stock_warning`·`exchange_rate`·`market_calendar` |
 | V2 | 2 토스·F1~F4 | `candle`, `market_index_quote`, `broker_order`, `lot`, `lot_disposal`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref` |
 | V2.1 | 2 | `lot_disposal`을 `(lot_id, user_id)` 복합 FK로 재생성, `edgar_ticker` 분리(`edgar_entity.code` 제거) |
+| V2.2 | 2 | `stock_master.listing_board` 추가(+인덱스), `stock_warning` 재생성(`administrative`·`trading_halted` NULL 허용, 캐시라 데이터 손실 없음) |
+| V2.3 | 2 | `stock_warning.unknown_warning` 추가(캐시를 비운 뒤, 기본값 0 이 안전으로 읽히지 않게) |
 | V3 | 3 수집·RAG | 9장 전부(`pension_*`, `etf_*`, `translation_*` 포함) |
 | V4 | 4 토론·추천·리포트 | `debate_*`, `stock_outlook_digest`, `industry_digest`, `related_symbol`, `recommendation`, `market_report`, `llm_route`·`llm_budget`·`llm_price`·`llm_usage` |
 | V5 | 5 학습 | `prediction_outcome`, `persona_weight`, `persona_weight_history`, `retrospective` |
@@ -1401,3 +1406,5 @@ erDiagram
 | 2026-09-27 | 3.3 커넥션 풀을 HikariCP 쓰기 풀 1 + 읽기 전용 풀로 확정(readOnly 트랜잭션 라우팅). 5장 `event_log.payload_version` 추가(코드 리뷰 반영) |
 | 2026-09-29 | V2 적용(`V2__trading_orders_lots_market_cache.sql`). 구현에서 더한 열: `candle.currency`·`candle.fetched_at`, KRX 세 표의 `fetched_at`(3.1 외부 자료 규칙), `lot.created_at`·`updated_at`, `lot_disposal.created_at`. 추가 인덱스 `dart_corp(stock_code)`·`edgar_entity(code)`. 물리 FK 는 `lot → app_user`, `lot_disposal → lot` 두 곳. 골든 파일 이름을 `golden-schema.sql` 로 |
 | 2026-09-29 | V2.1: `lot_disposal` 의 사용자를 참조 lot 의 사용자와 복합 FK 로 묶음, 한 CIK 의 여러 티커를 담는 `edgar_ticker` 분리(코드 리뷰 반영) |
+| 2026-09-29 | V2.2: 종목 마스터의 상장 시장 `listing_board`, 경고 캐시의 관리종목·거래정지 "모름(NULL)". 토스 기반 마스터 동기화 규칙(07:00 KST, 시장 단위 상장폐지 표시, 보강 열 보존) |
+| 2026-09-29 | V2.3: 경고 캐시에 뜻을 모르는 유의사항 표시 `unknown_warning`. 종목 정보 누락 시 그 시장을 동기화 실패로 봄 |

@@ -336,6 +336,9 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | 휴장일 `integrated: null` | `TossMarketCalendarAdapter`가 빈 세션 `TradingDay` |
 | 계좌는 현재 BROKERAGE만 | `TossAccountLookup`이 종합매매 계좌 하나를 선택(여럿이면 선택 필요 — 마법사 ③ TODO) |
 | 웹소켓 180초 무수신 종료, 60초 PING, 연결 2개·구독 100건·선언 5회/초, `personal:order` 재연결 뒤 재동기 | `TossRealtimeFeed`: 키 주인별 연결 1개, OkHttp 표준 ping 60초, 구독 전체를 배열 하나로 선언(변경은 250ms 묶음, 비면 `[]`만), 100건 초과 거부. **연결 성공과 구독 확정을 구분**: 선언 `id` 에 맞는 `subscriptions` 승인을 받아야 `FeedState(CONNECTED, accepted, rejected)` 를 알림, 승인이 10초 안에 없거나 `error` 프레임이면 끊고 재연결(`rate-limit-exceeded` 만 1초 뒤 재선언). 재연결 지수 백오프(1초→60초)와 재선언, 재승인 시 `recovered = true` 로 재동기 신호. `personal:order` 는 토픽 코드와 `data.accountSeq` 가 선택 계좌 순번과 같을 때만 받음. 수신 대기열 `TossFeedInbox`: 시세는 종목별 최신값으로 합치고, 내 주문 이벤트는 순서 보장·상한 1000건, 넘치면 끊고 재연결·재동기(읽기 스레드를 막지 않아 2초 막힘 종료도 피함) |
+| `/stocks/all` 은 코드·이름·종류·보통주 여부·ISIN 만, 시장별 전량(실측: KOSPI 2,477 · KOSDAQ 1,825 · KR_ETC 0 · NYSE 2,304 · NASDAQ 4,440 · AMEX 3,897 · US_ETC 455). 신주인수권은 8자리 코드(`2109801G`) | `StockMasterSyncService`: 시장별 목록 → `/stocks` 200건씩 → `stock_master` upsert(07:00 KST 이후 첫 확인, 모든 시장 성공 시에만 동기화 시각 기록). 코드 형식이 맞지 않는 행(신주인수권)은 건너뜀. 빈 목록이면 상장폐지 표시를 하지 않음. RateLimiter stock 5 · stock-all 1 |
+| 매수 유의사항에 관리종목·투자주의 없음, 거래정지는 `/stocks` 의 `koreanMarketDetail`(국내만) | `StockFlags`: 유의사항 + KRX·NXT 거래정지(어느 쪽이든 정지면 정지). `nxtTradingSuspended` 의 null 은 규격상 NXT 미지원 종목이라 정지 아님, NXT 지원 종목인데 null 이면 모름. 모르는 유의사항 종류는 `hasUnknownWarning`. 관리종목·미국 거래정지는 null(모름). 캐시 TTL 10초(`stock_warning`) |
+| 호가는 매번 전체 스냅샷, 국내는 KRX·NXT 합산이라 교차돼 보일 수 있음 | `MarketDataPort.orderBook`(MARKET_DATA 그룹), 통화 불일치는 조회 실패 |
 | 어뷰징 제한(단시간 대량 주문) | 가드레일 분당 자동 주문 상한(PROJECT 8.1, 기본 5회/분) |
 | 1분봉 합 ≠ 일봉 | 3·5·10·30·60분·주·월·년 집계는 1분봉으로, 일봉은 토스 일봉 그대로(재구성하지 않음) |
 | 미국 시세 NBBO 아님 | 가격 표시·가드레일은 참고 시세로 다루고 체결가는 주문 상세 기준 |
@@ -347,3 +350,5 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | 2026-09-29 | 처음 작성. 원문 overview·FAQ·OpenAPI v1.2.19·AsyncAPI v1.2.2를 분석해 정리하고 로컬 사본을 최신으로 갱신 |
 | 2026-09-29 | 13장 웹소켓 적용 메모를 구현 내용으로 갱신 |
 | 2026-09-29 | 13장 웹소켓 메모에 구독 승인 확인·`[]` 해제·계좌 대조·수신 대기열 상한 반영 |
+| 2026-09-29 | 13장에 종목 마스터·매수 유의사항·호가 적용 메모와 시장별 종목 수 실측 추가 |
+| 2026-09-29 | 13장 경고 플래그 메모에 NXT null 의 뜻과 모르는 유의사항 처리 추가 |

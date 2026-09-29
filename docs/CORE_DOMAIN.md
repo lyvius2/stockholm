@@ -91,11 +91,25 @@ public record Symbol(Market market, String code) { ... }
 /** 정규/프리/애프터/휴장. F7 거래 시간 규칙의 입력. */
 public enum MarketSession { PRE, REGULAR, AFTER, CLOSED }
 
-/** 종목 경고 플래그. F4 표시와 F7 제외 필터가 같은 값을 본다. */
-public record StockFlags(boolean investmentWarning, boolean investmentRisk, boolean administrative,
-                         boolean tradingHalted, Optional<LocalDate> listedAt) {
-  public boolean isExcludedFromAutoBuy(LocalDate today, Period newListingWindow) { ... }
+/** 종목 경고 플래그의 현재값. F4 표시와 F7 제외 필터가 같은 값을 본다. 짧은 TTL(10초) 캐시.
+ *  null = 출처가 없어 모름: 관리종목은 토스가 주지 않고, 미국 종목의 거래정지도 주지 않는다. */
+public record StockFlags(Symbol symbol, boolean investmentWarning, boolean investmentRisk, boolean overheated,
+                         boolean liquidationTrading, boolean viStatic, boolean viDynamic,
+                         boolean hasUnknownWarning /* 뜻을 모르는 새 유의사항 종류 */,
+                         Boolean tradingHalted /* KRX·NXT 어느 쪽이든 정지면 true, NXT 지원 종목인데 NXT 값이 없으면 null */,
+                         Boolean administrative, Instant asOf) {
+  boolean hasUnknownState();   // 모르는 값이 하나라도 있음 → F7 제외 필터는 제외
+  static StockFlags of(Symbol s, List<StockWarning> warnings, KrTradingDetail krDetail, Instant asOf);
 }
+/** 종목 마스터의 한 행(토스 종목 정보). 상장일은 신규 상장 제외 필터가 여기서 읽는다. */
+public record StockProfile(Symbol symbol, String name, String englishName, String isin, ListingBoard board,
+                           SecurityType securityType, boolean isCommonShare, ListingStatus status,
+                           LocalDate listedOn, LocalDate delistedOn, BigDecimal sharesOutstanding,
+                           BigDecimal leverageFactor, KrTradingDetail krDetail /* 국내만 */) {
+  boolean isPreferred();   // STOCK 이면서 보통주가 아님
+  String chosung();        // 초성 검색 키(Chosung.of(name))
+}
+public enum ListingBoard { KOSPI, KOSDAQ, KR_ETC, NYSE, NASDAQ, AMEX, US_ETC }   // 각자 Market 을 가짐
 ```
 
 ```java
@@ -375,6 +389,14 @@ public interface MarketDataPort {
   List<Candle> candles(Symbol s, Duration interval, Instant from, Instant to);
   StockFlags flags(Symbol s); Optional<ExchangeRate> exchangeRate(Currency from, Currency to);
 }
+public interface StockCatalogPort {                          // 공용 정보, admin 토스 키
+  List<Symbol> listedSymbols(ListingBoard b);                // 시장별 거래 가능 종목 전체(일 배치)
+  List<StockProfile> profiles(List<Symbol> symbols);         // 최대 200
+  List<StockWarning> warnings(Symbol s);                     // VI 는 수 초 안에 반영
+}
+public interface StockMasterPort { void saveAll(List<StockProfile> p, Instant at); void markDelistedExcept(ListingBoard b, Set<Symbol> listed, Instant at);
+                                   Optional<Instant> lastSyncedAt(); void recordSync(Instant at); }
+public interface StockFlagsCachePort { Optional<StockFlags> find(Symbol s); void save(StockFlags f); }
 public interface MarketCalendarPort { MarketSession sessionAt(Market m, Instant t); boolean isTradingDay(Market m, LocalDate d); }
 public interface RealtimeFeedPort {                          // 구독은 engine이 lease 보유 시 우선
   void declare(UserId owner, Set<FeedTopic> topics);         // 주인별 구독 전체 교체(최대 100), 빈 집합은 전체 해제
@@ -500,3 +522,5 @@ public final class SecretMissingException extends DomainException {}
 | 2026-09-29 | **`TradingPort` 계약 변경(사용자 결정)**: 포트는 증권사가 아는 사실만 돌려줌 — `placeOrder(OrderSubmission)`·`placeAmendment(OrderAmendRequest)`·`cancelOrder` → `OrderReceipt`, `lookupOrder`·`openOrders`·`closedOrders(ClosedOrdersQuery)` → `BrokerOrderRecord`, `holdings` → `BrokerHoldings`, `buyingPower`. 토스 접수 응답에 상태가 없고 증권사는 출처·트리거·lot 을 모르기 때문. `BrokerOrder`·`PortfolioSnapshot` 은 engine 이 로컬 주문 기록·lot 과 합쳐 만듦. `fills`·`snapshot` 은 포트에서 뺌(체결은 주문 레코드의 체결 요약) |
 | 2026-09-29 | `RealtimeFeedPort` 를 토스 웹소켓의 선언형 구독에 맞춰 `declare(owner, topics)`(주인별 구독 전체 교체)·`release`·`addListener(FeedListener)` 로 정함. 도메인 `TradeTick`·`OrderEvent`(`OrderEventType`)·`FeedTopic`·`FeedState`(재연결 시 `recovered`) 추가 |
 | 2026-09-29 | `FeedState` 에 승인 결과 `accepted`·`rejected` 와 `isOrderStreamLive` 추가. CONNECTED 는 연결 성공이 아니라 구독 승인 뒤에만 옴. 본문 `RealtimeFeedPort` 스케치를 현재 계약으로 갱신 |
+| 2026-09-29 | 종목 마스터·경고: `StockProfile`(`ListingBoard`·`SecurityType`·`ListingStatus`·`KrTradingDetail`)·`StockWarning`·`Chosung`, `StockFlags` 를 유의사항 8종 + 거래정지로 넓히고 출처 없는 관리종목·미국 거래정지는 null(모름). 포트 `StockCatalogPort`·`StockMasterPort`·`StockFlagsCachePort`, `MarketDataPort.orderBook`. `listedAt` 은 플래그가 아니라 마스터에서 읽음 |
+| 2026-09-29 | `StockFlags.hasUnknownWarning`·`hasUnknownState`(F7 은 모름을 제외), NXT 지원 종목의 NXT 정지 값 누락은 거래정지 모름(null) |
