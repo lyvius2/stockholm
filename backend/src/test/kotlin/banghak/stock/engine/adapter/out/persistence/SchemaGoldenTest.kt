@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 
 /**
- * 빈 SQLite 에 마이그레이션을 적용한 결과가 골든 파일과 같아야 함. 다르면 `build/schema-actual.sql` 에 실제 스키마를 남기니, 의도한 변경이면 그
- * 내용을 골든 파일로 옮김.
+ * 빈 SQLite 에 마이그레이션을 적용한 결과가 골든 파일과 같아야 함.
+ * 다르면 `build/schema-actual.sql` 에 실제 스키마를 남기니, 의도한 변경이면 그 내용을 골든 파일로 옮김.
  */
 class SchemaGoldenTest : EngineDatabaseTest() {
     @Autowired private lateinit var engineWriteDataSource: HikariDataSource
@@ -42,7 +42,7 @@ class SchemaGoldenTest : EngineDatabaseTest() {
         sql.lines().joinToString(" ") { it.trim() }.replace(Regex("\\s+"), " ")
 
     companion object {
-        private const val GOLDEN = "/schema/golden-v1.sql"
+        private const val GOLDEN = "/schema/golden-schema.sql"
         private val ACTUAL: Path = Path.of("build", "schema-actual.sql")
     }
 }

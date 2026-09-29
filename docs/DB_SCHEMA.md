@@ -1392,3 +1392,4 @@ erDiagram
 | 날짜 | 변경 |
 |---|---|
 | 2026-09-27 | 3.3 커넥션 풀을 HikariCP 쓰기 풀 1 + 읽기 전용 풀로 확정(readOnly 트랜잭션 라우팅). 5장 `event_log.payload_version` 추가(코드 리뷰 반영) |
+| 2026-09-29 | V2 적용(`V2__trading_orders_lots_market_cache.sql`). 구현에서 더한 열: `candle.currency`·`candle.fetched_at`, KRX 세 표의 `fetched_at`(3.1 외부 자료 규칙), `lot.created_at`·`updated_at`, `lot_disposal.created_at`. 추가 인덱스 `dart_corp(stock_code)`·`edgar_entity(code)`. 물리 FK 는 `lot → app_user`, `lot_disposal → lot` 두 곳. 골든 파일 이름을 `golden-schema.sql` 로 |
