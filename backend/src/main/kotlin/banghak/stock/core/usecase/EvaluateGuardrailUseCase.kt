@@ -1,6 +1,7 @@
 package banghak.stock.core.usecase
 
 import banghak.stock.core.domain.guardrail.GuardrailVerdict
+import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.OrderIntent
 
 /**
@@ -10,5 +11,9 @@ import banghak.stock.core.domain.trading.OrderIntent
  * 구현은 계좌 스냅샷·장 달력·시세·환율을 모아 컨텍스트를 만들고 규칙 묶음을 돌림.
  */
 interface EvaluateGuardrailUseCase {
-    fun evaluate(intent: OrderIntent): GuardrailVerdict
+    /**
+     * 주문 의도를 판정함.
+     * [clientOrderId] 는 이 주문을 보낼 때 쓸 멱등 키이며 같은 키의 재접수를 막는 데 씀.
+     */
+    fun evaluate(intent: OrderIntent, clientOrderId: ClientOrderId): GuardrailVerdict
 }

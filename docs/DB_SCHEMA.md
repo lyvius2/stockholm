@@ -585,6 +585,7 @@ erDiagram
 - `broker_order`는 **증권사 캐시**(③)다. ORDER_MANAGEMENT 4장의 열에 도메인 `OrderIntent`·토스 상세 응답이 요구하는 열(`kind`, `time_in_force`, `order_amount`, 수수료·세금, 체결·취소 시각, 트리거)을 더했다. 토스는 건별 체결을 주지 않으므로 별도 `fill` 표를 두지 않고 주문 1건 = 체결 1건으로 이 표에 둔다.
 - `origin`은 `OrderOrigin {MANUAL, AI_RECOMMENDED, AUTO_BUY, AUTO_SELL}`로 두고 `lot.origin`은 `BuyOrigin` 그대로. CORE_DOMAIN에 `OrderOrigin`을 추가해야 한다(12장 결정 3).
 - `client_order_id`는 NULL 허용(정정·취소로 생긴 주문에 토스가 원 키를 이어 주는지 [확인 필요]). `(user_id, client_order_id)` 부분 유일 인덱스는 벤더별로 달라 두지 않고 애플리케이션이 `lookup` 후 삽입한다.
+- `order_submission`은 **주문 요청 기록**(④ 상태, V2.4). 멱등 키(`client_order_id`) PK 로 한 행이며 증권사에 보내기 **전에** `SENDING` 으로 남기고(같은 트랜잭션에 `OrderIntended`), 결과에 따라 `ACCEPTED`(`broker_order_id`)·`UNKNOWN`·`REJECTED`·`NOT_SENT`·`NEEDS_REVIEW` 로 바꾼다. 같은 키의 두 번째 요청은 이 행으로 첫 결과를 돌려받는다. `SENDING`·`UNKNOWN` 은 확인 대상이라 접수 뒤 기록 실패·데몬 재시작에도 주문 목록 대조가 이어진다. 요청 내용(의도 전체·고액 확인)을 담아 확인에 쓴다. 물리 FK 없음(`broker_order` 와 같음).
 - `lot`은 `LotOpened/Reduced/Closed/AgedOutOfAutoBuy`의 projection(②). 청산 lot도 남긴다. `fx_*`는 US면 NOT NULL(값 객체가 검증). 노출액 계산 입력은 `origin, bought_at, remaining_quantity, unit_cost, fx_*`.
 - `lot_disposal`은 매도 체결이 lot을 **선입선출**로 소진한 기록(`LotReduced`·`LotClosed` payload의 projection, ②). 매도 1건이 여러 lot을 소진하면 lot마다 한 행. F20 거래내역 손익 탭·F2·F17의 원천이며 원화 실현손익 = `realized_krw` = 매매손익 + `fx_pnl_krw`. 물리 FK는 `lot`에만 두며 **`(lot_id, user_id)` 복합 FK**라 다른 사용자의 lot을 가리키는 소진 기록은 DB가 거부한다(`lot`에 `(lot_id, user_id)` 유일 인덱스). [제안 2026-09-25]
 - `portfolio_cache`는 마지막 스냅샷(패널의 "지연·실패 시각" 표시용). `snapshot_json` 안에 계좌번호는 없다(끝 4자리도 넣지 않음, `credential_meta`에 있음).
@@ -1378,6 +1379,7 @@ erDiagram
 | V2.1 | 2 | `lot_disposal`을 `(lot_id, user_id)` 복합 FK로 재생성, `edgar_ticker` 분리(`edgar_entity.code` 제거) |
 | V2.2 | 2 | `stock_master.listing_board` 추가(+인덱스), `stock_warning` 재생성(`administrative`·`trading_halted` NULL 허용, 캐시라 데이터 손실 없음) |
 | V2.3 | 2 | `stock_warning.unknown_warning` 추가(캐시를 비운 뒤, 기본값 0 이 안전으로 읽히지 않게) |
+| V2.4 | 2 | `order_submission`(주문 요청 기록, 멱등 키 PK) |
 | V3 | 3 수집·RAG | 9장 전부(`pension_*`, `etf_*`, `translation_*` 포함) |
 | V4 | 4 토론·추천·리포트 | `debate_*`, `stock_outlook_digest`, `industry_digest`, `related_symbol`, `recommendation`, `market_report`, `llm_route`·`llm_budget`·`llm_price`·`llm_usage` |
 | V5 | 5 학습 | `prediction_outcome`, `persona_weight`, `persona_weight_history`, `retrospective` |
@@ -1407,4 +1409,6 @@ erDiagram
 | 2026-09-29 | V2 적용(`V2__trading_orders_lots_market_cache.sql`). 구현에서 더한 열: `candle.currency`·`candle.fetched_at`, KRX 세 표의 `fetched_at`(3.1 외부 자료 규칙), `lot.created_at`·`updated_at`, `lot_disposal.created_at`. 추가 인덱스 `dart_corp(stock_code)`·`edgar_entity(code)`. 물리 FK 는 `lot → app_user`, `lot_disposal → lot` 두 곳. 골든 파일 이름을 `golden-schema.sql` 로 |
 | 2026-09-29 | V2.1: `lot_disposal` 의 사용자를 참조 lot 의 사용자와 복합 FK 로 묶음, 한 CIK 의 여러 티커를 담는 `edgar_ticker` 분리(코드 리뷰 반영) |
 | 2026-09-29 | V2.2: 종목 마스터의 상장 시장 `listing_board`, 경고 캐시의 관리종목·거래정지 "모름(NULL)". 토스 기반 마스터 동기화 규칙(07:00 KST, 시장 단위 상장폐지 표시, 보강 열 보존) |
+| 2026-09-29 | `broker_order.trigger_type` 값: `MANUAL`·`MANUAL_AMEND`·`RECOMMENDATION`·`AUTO_BUY`·`AUTO_SELL`·`EXTERNAL`(토스 앱 등 밖에서 낸 주문, 실시간 채널로만 앎). `status` 는 도메인 이름(`PARTIALLY_FILLED`·`CANCELLED`·`PENDING_AMEND`…). 접수 기록은 실시간 이벤트가 먼저 만든 행의 상태·체결을 덮지 않음 |
 | 2026-09-29 | V2.3: 경고 캐시에 뜻을 모르는 유의사항 표시 `unknown_warning`. 종목 정보 누락 시 그 시장을 동기화 실패로 봄 |
+| 2026-09-29 | V2.4: 주문 요청 기록 `order_submission`(보내기 전 기록, 같은 키의 재요청은 첫 결과, 결과 모름 확인의 원천) |

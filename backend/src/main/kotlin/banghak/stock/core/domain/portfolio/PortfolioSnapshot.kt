@@ -6,8 +6,7 @@ import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.Money
-import banghak.stock.core.domain.trading.BrokerOrder
-import banghak.stock.core.domain.trading.Fill
+import banghak.stock.core.domain.trading.BrokerOrderRecord
 import java.time.Duration
 import java.time.Instant
 
@@ -30,6 +29,7 @@ data class DepositBalance(val cashBuyingPower: Map<Currency, Money>, val asOf: I
 /**
  * 가드레일이 보는 "그 순간의 계좌".
  * 전부 증권사에서 온 값에 로컬 lot 출처 태깅을 더한 것임.
+ * [openOrders] 는 증권사의 미체결 전체라 토스 앱에서 낸 주문도 들어 있음.
  * 오래된 스냅샷으로는 주문하지 않음([isStale] 이면 가드레일이 거부).
  */
 data class PortfolioSnapshot(
@@ -37,11 +37,13 @@ data class PortfolioSnapshot(
     val market: Market,
     val positions: List<Position>,
     val deposit: DepositBalance,
-    val openOrders: List<BrokerOrder>,
-    val todayFills: List<Fill>,
+    val openOrders: List<BrokerOrderRecord>,
     val asOf: Instant,
 ) {
     init {
+        openOrders
+            .firstOrNull { it.symbol.market != market }
+            ?.let { throw InvalidValueException("$market 스냅샷에 ${it.symbol} 주문이 섞임") }
         positions
             .firstOrNull { it.symbol.market != market || it.userId != userId }
             ?.let {

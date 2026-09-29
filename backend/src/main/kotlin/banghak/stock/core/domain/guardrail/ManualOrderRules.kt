@@ -78,7 +78,7 @@ class OppositeSideOpenOrder : Guardrail {
         val intent = context.intent
         val opposite =
             context.snapshot.openOrders.any {
-                it.isOpen && it.intent.symbol == intent.symbol && it.intent.side != intent.side
+                it.isOpen && it.symbol == intent.symbol && it.side != intent.side
             }
         return if (opposite) Violation(name, "같은 종목의 반대 방향 미체결 주문이 있음") else Clear
     }
@@ -94,14 +94,11 @@ class DuplicateIntent : Guardrail {
 
     override fun check(context: GuardrailContext): GuardrailFinding {
         val intent = context.intent
-        val sameKey =
-            (context.snapshot.openOrders + context.todayOrders).any {
-                it.clientOrderId == context.clientOrderId
-            }
+        val sameKey = context.todayOrders.any { it.clientOrderId == context.clientOrderId }
         if (sameKey) return Violation(name, "같은 멱등 키(${context.clientOrderId})의 주문이 오늘 이미 있음")
         val sameSideOpen =
             context.snapshot.openOrders.any {
-                it.isOpen && it.intent.symbol == intent.symbol && it.intent.side == intent.side
+                it.isOpen && it.symbol == intent.symbol && it.side == intent.side
             }
         if (!sameSideOpen) return Clear
         return if (intent.isAutomatic) Violation(name, "같은 종목·방향의 미체결 주문이 이미 있음")
@@ -115,7 +112,7 @@ class DuplicateIntent : Guardrail {
  * 해외 주문은 환율이 있어야 판정할 수 있고, 시장가 매도는 현재가가 있어야 금액을 앎.
  */
 class HighValueOrder : Guardrail {
-    override val name = "HighValueOrder"
+    override val name = NAME
 
     override fun check(context: GuardrailContext): GuardrailFinding {
         val notionalKrw =
@@ -152,6 +149,11 @@ class HighValueOrder : Guardrail {
 
     private fun isFresh(asOf: Instant, maxAge: Duration, context: GuardrailContext): Boolean =
         Duration.between(asOf, context.now) <= maxAge
+
+    companion object {
+        /** 이 노트를 사람이 확인하면 증권사에 고액 확인(`confirmHighValueOrder`)을 보냄. */
+        const val NAME = "HighValueOrder"
+    }
 }
 
 /**

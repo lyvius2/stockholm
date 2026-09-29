@@ -16,7 +16,7 @@ import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.TimeInForce
 import banghak.stock.core.domain.trading.TradingFixtures
 import banghak.stock.core.domain.trading.TradingFixtures.autoBuy
-import banghak.stock.core.domain.trading.TradingFixtures.brokerOrder
+import banghak.stock.core.domain.trading.TradingFixtures.brokerRecord
 import banghak.stock.core.domain.trading.TradingFixtures.krw
 import banghak.stock.core.domain.trading.TradingFixtures.limitBuy
 import banghak.stock.core.domain.trading.TradingFixtures.manual
@@ -151,10 +151,10 @@ class ManualOrderRulesTest {
         fun oppositeAndDuplicate() {
             val buy = limitBuy()
             val sell = buy.copy(side = OrderSide.SELL)
-            val openSell = brokerOrder(intent = sell, brokerOrderId = "S-1")
-            val openBuy = brokerOrder(intent = buy, brokerOrderId = "B-1")
+            val openSell = brokerRecord(intent = sell, brokerOrderId = "S-1")
+            val openBuy = brokerRecord(intent = buy, brokerOrderId = "B-1")
             val filledSell =
-                brokerOrder(
+                brokerRecord(
                     intent = sell,
                     status = OrderStatus.FILLED,
                     filled = Quantity.of(10),
@@ -267,11 +267,11 @@ class ManualOrderRulesTest {
                 now = kst("07:00"),
                 openOrders =
                     listOf(
-                        brokerOrder(
+                        brokerRecord(
                             intent = buy.copy(side = OrderSide.SELL),
                             brokerOrderId = "S-1",
                         ),
-                        brokerOrder(intent = buy, brokerOrderId = "B-1"),
+                        brokerRecord(intent = buy, brokerOrderId = "B-1"),
                     ),
                 snapshotAsOf = kst("06:00"),
             )

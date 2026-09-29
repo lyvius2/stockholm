@@ -10,6 +10,7 @@ import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.portfolio.DepositBalance
 import banghak.stock.core.domain.portfolio.PortfolioSnapshot
 import banghak.stock.core.domain.trading.BrokerOrder
+import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.Quote
@@ -83,7 +84,7 @@ object GuardrailFixtures {
     fun snapshot(
         intent: OrderIntent,
         asOf: Instant,
-        openOrders: List<BrokerOrder> = emptyList(),
+        openOrders: List<BrokerOrderRecord> = emptyList(),
     ): PortfolioSnapshot {
         val currency = intent.market.currency
         return PortfolioSnapshot(
@@ -92,7 +93,6 @@ object GuardrailFixtures {
             emptyList(),
             DepositBalance(mapOf(currency to Money.zero(currency)), asOf),
             openOrders,
-            emptyList(),
             asOf,
         )
     }
@@ -102,7 +102,7 @@ object GuardrailFixtures {
         intent: OrderIntent,
         now: Instant,
         tradingDay: TradingDay = if (intent.market == Market.KR) krDay else usDay,
-        openOrders: List<BrokerOrder> = emptyList(),
+        openOrders: List<BrokerOrderRecord> = emptyList(),
         todayOrders: List<BrokerOrder> = emptyList(),
         quote: Quote? = null,
         fx: ExchangeRate? = usdKrw(now),

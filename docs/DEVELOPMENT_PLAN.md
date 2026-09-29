@@ -49,7 +49,7 @@
 
 ## 4. 2단계 — 토스 연동과 수동 매매 (목표 4~6주) → 첫 사용 가능 버전
 
-**목표**: F1 매수·매도, F3 차트, F4 종목 검색·관심종목, F11 급등락, F14 주문 관리, F16 자산 조회, F18 평가금액, F19 시작 종목, F20 거래내역(손익·체결·매매), F23 지수 티커. 승인 기반 소액 실주문 1회 검증.
+**목표**: F1 매수·매도(조건주문 SINGLE·OCO·OTO 포함), F3 차트, F4 종목 검색·관심종목, F11 급등락, F14 주문 관리, F16 자산 조회, F18 평가금액, F19 시작 종목, F20 거래내역(손익·체결·매매), F23 지수 티커. 승인 기반 소액 실주문 1회 검증.
 **읽을 문서**: [EXTERNAL_APIS.md](EXTERNAL_APIS.md) 1.1·1.2, PROJECT 8.1·F1·F3·F4·F11·11.3, [ORDER_MANAGEMENT_DESIGN.md](ORDER_MANAGEMENT_DESIGN.md), [PORTFOLIO_PANEL_DESIGN.md](PORTFOLIO_PANEL_DESIGN.md), [TRADE_HISTORY_DESIGN.md](TRADE_HISTORY_DESIGN.md), [ASSET_DESIGN.md](ASSET_DESIGN.md), [FIRST_RUN_DESIGN.md](FIRST_RUN_DESIGN.md) 6장, [KRX_DESIGN.md](KRX_DESIGN.md), [DB_SCHEMA.md](DB_SCHEMA.md) 6·7장.
 
 착수 순서:
@@ -58,7 +58,7 @@
 2. `core` 주문·보유 TDD: `OrderIntent`·`OrderKind`·`TimeInForce`·`OrderOrigin`·`OrderTrigger`, `BrokerOrder`(정정 체인·`canAmend/canCancel/remaining`), `OrderStatus` 매핑·`UNKNOWN`, `Lot`·`Position`·`ProfitLoss`, `PortfolioSnapshot`·`DepositBalance`, `StartStockResolver`(⑴⑵⑶, 2초 상한, fake 포트). 수동 주문 가드레일(`MarketOrderScope`, 고액 확인, 반대 방향 미체결 409 처리).
 3. V2 마이그레이션: `candle`, `broker_order`, `lot`, `lot_disposal`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref`.
 4. 토스 어댑터: `TradingPort`(주문·정정·취소·조회, `clientOrderId` 멱등·10분 규칙·타임아웃 시 조회 후 결정), `MarketDataPort`, `MarketCalendarPort`, `RealtimeFeedPort`(재연결·`OPEN` 재동기·LOSSY 보정), 그룹별 rate limiter, 403(IP)·429 도메인 예외. 종목 마스터 동기화(토스 + KRX + DART 기업개황 → `stock_master`), `stock_warning` 짧은 TTL.
-5. 데몬 서비스: 분봉 집계(1분→3·5·10·30·60·주·월·년), 이동평균·거래량 평균, 로컬 WebSocket(초당 4회 묶음), 주문 서비스(모달 → 가드레일 → 주문 → `personal:order` → `broker_order`·`lot` projection), 정정·취소(체인, 한도 초과 확인 창은 6단계 전까지 항상 통과), 주문 내역 커서 적재, lot 선입선출 매칭(`lot_disposal`)과 실현손익·환차손익 계산(F20 손익 탭), F18 계산(`BigDecimal`), F19 시작 종목·`lastViewedStock` 디바운스, 급등락 재정렬(1d 랭킹 100 → 현재가 다건).
+5. 데몬 서비스: 분봉 집계(1분→3·5·10·30·60·주·월·년), 이동평균·거래량 평균, 로컬 WebSocket(초당 4회 묶음), 주문 서비스(모달 → 가드레일 → 주문 → `personal:order` → `broker_order`·`lot` projection, 멱등 키는 화면이 주고 요청은 보내기 전에 `order_submission` 에 기록, 결과 모름은 주문 목록을 읽어 확인하고 다시 보내지 않음), 조건주문(등록·수정·취소·조회, OCO·OTO 종목당 1개, 국내는 KRX 정규장에서만 발동), 정정·취소(체인, 한도 초과 확인 창은 6단계 전까지 항상 통과), 주문 내역 커서 적재, lot 선입선출 매칭(`lot_disposal`)과 실현손익·환차손익 계산(F20 손익 탭), F18 계산(`BigDecimal`), F19 시작 종목·`lastViewedStock` 디바운스, 급등락 재정렬(1d 랭킹 100 → 현재가 다건).
 6. `CredentialVerifier` 토스·KRX·Massive·DART·네이버·공공데이터포털·Slack 실제 검증 호출로 교체(형식 검사 → 실호출).
 7. 금융결제원: 학습 테스트(테스트베드/운영 확인) → `IdentityPort`·`AssetPort` 어댑터(동의 브라우저·`127.0.0.1` 콜백·토큰 Keychain) → 자산 모달. 조회 결과는 저장하지 않는다.
 8. 화면: 네 영역(차트 두 모드·기간 탭, 가격·호가·상태 칩·ⓘ 버튼 자리, 3번 영역 세 탭·주문 모달·정정 모달·취소 확인, 토론 영역은 자리만), 서랍(관심종목·급등락, 좌우 배타 규칙), 종목 검색 팝오버(초성), 사용자 드롭다운, 평가금액 패널, 거래내역 패널(세 탭·기간 단위, F18과 40:60), F21 세 모달(회원정보 변경·알림 설정·회원 관리/공유 키), 조회 제한 모드 배너, 사유 토스트, 설정 저장·복원(비율·토글·서랍 폭).
@@ -175,3 +175,9 @@
 - HANDOFF.md의 "지금 상태"에 **단계·번호**(예: "2단계 4번 진행 중, 토스 어댑터 `TradingPort.amend`까지")로 적는다.
 - 단계가 끝나면 이 문서의 완료 기준을 하나씩 체크한 결과를 HANDOFF에 남기고 PROJECT.md 12장의 단계 표기를 갱신한다.
 - 예상 기간은 1인 기준 참고값이다. 늘어나면 범위를 줄이지 말고 기간을 늘린다(가드레일·테스트를 빼지 않는다).
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-29 | 2단계에 조건주문 포함(사용자 결정), 주문 서비스의 결과 모름 확인 방식 |

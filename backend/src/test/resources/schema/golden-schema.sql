@@ -34,6 +34,10 @@ CREATE INDEX idx_lot_user_origin_time ON lot (user_id, origin, bought_at);
 CREATE INDEX idx_lot_user_symbol_closed ON lot (user_id, market, code, closed_at);
 -- index idx_notification_user_acked
 CREATE INDEX idx_notification_user_acked ON notification (user_id, acked_at);
+-- index idx_order_submission_user_broker
+CREATE INDEX idx_order_submission_user_broker ON order_submission (user_id, broker_order_id);
+-- index idx_order_submission_user_state
+CREATE INDEX idx_order_submission_user_state ON order_submission (user_id, state);
 -- index idx_persona_definition_user
 CREATE INDEX idx_persona_definition_user ON persona_definition (user_id);
 -- index idx_recovery_code_user
@@ -100,6 +104,8 @@ CREATE TABLE market_calendar ( market TEXT NOT NULL, trading_date TEXT NOT NULL,
 CREATE TABLE market_index_quote ( index_code TEXT NOT NULL PRIMARY KEY, value TEXT NOT NULL, change_amount TEXT, change_ratio TEXT, as_of TEXT, closed INTEGER NOT NULL DEFAULT 0, source TEXT NOT NULL, fetched_at TEXT NOT NULL );
 -- table notification
 CREATE TABLE notification ( notification_id TEXT NOT NULL PRIMARY KEY, user_id TEXT NOT NULL, kind TEXT NOT NULL, dedupe_key TEXT NOT NULL, title TEXT NOT NULL, body TEXT, link_json TEXT, created_at TEXT NOT NULL, read_at TEXT, acked_at TEXT, slack_sent_at TEXT );
+-- table order_submission
+CREATE TABLE order_submission ( client_order_id TEXT NOT NULL PRIMARY KEY, user_id TEXT NOT NULL, device_id TEXT NOT NULL, market TEXT NOT NULL, code TEXT NOT NULL, side TEXT NOT NULL, kind TEXT NOT NULL, time_in_force TEXT NOT NULL, limit_price_amount TEXT, limit_price_currency TEXT, quantity TEXT, order_amount_amount TEXT, order_amount_currency TEXT, origin TEXT NOT NULL, trigger_type TEXT NOT NULL, trigger_json TEXT, intended_at TEXT NOT NULL, high_value_confirmed INTEGER NOT NULL, state TEXT NOT NULL, broker_order_id TEXT, reason TEXT, sent_at TEXT NOT NULL, updated_at TEXT NOT NULL );
 -- table persona_definition
 CREATE TABLE persona_definition ( persona_id TEXT NOT NULL, version INTEGER NOT NULL, user_id TEXT NOT NULL REFERENCES app_user (user_id) ON DELETE CASCADE, emoji TEXT, name TEXT NOT NULL, role TEXT NOT NULL, stance TEXT, prompt_snapshot TEXT NOT NULL, query_template_json TEXT, is_current INTEGER NOT NULL DEFAULT 1, created_at TEXT NOT NULL, PRIMARY KEY (persona_id, version) );
 -- table portfolio_cache

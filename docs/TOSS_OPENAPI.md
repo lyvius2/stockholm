@@ -324,7 +324,7 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | 401 `token-revoked`·`expired-token` | `TossTokenAuthenticator`가 한 번만 갱신·재시도, 두 번째 401은 `BrokerAccessDeniedException` |
 | 그룹별 초당 한도 | Resilience4j RateLimiter 인스턴스(`application-engine.yml`): market-data 15·chart 20·market-info 3·order 10·order-history 5·order-info 3(피크 기준)·asset 5·account 1 |
 | 주문 접수 응답에 상태 없음, 출처를 모름 | `TradingPort`는 `OrderReceipt`·`BrokerOrderRecord`만 반환(CORE_DOMAIN Changes 2026-09-29) |
-| `clientOrderId` 36자·10분·같은 키 다른 내용 422 | `ClientOrderId`(26자 결정적/ULID), 결과 모름은 조회 후 결정, 409 `request-in-progress`는 결과 모름 |
+| `clientOrderId` 36자·10분·같은 키 다른 내용 422, 같은 키 재요청은 이전 결과를 그대로 돌려줌. **주문 조회·상세(`Order`)에는 `clientOrderId` 가 없음** | `ClientOrderId`(26자 결정적/ULID, 수동은 화면이 줌), 409 `request-in-progress`는 결과 모름. 결과 모름은 다시 보내지 않음(첫 요청이 안 닿았으면 새 주문이 됨) — `ManualOrderService` 가 미체결·종료 목록을 읽어 속성으로 대조(`SubmissionMatcher`) |
 | 시장가 범위·소수점·금액 주문 시간 | `OrderIntent` 형태 불변식 + 가드레일 `MarketOrderScope` |
 | 1억 확인·30억 한도 | 가드레일 `HighValueOrder`(노트·거부), `OrderSubmission.isHighValueConfirmed` |
 | 반대 방향 미체결 409 | 가드레일 `OppositeSideOpenOrder`로 선제 차단 |
@@ -352,3 +352,4 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | 2026-09-29 | 13장 웹소켓 메모에 구독 승인 확인·`[]` 해제·계좌 대조·수신 대기열 상한 반영 |
 | 2026-09-29 | 13장에 종목 마스터·매수 유의사항·호가 적용 메모와 시장별 종목 수 실측 추가 |
 | 2026-09-29 | 13장 경고 플래그 메모에 NXT null 의 뜻과 모르는 유의사항 처리 추가 |
+| 2026-09-29 | 13장: 멱등 키 재요청의 의미, 주문 조회에 멱등 키가 없다는 사실, 결과 모름은 읽기 전용 대조로 확인 |

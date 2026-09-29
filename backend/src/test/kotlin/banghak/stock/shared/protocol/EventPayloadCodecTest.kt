@@ -24,7 +24,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-/** 이벤트 36종 전부가 JSON 을 거쳐 같은 값으로 돌아오고, 금액 자릿수가 보존됨. */
+/** 이벤트 37종 전부가 JSON 을 거쳐 같은 값으로 돌아오고, 금액 자릿수가 보존됨. */
 class EventPayloadCodecTest {
     private val codec = EventPayloadCodec()
     private val t0 = Instant.parse("2026-09-27T00:00:00Z")
@@ -91,6 +91,7 @@ class EventPayloadCodecTest {
                 Money.of("0", Currency.KRW),
             ),
             OrderResultUnknown(key, "timeout"),
+            OrderRejected(key, "insufficient-buying-power"),
             GuardrailEvaluated(key, false, listOf("TotalExposureCap", "DailyBuyCap")),
             AutomationSettingChanged(Market.KR, OrderSide.BUY, ExecutionStage.APPROVAL_REQUIRED),
             LimitsLowered("totalExposure.KR", "9000000"),
@@ -127,7 +128,7 @@ class EventPayloadCodecTest {
         )
 
     @Test
-    @DisplayName("이벤트 36종 전부가 JSON 왕복 뒤 같은 값임")
+    @DisplayName("이벤트 37종 전부가 JSON 왕복 뒤 같은 값임")
     fun everyEventKindRoundTrips() {
         val covered = samples.map { it::class }.toSet()
         assertThat(covered).containsExactlyInAnyOrderElementsOf(DomainEvent::class.sealedSubclasses)

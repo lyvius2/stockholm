@@ -44,6 +44,13 @@ class GuardrailViolationException(val violations: List<String>) :
     DomainException("가드레일 위반: " + violations.joinToString("; "))
 
 /**
+ * 가드레일이 사람의 확인을 요구하는 노트를 남겼는데 확인하지 않았음.
+ * 화면은 [notes] 를 확인 창에 보이고, 사람이 확인하면 규칙 이름을 붙여 다시 냄.
+ */
+class ConfirmationRequiredException(val notes: List<String>) :
+    DomainException("확인이 필요함: " + notes.joinToString("; "))
+
+/**
  * 증권사가 요청을 거부함(허용 IP 미등록, 키 거부).
  * 재시도로 풀리지 않으므로 사용자에게 IP 등록·키 확인을 안내함.
  */

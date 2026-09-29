@@ -49,6 +49,32 @@ object TradingFixtures {
             now,
         )
 
+    fun brokerRecord(
+        intent: OrderIntent = limitBuy(),
+        status: OrderStatus = OrderStatus.PENDING,
+        filled: Quantity = Quantity.ZERO,
+        brokerOrderId: String = "B-1",
+    ): BrokerOrderRecord =
+        BrokerOrderRecord(
+            brokerOrderId = brokerOrderId,
+            symbol = intent.symbol,
+            side = intent.side,
+            kind = intent.kind,
+            timeInForce = intent.timeInForce,
+            limitPrice = intent.limitPrice,
+            quantity = intent.quantity,
+            orderAmount = intent.orderAmount,
+            status = status,
+            filledQuantity = filled,
+            averageFilledPrice = null,
+            filledAmount = null,
+            fee = null,
+            tax = null,
+            orderedAt = now,
+            filledAt = null,
+            canceledAt = null,
+        )
+
     fun brokerOrder(
         intent: OrderIntent = limitBuy(),
         status: OrderStatus = OrderStatus.PENDING,

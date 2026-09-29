@@ -17,7 +17,7 @@ import java.time.Instant
  * 규칙은 이 객체만 봄.
  * 생성 시 주문·스냅샷·거래일·현재가가 같은 사용자·시장·종목인지 검사함.
  * 다른 사용자나 다른 시장의 데이터로는 판정하지 않음.
- * [todayOrders] 는 오늘 낸 주문 전체(체결·취소 포함)이며 같은 멱등 키의 재접수를 막는 데 씀.
+ * [todayOrders] 는 Stockholm 이 오늘 낸 주문 전체(체결·취소 포함)이며 같은 멱등 키의 재접수를 막는 데 씀.
  */
 data class GuardrailContext(
     val intent: OrderIntent,
@@ -38,7 +38,7 @@ data class GuardrailContext(
             throw InvalidValueException("거래일 시장 ${tradingDay.market} 이 주문 시장 ${intent.market} 과 다름")
         if (quote != null && quote.symbol != intent.symbol)
             throw InvalidValueException("현재가 종목 ${quote.symbol} 이 주문 종목 ${intent.symbol} 과 다름")
-        (snapshot.openOrders + todayOrders)
+        todayOrders
             .firstOrNull { it.intent.userId != intent.userId }
             ?.let { throw InvalidValueException("다른 사용자의 주문이 섞임: ${it.brokerOrderId}") }
     }

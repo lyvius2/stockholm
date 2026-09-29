@@ -1,6 +1,9 @@
 package banghak.stock.core.domain.eventlog
 
-/** 이벤트 종류 → 동기화 범위. 표는 이곳 하나뿐이며 `when`이 모든 이벤트를 강제로 덮음. */
+/**
+ * 이벤트 종류 → 동기화 범위.
+ * 표는 이곳 하나뿐이며 `when`이 모든 이벤트를 강제로 덮음.
+ */
 object SyncScopes {
     fun of(event: DomainEvent): SyncScope =
         when (event) {
@@ -15,6 +18,7 @@ object SyncScopes {
             is OrderStatusChanged,
             is OrderFilled,
             is OrderResultUnknown,
+            is OrderRejected,
             is GuardrailEvaluated,
             is SimulatedOrderRecorded -> SyncScope.LOCAL
             is AutomationSettingChanged,

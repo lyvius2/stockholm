@@ -20,8 +20,7 @@ class PortfolioSnapshotTest {
     @Test
     @DisplayName("정확히 maxAge 만큼 지난 스냅샷은 쓸 수 있고 1초 더 지나면 stale 임")
     fun staleBoundary() {
-        val snapshot =
-            PortfolioSnapshot(user, Market.KR, emptyList(), deposit, emptyList(), emptyList(), now)
+        val snapshot = PortfolioSnapshot(user, Market.KR, emptyList(), deposit, emptyList(), now)
         val maxAge = Duration.ofSeconds(10)
         assertThat(snapshot.isStale(now.plus(maxAge), maxAge)).isFalse()
         assertThat(snapshot.isStale(now.plus(maxAge).plusSeconds(1), maxAge)).isTrue()
@@ -36,7 +35,6 @@ class PortfolioSnapshotTest {
                     Market.US,
                     listOf(Position(user, lot().symbol, listOf(lot()))),
                     deposit,
-                    emptyList(),
                     emptyList(),
                     now,
                 )

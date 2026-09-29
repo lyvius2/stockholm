@@ -208,9 +208,10 @@ public record Position(Symbol symbol, List<Lot> openLots) {
   public Quantity quantityFrom(BuyOrigin origin);
 }
 
-/** 가드레일이 보는 "그 순간의 계좌". 전부 증권사 API에서 온 값 + 로컬 lot 태깅. */
+/** 가드레일이 보는 "그 순간의 계좌". 전부 증권사 API에서 온 값 + 로컬 lot 태깅.
+ *  openOrders 는 증권사 미체결 전체(BrokerOrderRecord)라 토스 앱에서 낸 주문도 들어 있다. */
 public record PortfolioSnapshot(UserId userId, Market market, List<Position> positions, DepositBalance deposit,
-                                List<BrokerOrder> openOrders, List<Fill> todayFills, Instant asOf) {
+                                List<BrokerOrderRecord> openOrders, Instant asOf) {
   public boolean isStale(Instant now, Duration maxAge)   // 오래됐으면 가드레일은 REJECT(fail-safe)
 }
 public record DepositBalance(Money available, Money total, Instant asOf) {}
@@ -524,3 +525,4 @@ public final class SecretMissingException extends DomainException {}
 | 2026-09-29 | `FeedState` 에 승인 결과 `accepted`·`rejected` 와 `isOrderStreamLive` 추가. CONNECTED 는 연결 성공이 아니라 구독 승인 뒤에만 옴. 본문 `RealtimeFeedPort` 스케치를 현재 계약으로 갱신 |
 | 2026-09-29 | 종목 마스터·경고: `StockProfile`(`ListingBoard`·`SecurityType`·`ListingStatus`·`KrTradingDetail`)·`StockWarning`·`Chosung`, `StockFlags` 를 유의사항 8종 + 거래정지로 넓히고 출처 없는 관리종목·미국 거래정지는 null(모름). 포트 `StockCatalogPort`·`StockMasterPort`·`StockFlagsCachePort`, `MarketDataPort.orderBook`. `listedAt` 은 플래그가 아니라 마스터에서 읽음 |
 | 2026-09-29 | `StockFlags.hasUnknownWarning`·`hasUnknownState`(F7 은 모름을 제외), NXT 지원 종목의 NXT 정지 값 누락은 거래정지 모름(null) |
+| 2026-09-29 | 주문 서비스 착수: `PortfolioSnapshot.openOrders` 를 증권사 기록(`BrokerOrderRecord`)으로 바꾸고 쓰는 곳이 없는 `todayFills` 를 뺌(토스 앱 주문도 반대 방향·중복 검사에 보이게, 앱의 국내 시장가 주문처럼 `OrderIntent` 로 표현할 수 없는 주문도 담김). `GuardrailContext.todayOrders` 만 Stockholm 의 주문(멱등 키 검사). `EvaluateGuardrailUseCase.evaluate(intent, clientOrderId)`. usecase `PlaceManualOrderUseCase`(`ManualOrderRequest(clientOrderId, intent, confirmedRules)` — 멱등 키는 화면이 줌 → `OrderPlacement.Accepted`/`Pending`/`NeedsReview`)·`ResolvePendingOrdersUseCase`(읽기 전용), `SubmissionState`·`SubmissionRecord`·`SubmissionMatcher`(결과 모름 요청을 주문 목록에서 속성으로 찾음), 예외 `ConfirmationRequiredException`, 이벤트 `OrderRejected`, 포트 `BrokerOrderStorePort`·`LotStorePort`·`SubmissionStorePort`. `HighValueOrder.NAME` |

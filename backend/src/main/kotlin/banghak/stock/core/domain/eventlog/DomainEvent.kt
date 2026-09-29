@@ -18,8 +18,10 @@ import banghak.stock.core.domain.trading.Quantity
 import java.time.Instant
 
 /**
- * 동기화·감사·projection의 원천이 되는 도메인 이벤트. 추가 전용. 계좌번호·키·토큰은 어떤 이벤트에도 들어가지 않음. 동기화 범위는 [SyncScopes]의 표
- * 한곳에서 정함.
+ * 동기화·감사·projection의 원천이 되는 도메인 이벤트.
+ * 추가 전용.
+ * 계좌번호·키·토큰은 어떤 이벤트에도 들어가지 않음.
+ * 동기화 범위는 [SyncScopes]의 표 한곳에서 정함.
  */
 sealed interface DomainEvent
 
@@ -84,8 +86,17 @@ data class OrderFilled(
     val tax: Money,
 ) : DomainEvent
 
-/** 주문 결과를 모름(타임아웃). 조회로 확정하기 전에는 재시도하지 않음. */
+/**
+ * 주문 결과를 모름(타임아웃).
+ * 조회로 확정하기 전에는 재시도하지 않음.
+ */
 data class OrderResultUnknown(val clientOrderId: ClientOrderId, val reason: String) : DomainEvent
+
+/**
+ * 증권사가 주문을 받지 않음(규칙 위반·예수금 부족 등).
+ * [reason] 은 증권사 오류 코드임.
+ */
+data class OrderRejected(val clientOrderId: ClientOrderId, val reason: String) : DomainEvent
 
 // guardrail / automation
 data class GuardrailEvaluated(
@@ -102,7 +113,10 @@ data class AutomationSettingChanged(
 
 data class LimitsLowered(val limit: String, val value: String) : DomainEvent
 
-/** 한도를 올리는 요청은 무시하고 기록만 남김. 한도는 낮출 수만 있음. */
+/**
+ * 한도를 올리는 요청은 무시하고 기록만 남김.
+ * 한도는 낮출 수만 있음.
+ */
 data class LimitRaiseIgnored(val limit: String, val requested: String) : DomainEvent
 
 data class KillSwitchChanged(val engaged: Boolean, val reason: String) : DomainEvent
