@@ -492,3 +492,5 @@ public final class SecretMissingException extends DomainException {}
 | 2026-09-27 | 예외 클래스 이름에 접미어 `Exception` 적용(11장과 본문 언급) |
 | 2026-09-27 | 4·5장을 Kotlin 으로 구현. 구현에서 정한 것: `OrderIntent.origin` 은 `OrderOrigin`(매도 주문 포함), `DepositBalance` 는 통화별 buying-power 맵(PORTFOLIO_PANEL 5장), `OrderRejectedException` 의 tickSize·nearestPrices 는 BigDecimal(error→money 순환 방지), `LotDisposal.realizedKrw` = 매매손익 + 환차손익으로 정의, `StartStockResolver` 는 후보(`StartStockCandidates`)를 받는 순수 함수이고 2초 상한 조회는 engine 몫, 시장가 매도의 정수 수량 판정은 가드레일 `MarketOrderScope` 에 둠 |
 | 2026-09-29 | 코드 리뷰 반영: `Position` 은 `userId` 를 갖고 다른 사용자의 lot 을 거부, `Sale.userId`, 지정가 주문은 정수 주수만, `Position.marketValue` 는 현지 통화 |
+| 2026-09-29 | 7장 가드레일 뼈대와 수동 규칙 구현. `MarketSession` 에 토스 미국 데이마켓 `DAY_MARKET` 추가, 규칙 판정에 확인 노트(`GuardrailFinding.Note`) 도입, `TradingPort.submit` 은 `placeOrder` 로(경계 테스트의 `place*` 규칙) |
+| 2026-09-29 | `GuardrailContext` 에 `clientOrderId`·`todayOrders` 추가와 생성 시 사용자·시장·종목 일치 검사, 고액 판정의 현재가·환율 신선도 조건 |

@@ -35,3 +35,10 @@ class OrderResultUnknownException(message: String, cause: Throwable? = null) :
  */
 class MarketDataUnavailableException(message: String, cause: Throwable? = null) :
     DomainException(message, cause)
+
+/**
+ * 가드레일 위반으로 주문을 내지 않음.
+ * 화면은 [violations] 목록을 그대로 보임(규칙 이름과 사유).
+ */
+class GuardrailViolationException(val violations: List<String>) :
+    DomainException("가드레일 위반: " + violations.joinToString("; "))

@@ -47,3 +47,6 @@ desktop/src/renderer/generated/*
 
 figma-plugin/
 docs/external/
+
+# IDE(VS Code Java/Gradle 확장)가 만드는 빌드 출력
+backend/bin/

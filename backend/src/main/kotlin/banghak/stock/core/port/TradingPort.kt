@@ -17,7 +17,11 @@ import java.time.LocalDate
  * [lookup] 으로 확정하기 전에 재시도하지 않음.
  */
 interface TradingPort {
-    fun submit(intent: OrderIntent, clientOrderId: ClientOrderId): BrokerOrder
+    /**
+     * 주문 접수.
+     * 이름은 `place` 로 시작해야 함 — 경계 테스트가 이 접두어로 주문 호출 위치를 잠금.
+     */
+    fun placeOrder(intent: OrderIntent, clientOrderId: ClientOrderId): BrokerOrder
 
     /**
      * 정정.
