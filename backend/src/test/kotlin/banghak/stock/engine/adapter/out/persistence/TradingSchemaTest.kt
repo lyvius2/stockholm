@@ -30,6 +30,44 @@ class TradingSchemaTest : EngineDatabaseTest() {
     }
 
     @Test
+    @DisplayName("다른 사용자의 lot 을 가리키는 소진 기록은 DB 가 거부함")
+    fun disposalMustBelongToLotOwner() {
+        write.update(INSERT_USER, "u_owner")
+        write.update(INSERT_USER, "u_intruder")
+        write.update(INSERT_LOT, "l_owned", "u_owner")
+
+        assertThatThrownBy { write.update(INSERT_DISPOSAL, "x_bad", "u_intruder", "l_owned") }
+            .isInstanceOf(DataAccessException::class.java)
+            .hasMessageContaining("FOREIGN KEY constraint failed")
+        write.update(INSERT_DISPOSAL, "x_ok", "u_owner", "l_owned")
+        assertThat(count("lot_disposal where disposal_id = 'x_ok'")).isEqualTo(1)
+    }
+
+    @Test
+    @DisplayName("한 CIK 에 티커가 여럿이어도 티커마다 대응이 남음")
+    fun oneCikMayHaveSeveralTickers() {
+        write.update(
+            "insert into edgar_entity (cik, name, updated_at) values ('0001067983', 'Berkshire Hathaway Inc.', $NOW)"
+        )
+        write.update(
+            "insert into edgar_ticker (code, cik, exchange, updated_at) values ('BRK.A', '0001067983', 'NYSE', $NOW)"
+        )
+        write.update(
+            "insert into edgar_ticker (code, cik, exchange, updated_at) values ('BRK.B', '0001067983', 'NYSE', $NOW)"
+        )
+
+        assertThat(
+                write.queryForList(
+                    "select code from edgar_ticker where cik = '0001067983' order by code",
+                    String::class.java,
+                )
+            )
+            .containsExactly("BRK.A", "BRK.B")
+        assertThat(plan("select code from edgar_ticker where cik = '0001067983'"))
+            .contains("idx_edgar_ticker_cik")
+    }
+
+    @Test
     @DisplayName("증권사 주문 캐시와 알림은 FK 가 없어 등록부에 없는 사용자로도 들어가고, 사용자를 지워도 남음")
     fun cacheAndNotificationHaveNoForeignKey() {
         write.update(INSERT_ORDER, "o_ghost", "u_ghost")

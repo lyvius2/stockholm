@@ -99,7 +99,8 @@
 
 | 표 | 열 | 비고 |
 |---|---|---|
-| `edgar_entity` | `cik, symbol_code, name, sic, fiscal_year_end, updated_at` | 티커 파일 + submissions 머리 |
+| `edgar_entity` | `cik, name, sic, fiscal_year_end, updated_at` | submissions 머리 |
+| `edgar_ticker` | `code, cik, exchange, updated_at` (티커마다 한 행, 한 CIK 에 여러 행) | 티커 파일 `company_tickers.json` |
 | `us_disclosure` | `accession_no(PK), cik, form, items, filing_date, report_date, accepted_at, primary_document, size, supersedes_accession, first_seen_at, indexed_at` | 공시 감시 결과. F15 공시 탭·가드레일 이벤트 원천 |
 | `us_financial_fact` | `cik, tag, unit, end_date, start_date, frame, fy, fp, form, accession_no, filed, val` | company facts 정규화. `(cik, tag, unit, end_date, frame, accession_no)` 유일 |
 
@@ -132,3 +133,9 @@ F15의 `financial_statement`([`docs/STOCK_INFO_DESIGN.md`](STOCK_INFO_DESIGN.md)
 3. ~~배당 기준일·지급일 출처~~ → Massive `/v3/reference/dividends`로 해결(2026-09-25, [`docs/EXTERNAL_APIS.md`](EXTERNAL_APIS.md) 2.9).
 4. `6-K`(ADR)에는 `items`가 없어 분류가 어렵다 — 제목(`primaryDocDescription`) 키워드로 보조할지.
 5. F5 미국 스크리닝에 frames API를 쓸지(한 호출로 전 종목 한 분기 값).
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-09-29 | 티커 → CIK 대응을 `edgar_ticker` 로 분리(한 회사의 여러 티커), `edgar_entity` 에서 티커 열 제거 |

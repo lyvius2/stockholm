@@ -305,6 +305,7 @@ erDiagram
   stock_master ||--o{ candle : "no FK"
   stock_master ||--o| dart_corp : "KR (no FK)"
   stock_master ||--o| edgar_entity : "US (no FK)"
+  edgar_entity ||--o{ edgar_ticker : "tickers (no FK)"
   stock_master ||--o| us_ticker_ref : "US (no FK)"
 
   stock_master {
@@ -416,10 +417,15 @@ erDiagram
   }
   edgar_entity {
     string cik PK
-    string code
     string name
     string sic
     string fiscal_year_end
+    string updated_at
+  }
+  edgar_ticker {
+    string code PK "티커"
+    string cik "한 CIK 에 여러 티커"
+    string exchange
     string updated_at
   }
   us_ticker_ref {
@@ -577,7 +583,7 @@ erDiagram
 - `origin`은 `OrderOrigin {MANUAL, AI_RECOMMENDED, AUTO_BUY, AUTO_SELL}`로 두고 `lot.origin`은 `BuyOrigin` 그대로. CORE_DOMAIN에 `OrderOrigin`을 추가해야 한다(12장 결정 3).
 - `client_order_id`는 NULL 허용(정정·취소로 생긴 주문에 토스가 원 키를 이어 주는지 [확인 필요]). `(user_id, client_order_id)` 부분 유일 인덱스는 벤더별로 달라 두지 않고 애플리케이션이 `lookup` 후 삽입한다.
 - `lot`은 `LotOpened/Reduced/Closed/AgedOutOfAutoBuy`의 projection(②). 청산 lot도 남긴다. `fx_*`는 US면 NOT NULL(값 객체가 검증). 노출액 계산 입력은 `origin, bought_at, remaining_quantity, unit_cost, fx_*`.
-- `lot_disposal`은 매도 체결이 lot을 **선입선출**로 소진한 기록(`LotReduced`·`LotClosed` payload의 projection, ②). 매도 1건이 여러 lot을 소진하면 lot마다 한 행. F20 거래내역 손익 탭·F2·F17의 원천이며 원화 실현손익 = `realized_krw` = 매매손익 + `fx_pnl_krw`. 물리 FK는 `lot`에만(같은 사용자 projection, 함께 재생). [제안 2026-09-25]
+- `lot_disposal`은 매도 체결이 lot을 **선입선출**로 소진한 기록(`LotReduced`·`LotClosed` payload의 projection, ②). 매도 1건이 여러 lot을 소진하면 lot마다 한 행. F20 거래내역 손익 탭·F2·F17의 원천이며 원화 실현손익 = `realized_krw` = 매매손익 + `fx_pnl_krw`. 물리 FK는 `lot`에만 두며 **`(lot_id, user_id)` 복합 FK**라 다른 사용자의 lot을 가리키는 소진 기록은 DB가 거부한다(`lot`에 `(lot_id, user_id)` 유일 인덱스). [제안 2026-09-25]
 - `portfolio_cache`는 마지막 스냅샷(패널의 "지연·실패 시각" 표시용). `snapshot_json` 안에 계좌번호는 없다(끝 4자리도 넣지 않음, `credential_meta`에 있음).
 - `notification`은 알림 센터의 원천이며 `(user_id, kind, dedupe_key)` 유일. NPS의 `pension_holdings_change_ack`는 이 표의 `kind=DATA_UPDATED, dedupe_key=change_id, acked_at`로 흡수한다(NPS_HOLDINGS_DESIGN 6장 수정 대상). 보존 180일.
 - `approval_request`는 승인 후 실행 단계(6단계)의 대기 목록. 이벤트 목록에 없던 `ApprovalRequested/Decided/Expired`를 CORE_DOMAIN에 추가한다(12장 결정 4).
@@ -1366,6 +1372,7 @@ erDiagram
 |---|---|---|
 | V1 | 1 리포 골격 | 4장 전부, 5장 전부, `stock_master`·`stock_warning`·`exchange_rate`·`market_calendar` |
 | V2 | 2 토스·F1~F4 | `candle`, `market_index_quote`, `broker_order`, `lot`, `lot_disposal`, `portfolio_cache`, `notification`, KRX 세 표, `dart_corp`·`edgar_entity`·`us_ticker_ref` |
+| V2.1 | 2 | `lot_disposal`을 `(lot_id, user_id)` 복합 FK로 재생성, `edgar_ticker` 분리(`edgar_entity.code` 제거) |
 | V3 | 3 수집·RAG | 9장 전부(`pension_*`, `etf_*`, `translation_*` 포함) |
 | V4 | 4 토론·추천·리포트 | `debate_*`, `stock_outlook_digest`, `industry_digest`, `related_symbol`, `recommendation`, `market_report`, `llm_route`·`llm_budget`·`llm_price`·`llm_usage` |
 | V5 | 5 학습 | `prediction_outcome`, `persona_weight`, `persona_weight_history`, `retrospective` |
@@ -1393,3 +1400,4 @@ erDiagram
 |---|---|
 | 2026-09-27 | 3.3 커넥션 풀을 HikariCP 쓰기 풀 1 + 읽기 전용 풀로 확정(readOnly 트랜잭션 라우팅). 5장 `event_log.payload_version` 추가(코드 리뷰 반영) |
 | 2026-09-29 | V2 적용(`V2__trading_orders_lots_market_cache.sql`). 구현에서 더한 열: `candle.currency`·`candle.fetched_at`, KRX 세 표의 `fetched_at`(3.1 외부 자료 규칙), `lot.created_at`·`updated_at`, `lot_disposal.created_at`. 추가 인덱스 `dart_corp(stock_code)`·`edgar_entity(code)`. 물리 FK 는 `lot → app_user`, `lot_disposal → lot` 두 곳. 골든 파일 이름을 `golden-schema.sql` 로 |
+| 2026-09-29 | V2.1: `lot_disposal` 의 사용자를 참조 lot 의 사용자와 복합 FK 로 묶음, 한 CIK 의 여러 티커를 담는 `edgar_ticker` 분리(코드 리뷰 반영) |
