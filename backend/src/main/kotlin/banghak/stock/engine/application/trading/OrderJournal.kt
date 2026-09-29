@@ -2,13 +2,17 @@ package banghak.stock.engine.application.trading
 
 import banghak.stock.core.domain.eventlog.DomainEvent
 import banghak.stock.core.domain.eventlog.GuardrailEvaluated
+import banghak.stock.core.domain.eventlog.OrderAmendRequested
 import banghak.stock.core.domain.eventlog.OrderIntended
 import banghak.stock.core.domain.eventlog.OrderRejected
 import banghak.stock.core.domain.eventlog.OrderResultUnknown
+import banghak.stock.core.domain.eventlog.OrderStatusChanged
 import banghak.stock.core.domain.eventlog.OrderSubmitted
 import banghak.stock.core.domain.guardrail.GuardrailVerdict
 import banghak.stock.core.domain.identity.DeviceId
+import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.trading.BrokerOrder
+import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.OrderSubmission
 import banghak.stock.core.domain.trading.Quantity
@@ -61,21 +65,7 @@ class OrderJournal(
     @Transactional
     fun beginSubmission(record: SubmissionRecord): Boolean {
         if (!submissions.tryBegin(record)) return false
-        val intent = record.submission.intent
-        append(
-            record.deviceId,
-            record.submission,
-            OrderIntended(
-                record.clientOrderId,
-                intent.symbol,
-                intent.side,
-                intent.kind,
-                intent.quantity,
-                intent.limitPrice,
-                intent.orderAmount,
-                intent.origin,
-            ),
-        )
+        append(record.deviceId, record.submission, requestedEventOf(record))
         return true
     }
 
@@ -90,7 +80,7 @@ class OrderJournal(
             BrokerOrder(
                 clientOrderId = record.clientOrderId,
                 brokerOrderId = brokerOrderId,
-                replacesBrokerOrderId = null,
+                replacesBrokerOrderId = record.replacesBrokerOrderId,
                 intent = submission.intent,
                 status = OrderStatus.PENDING,
                 filledQuantity = Quantity.ZERO,
@@ -136,6 +126,51 @@ class OrderJournal(
             clock.instant(),
         )
         append(record.deviceId, record.submission, OrderResultUnknown(record.clientOrderId, reason))
+    }
+
+    /**
+     * 증권사가 알려 준 주문 상태·체결을 반영함.
+     * 이미 반영된 것보다 뒤처진 기록(재동기 스냅샷이 실시간 이벤트보다 오래된 경우)은 버림.
+     */
+    @Transactional
+    fun recordBrokerProgress(deviceId: DeviceId, userId: UserId, record: BrokerOrderRecord) {
+        val before = orders.findRecorded(userId, record.brokerOrderId)
+        if (before != null && before.progress.isAheadOf(record)) return
+        orders.applyBrokerRecord(userId, record, clock.instant())
+        if (
+            before == null || !before.isPlacedByStockholm || before.progress.status == record.status
+        )
+            return
+        events.append(
+            userId,
+            deviceId,
+            listOf(OrderStatusChanged(record.brokerOrderId, before.progress.status, record.status)),
+            clock.instant(),
+        )
+    }
+
+    /** 요청 기록이 없는 조작(취소)의 흔적을 남김. */
+    @Transactional
+    fun recordEvent(userId: UserId, deviceId: DeviceId, event: DomainEvent) {
+        events.append(userId, deviceId, listOf(event), clock.instant())
+    }
+
+    private fun requestedEventOf(record: SubmissionRecord): DomainEvent {
+        val intent = record.submission.intent
+        val original = record.replacesBrokerOrderId
+        return if (original != null)
+            OrderAmendRequested(record.clientOrderId, original, intent.limitPrice, intent.quantity)
+        else
+            OrderIntended(
+                record.clientOrderId,
+                intent.symbol,
+                intent.side,
+                intent.kind,
+                intent.quantity,
+                intent.limitPrice,
+                intent.orderAmount,
+                intent.origin,
+            )
     }
 
     private fun append(deviceId: DeviceId, submission: OrderSubmission, event: DomainEvent) {

@@ -585,6 +585,7 @@ erDiagram
 - `broker_order`는 **증권사 캐시**(③)다. ORDER_MANAGEMENT 4장의 열에 도메인 `OrderIntent`·토스 상세 응답이 요구하는 열(`kind`, `time_in_force`, `order_amount`, 수수료·세금, 체결·취소 시각, 트리거)을 더했다. 토스는 건별 체결을 주지 않으므로 별도 `fill` 표를 두지 않고 주문 1건 = 체결 1건으로 이 표에 둔다.
 - `origin`은 `OrderOrigin {MANUAL, AI_RECOMMENDED, AUTO_BUY, AUTO_SELL}`로 두고 `lot.origin`은 `BuyOrigin` 그대로. CORE_DOMAIN에 `OrderOrigin`을 추가해야 한다(12장 결정 3).
 - `client_order_id`는 NULL 허용(정정·취소로 생긴 주문에 토스가 원 키를 이어 주는지 [확인 필요]). `(user_id, client_order_id)` 부분 유일 인덱스는 벤더별로 달라 두지 않고 애플리케이션이 `lookup` 후 삽입한다.
+- `broker_order` 는 실시간 주문 채널·미체결 재동기로 갱신한다. 처음 보는 주문(토스 앱 등)은 `trigger_type=EXTERNAL`·`origin=MANUAL`·멱등 키 없음으로 넣고, 우리 주문은 의도·출처·트리거를 두고 증권사 사실(상태·체결·가격·주문 시각)만 덮는다. 체결 수량이 줄거나 닫힌 주문을 다시 여는 기록은 버린다(`OrderProgress`). 진행 비교와 반영은 한 트랜잭션이고 `version`(JPA `@Version`)으로 동시 갱신을 막으며, 충돌하면 다시 읽어 판정한다. 상태 변경 이벤트는 우리 주문에만 남긴다.
 - `order_submission`은 **주문 요청 기록**(④ 상태, V2.4). 멱등 키(`client_order_id`) PK 로 한 행이며 증권사에 보내기 **전에** `SENDING` 으로 남기고(같은 트랜잭션에 `OrderIntended`), 결과에 따라 `ACCEPTED`(`broker_order_id`)·`UNKNOWN`·`REJECTED`·`NOT_SENT`·`NEEDS_REVIEW` 로 바꾼다. 같은 키의 두 번째 요청은 이 행으로 첫 결과를 돌려받는다. `SENDING`·`UNKNOWN` 은 확인 대상이라 접수 뒤 기록 실패·데몬 재시작에도 주문 목록 대조가 이어진다. 요청 내용(의도 전체·고액 확인)을 담아 확인에 쓴다. 물리 FK 없음(`broker_order` 와 같음).
 - `lot`은 `LotOpened/Reduced/Closed/AgedOutOfAutoBuy`의 projection(②). 청산 lot도 남긴다. `fx_*`는 US면 NOT NULL(값 객체가 검증). 노출액 계산 입력은 `origin, bought_at, remaining_quantity, unit_cost, fx_*`.
 - `lot_disposal`은 매도 체결이 lot을 **선입선출**로 소진한 기록(`LotReduced`·`LotClosed` payload의 projection, ②). 매도 1건이 여러 lot을 소진하면 lot마다 한 행. F20 거래내역 손익 탭·F2·F17의 원천이며 원화 실현손익 = `realized_krw` = 매매손익 + `fx_pnl_krw`. 물리 FK는 `lot`에만 두며 **`(lot_id, user_id)` 복합 FK**라 다른 사용자의 lot을 가리키는 소진 기록은 DB가 거부한다(`lot`에 `(lot_id, user_id)` 유일 인덱스). [제안 2026-09-25]
@@ -1380,6 +1381,9 @@ erDiagram
 | V2.2 | 2 | `stock_master.listing_board` 추가(+인덱스), `stock_warning` 재생성(`administrative`·`trading_halted` NULL 허용, 캐시라 데이터 손실 없음) |
 | V2.3 | 2 | `stock_warning.unknown_warning` 추가(캐시를 비운 뒤, 기본값 0 이 안전으로 읽히지 않게) |
 | V2.4 | 2 | `order_submission`(주문 요청 기록, 멱등 키 PK) |
+| V2.6 | 2 | `order_submission.replaces_broker_order_id`(정정 요청의 원주문) |
+| V2.7 | 2 | `broker_order.version`(낙관적 잠금. 실시간 이벤트와 재동기가 같은 주문을 동시에 고칠 때 먼저 읽은 진행으로 덮지 않게) |
+| V2.5 | 2 | `broker_order.filled_amount_*`(누적 체결 금액. 새 체결분 단가 = 금액 차이 ÷ 수량 차이, 평균가 × 수량의 반올림 오차를 피함) |
 | V3 | 3 수집·RAG | 9장 전부(`pension_*`, `etf_*`, `translation_*` 포함) |
 | V4 | 4 토론·추천·리포트 | `debate_*`, `stock_outlook_digest`, `industry_digest`, `related_symbol`, `recommendation`, `market_report`, `llm_route`·`llm_budget`·`llm_price`·`llm_usage` |
 | V5 | 5 학습 | `prediction_outcome`, `persona_weight`, `persona_weight_history`, `retrospective` |
@@ -1412,3 +1416,6 @@ erDiagram
 | 2026-09-29 | `broker_order.trigger_type` 값: `MANUAL`·`MANUAL_AMEND`·`RECOMMENDATION`·`AUTO_BUY`·`AUTO_SELL`·`EXTERNAL`(토스 앱 등 밖에서 낸 주문, 실시간 채널로만 앎). `status` 는 도메인 이름(`PARTIALLY_FILLED`·`CANCELLED`·`PENDING_AMEND`…). 접수 기록은 실시간 이벤트가 먼저 만든 행의 상태·체결을 덮지 않음 |
 | 2026-09-29 | V2.3: 경고 캐시에 뜻을 모르는 유의사항 표시 `unknown_warning`. 종목 정보 누락 시 그 시장을 동기화 실패로 봄 |
 | 2026-09-29 | V2.4: 주문 요청 기록 `order_submission`(보내기 전 기록, 같은 키의 재요청은 첫 결과, 결과 모름 확인의 원천) |
+| 2026-09-29 | V2.5: `broker_order` 누적 체결 금액. 실시간 반영 규칙(외부 주문 행, 뒤처진 기록 버림) |
+| 2026-09-29 | V2.6: 정정 요청도 `order_submission` 에 두고 원주문 번호를 남김(결과 모름일 때 새 주문을 원주문과 이어 찾음) |
+| 2026-09-29 | V2.7: `broker_order.version` 낙관적 잠금 |

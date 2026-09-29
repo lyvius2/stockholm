@@ -4,7 +4,9 @@ import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.trading.ClientOrderId
+import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.OrderSubmission
+import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.SubmissionRecord
 import banghak.stock.core.domain.trading.SubmissionState
 import banghak.stock.core.domain.trading.TradingFixtures
@@ -13,6 +15,8 @@ import banghak.stock.engine.application.trading.OrderJournal
 import banghak.stock.support.EngineDatabaseTest
 import com.zaxxer.hikari.HikariDataSource
 import java.time.Instant
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -52,6 +56,17 @@ class SubmissionPersistenceTest : EngineDatabaseTest() {
     }
 
     @Test
+    @DisplayName("정정 요청은 원주문 번호를 함께 남김")
+    fun keepsReplacedOrder() {
+        val amendKey = ClientOrderId("01K6AMD0000000000000000001")
+        val amend = sending(amendKey).copy(replacesBrokerOrderId = "B-1")
+
+        store.tryBegin(amend)
+
+        assertThat(store.find(user, amendKey)?.replacesBrokerOrderId).isEqualTo("B-1")
+    }
+
+    @Test
     @DisplayName("결과가 정해지지 않은 요청만 확인 대상이고, 접수로 연결된 주문 번호를 알려 줌")
     fun tracksUnresolvedAndClaimed() {
         val second = ClientOrderId("01K6REQ0000000000000000002")
@@ -84,6 +99,48 @@ class SubmissionPersistenceTest : EngineDatabaseTest() {
         assertThat(eventTypes()).containsExactly("OrderIntended")
     }
 
+    @Test
+    @DisplayName("반영할 때마다 행 버전이 오르고, 두 스레드가 같은 주문을 동시에 반영해도 최종 상태는 뒤로 가지 않음")
+    fun concurrentProgressNeverRegresses() {
+        val partial =
+            TradingFixtures.brokerRecord(
+                brokerOrderId = "B-7",
+                status = OrderStatus.PARTIALLY_FILLED,
+                filled = Quantity.of(4),
+            )
+        val filled = partial.copy(status = OrderStatus.FILLED, filledQuantity = Quantity.of(10))
+        journal.recordBrokerProgress(TradingFixtures.device, user, partial)
+        val versionBefore = version("B-7")
+
+        val pool = Executors.newFixedThreadPool(2)
+        repeat(REPEATS) {
+            listOf(partial, filled)
+                .map { record ->
+                    pool.submit {
+                        journal.recordBrokerProgress(TradingFixtures.device, user, record)
+                    }
+                }
+                .forEach { it.get(5, TimeUnit.SECONDS) }
+        }
+        pool.shutdown()
+
+        assertThat(
+                write.queryForObject(
+                    "select status from broker_order where broker_order_id = 'B-7'",
+                    String::class.java,
+                )
+            )
+            .isEqualTo("FILLED")
+        assertThat(version("B-7")).isGreaterThan(versionBefore)
+    }
+
+    private fun version(brokerOrderId: String): Long =
+        write.queryForObject(
+            "select version from broker_order where broker_order_id = ?",
+            Long::class.java,
+            brokerOrderId,
+        )!!
+
     private fun sending(clientOrderId: ClientOrderId = key) =
         SubmissionRecord(
             OrderSubmission(
@@ -102,6 +159,7 @@ class SubmissionPersistenceTest : EngineDatabaseTest() {
         write.queryForList("select type from event_log order by seq", String::class.java)
 
     companion object {
+        private const val REPEATS = 20
         private const val NOW = "'2026-09-30T00:00:00.000Z'"
     }
 }

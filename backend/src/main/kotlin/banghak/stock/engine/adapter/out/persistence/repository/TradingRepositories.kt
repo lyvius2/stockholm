@@ -19,6 +19,22 @@ interface BrokerOrderRepository : JpaRepository<BrokerOrderEntity, String> {
         @Param("since") since: Instant,
         @Param("externalTrigger") externalTrigger: String,
     ): List<BrokerOrderEntity>
+
+    @Query(
+        "select o from BrokerOrderEntity o where o.userId = :userId and o.brokerOrderId = :brokerOrderId"
+    )
+    fun findOwned(
+        @Param("userId") userId: String,
+        @Param("brokerOrderId") brokerOrderId: String,
+    ): BrokerOrderEntity?
+
+    @Query(
+        "select o.brokerOrderId from BrokerOrderEntity o where o.userId = :userId and o.status in :statuses"
+    )
+    fun findIdsByUserIdAndStatuses(
+        @Param("userId") userId: String,
+        @Param("statuses") statuses: Collection<String>,
+    ): List<String>
 }
 
 interface LotRepository : JpaRepository<LotEntity, String> {

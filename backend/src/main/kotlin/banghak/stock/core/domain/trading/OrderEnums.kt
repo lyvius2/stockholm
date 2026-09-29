@@ -50,5 +50,12 @@ enum class OrderStatus(val isOpen: Boolean, val isInFlight: Boolean) {
     CANCEL_REJECTED(isOpen = false, isInFlight = false),
     AMEND_REJECTED(isOpen = false, isInFlight = false),
     REPLACED(isOpen = false, isInFlight = false),
-    UNKNOWN(isOpen = false, isInFlight = true),
+    UNKNOWN(isOpen = false, isInFlight = true);
+
+    /**
+     * 정정·취소할 수 있음(열려 있고 처리 중이 아님).
+     * 출처와 무관함.
+     */
+    val isChangeable: Boolean
+        get() = isOpen && !isInFlight
 }

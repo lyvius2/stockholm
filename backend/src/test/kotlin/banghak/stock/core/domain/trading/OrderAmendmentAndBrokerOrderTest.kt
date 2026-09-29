@@ -58,8 +58,8 @@ class OrderAmendmentAndBrokerOrderTest {
     }
 
     @Test
-    @DisplayName("정정 수량은 잔량까지만 허용함: 100주 중 24주 체결이면 76주는 되고 77주는 안 됨")
-    fun amendQuantityUpToRemaining() {
+    @DisplayName("잔량은 주문 수량에서 체결 수량을 뺀 값이고, 체결 수량이 주문 수량을 넘을 수 없음")
+    fun remainingAndFilledBound() {
         val order =
             brokerOrder(
                 intent = limitBuy(quantity = Quantity.of(100)),
@@ -67,14 +67,6 @@ class OrderAmendmentAndBrokerOrderTest {
                 filled = Quantity.of(24),
             )
         assertThat(order.remaining()).isEqualTo(Quantity.of(76))
-        order.requireAmendable(OrderAmendment(null, Quantity.of(76)))
-        assertThatThrownBy { order.requireAmendable(OrderAmendment(null, Quantity.of(77))) }
-            .isInstanceOf(InvalidValueException::class.java)
-        assertThatThrownBy {
-                brokerOrder(status = OrderStatus.PENDING_CANCEL)
-                    .requireAmendable(OrderAmendment(krw("1"), null))
-            }
-            .isInstanceOf(InvalidValueException::class.java)
         assertThatThrownBy {
                 brokerOrder(intent = limitBuy(quantity = Quantity.of(1)), filled = Quantity.of(2))
             }

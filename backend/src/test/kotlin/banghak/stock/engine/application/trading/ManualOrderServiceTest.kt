@@ -1,8 +1,5 @@
 package banghak.stock.engine.application.trading
 
-import banghak.stock.core.domain.account.TossDecision
-import banghak.stock.core.domain.account.UserAccount
-import banghak.stock.core.domain.account.UserStatus
 import banghak.stock.core.domain.error.BrokerUnavailableException
 import banghak.stock.core.domain.error.ConfirmationRequiredException
 import banghak.stock.core.domain.error.GuardrailViolationException
@@ -17,12 +14,12 @@ import banghak.stock.core.domain.eventlog.OrderSubmitted
 import banghak.stock.core.domain.guardrail.GuardrailFinding
 import banghak.stock.core.domain.guardrail.GuardrailVerdict
 import banghak.stock.core.domain.guardrail.HighValueOrder
-import banghak.stock.core.domain.identity.Role
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.OrderSubmission
+import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.RecommendationTrigger
 import banghak.stock.core.domain.trading.SubmissionRecord
 import banghak.stock.core.domain.trading.SubmissionState
@@ -52,40 +49,16 @@ class ManualOrderServiceTest {
     private val submissions = MemorySubmissionStore()
     private val orders = MemoryBrokerOrderStore()
     private val users = MemoryUserAccountPort()
+    private val journal = OrderJournal(events, submissions, orders, clock)
     private val service =
-        ManualOrderService(
-            guardrail,
-            trading,
-            OrderJournal(events, submissions, orders, clock),
-            submissions,
-            users,
-            clock,
-        )
+        ManualOrderService(guardrail, trading, SubmissionDispatcher(journal, submissions, clock))
+    private val resolver = PendingSubmissionResolver(trading, journal, submissions, users, clock)
     private val intent = TradingFixtures.limitBuy()
     private val key = ClientOrderId("01K6REQ0000000000000000001")
 
     @BeforeEach
     fun registerUser() {
-        val now = TradingFixtures.now
-        users.save(
-            UserAccount(
-                TradingFixtures.user,
-                Role.ADMIN,
-                "w",
-                "h",
-                now,
-                0,
-                0,
-                null,
-                UserStatus.ACTIVE,
-                TossDecision.REGISTERED,
-                false,
-                null,
-                null,
-                now,
-                now,
-            )
-        )
+        users.save(TradingFixtures.account())
     }
 
     @Test
@@ -165,6 +138,20 @@ class ManualOrderServiceTest {
         }
 
         @Test
+        @DisplayName("같은 키에 다른 주문 내용이 오면 첫 결과를 돌려주지 않고 거부함")
+        fun differentContentIsRejected() {
+            place()
+
+            assertThatThrownBy {
+                    service.place(
+                        ManualOrderRequest(key, intent.copy(quantity = Quantity.of(11)), emptySet())
+                    )
+                }
+                .isInstanceOf(InvalidValueException::class.java)
+            assertThat(trading.submissions).hasSize(1)
+        }
+
+        @Test
         @DisplayName("결과를 모르는 키는 확인 중을 돌려주고 다시 보내지 않음")
         fun unknownKeyStaysPending() {
             trading.placeResults += OrderResultUnknownException("타임아웃")
@@ -198,7 +185,7 @@ class ManualOrderServiceTest {
             assertThat(place()).isEqualTo(OrderPlacement.Pending(key))
             trading.openOrders += landed("B-77")
 
-            service.resolvePending()
+            resolver.resolvePending()
 
             assertThat(trading.submissions).hasSize(1)
             assertThat(submissions.records.getValue(key).brokerOrderId).isEqualTo("B-77")
@@ -213,13 +200,26 @@ class ManualOrderServiceTest {
         }
 
         @Test
+        @DisplayName("종료 목록이 상한에서 잘리면 미체결에 맞는 주문이 있어도 이번에는 판정하지 않음")
+        fun truncatedClosedPagesDeferDecision() {
+            trading.placeResults += OrderResultUnknownException("타임아웃")
+            place()
+            trading.openOrders += landed("B-77")
+            trading.hasMoreClosedPages = true
+
+            resolver.resolvePending()
+
+            assertThat(submissions.records.getValue(key).state).isEqualTo(SubmissionState.UNKNOWN)
+        }
+
+        @Test
         @DisplayName("이미 체결돼 종료 목록에 있는 주문도 찾음")
         fun matchesClosedOrder() {
             trading.placeResults += OrderResultUnknownException("타임아웃")
             place()
             trading.closedOrders += landed("B-88").copy(status = OrderStatus.FILLED)
 
-            service.resolvePending()
+            resolver.resolvePending()
 
             assertThat(submissions.records.getValue(key).brokerOrderId).isEqualTo("B-88")
         }
@@ -231,10 +231,10 @@ class ManualOrderServiceTest {
             place()
 
             clock.advance(Duration.ofSeconds(299))
-            service.resolvePending()
+            resolver.resolvePending()
             val readsBeforeLimit = trading.orderListReads
             clock.advance(Duration.ofSeconds(1))
-            service.resolvePending()
+            resolver.resolvePending()
 
             assertThat(readsBeforeLimit).isPositive()
             assertThat(trading.orderListReads).isEqualTo(readsBeforeLimit)
@@ -249,7 +249,7 @@ class ManualOrderServiceTest {
             place()
             trading.openOrders += listOf(landed("B-1"), landed("B-2"))
 
-            service.resolvePending()
+            resolver.resolvePending()
 
             assertThat(submissions.records.getValue(key).state)
                 .isEqualTo(SubmissionState.NEEDS_REVIEW)
@@ -264,7 +264,7 @@ class ManualOrderServiceTest {
             service.place(ManualOrderRequest(secondKey, intent, emptySet()))
             trading.openOrders += landed("B-1")
 
-            service.resolvePending()
+            resolver.resolvePending()
 
             val linked = submissions.records.values.mapNotNull { it.brokerOrderId }
             assertThat(linked).containsExactly("B-1")
@@ -286,10 +286,10 @@ class ManualOrderServiceTest {
             trading.openOrders += landed("B-5")
 
             clock.advance(Duration.ofSeconds(29))
-            service.resolvePending()
+            resolver.resolvePending()
             assertThat(trading.orderListReads).isZero()
             clock.advance(Duration.ofSeconds(1))
-            service.resolvePending()
+            resolver.resolvePending()
 
             assertThat(submissions.records.getValue(key).brokerOrderId).isEqualTo("B-5")
         }

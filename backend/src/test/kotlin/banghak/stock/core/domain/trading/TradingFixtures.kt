@@ -1,7 +1,11 @@
 package banghak.stock.core.domain.trading
 
+import banghak.stock.core.domain.account.TossDecision
+import banghak.stock.core.domain.account.UserAccount
+import banghak.stock.core.domain.account.UserStatus
 import banghak.stock.core.domain.automation.StrategyId
 import banghak.stock.core.domain.identity.DeviceId
+import banghak.stock.core.domain.identity.Role
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Market
@@ -26,6 +30,25 @@ object TradingFixtures {
     fun krw(amount: String): Money = Money.of(amount, Currency.KRW)
 
     fun usd(amount: String): Money = Money.of(amount, Currency.USD)
+
+    fun account(userId: UserId = user, status: UserStatus = UserStatus.ACTIVE): UserAccount =
+        UserAccount(
+            userId,
+            Role.ADMIN,
+            userId.value.takeLast(6),
+            "h",
+            now,
+            0,
+            0,
+            null,
+            status,
+            TossDecision.REGISTERED,
+            false,
+            null,
+            null,
+            now,
+            now,
+        )
 
     fun limitBuy(
         symbol: Symbol = samsung,

@@ -14,6 +14,7 @@ import banghak.stock.core.domain.portfolio.DepositBalance
 import banghak.stock.core.domain.portfolio.PortfolioSnapshot
 import banghak.stock.core.domain.portfolio.Position
 import banghak.stock.core.domain.trading.ClientOrderId
+import banghak.stock.core.domain.trading.ManualAmendTrigger
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.Quote
 import banghak.stock.core.port.BrokerOrderStorePort
@@ -51,7 +52,7 @@ class GuardrailService(
 
     private fun contextOf(intent: OrderIntent, clientOrderId: ClientOrderId): GuardrailContext {
         val market = intent.market
-        val snapshot = snapshotOf(intent.userId, market)
+        val snapshot = snapshotOf(intent.userId, market, amendedOrderOf(intent))
         val today = clock.instant().atZone(market.zone).toLocalDate()
         return GuardrailContext(
             intent = intent,
@@ -70,8 +71,16 @@ class GuardrailService(
         )
     }
 
+    // 정정 중에는 원주문과 새 주문이 체인 한 건이라 원주문을 같은 방향 미체결로 세지 않음
+    private fun amendedOrderOf(intent: OrderIntent): String? =
+        (intent.trigger as? ManualAmendTrigger)?.amendedBrokerOrderId
+
     // 스냅샷 시각은 조회를 시작한 순간으로 둬 신선도를 보수적으로 잼
-    private fun snapshotOf(userId: UserId, market: Market): PortfolioSnapshot {
+    private fun snapshotOf(
+        userId: UserId,
+        market: Market,
+        amendedOrder: String?,
+    ): PortfolioSnapshot {
         val asOf = clock.instant()
         return PortfolioSnapshot(
             userId = userId,
@@ -82,7 +91,8 @@ class GuardrailService(
                     mapOf(market.currency to trading.buyingPower(userId, market.currency)),
                     asOf,
                 ),
-            openOrders = trading.openOrders(userId, market),
+            openOrders =
+                trading.openOrders(userId, market).filterNot { it.brokerOrderId == amendedOrder },
             asOf = asOf,
         )
     }

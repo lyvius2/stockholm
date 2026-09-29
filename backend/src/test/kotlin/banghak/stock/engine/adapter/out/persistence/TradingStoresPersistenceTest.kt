@@ -5,7 +5,9 @@ import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.trading.OrderOrigin
+import banghak.stock.core.domain.trading.OrderProgress
 import banghak.stock.core.domain.trading.OrderStatus
+import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.TradingFixtures
 import banghak.stock.core.port.BrokerOrderStorePort
 import banghak.stock.core.port.LotStorePort
@@ -89,6 +91,40 @@ class TradingStoresPersistenceTest : EngineDatabaseTest() {
             .isInstanceOf(InvalidValueException::class.java)
         assertThat(orders.findPlacedSince(user, Market.KR, placedAt).map { it.brokerOrderId })
             .containsExactly("B-LATE")
+    }
+
+    @Test
+    @DisplayName("증권사 기록은 처음 보는 주문을 외부 주문으로 넣고, 우리 주문은 의도·출처를 두고 상태·체결·금액만 바꿈")
+    fun appliesBrokerRecords() {
+        orders.recordAccepted(order("B-1"), isHighValueConfirmed = false)
+        val filled =
+            TradingFixtures.brokerRecord(
+                    brokerOrderId = "B-1",
+                    status = OrderStatus.FILLED,
+                    filled = Quantity.of(10),
+                )
+                .copy(filledAmount = TradingFixtures.krw("700000"))
+
+        orders.applyBrokerRecord(user, filled, placedAt)
+        orders.applyBrokerRecord(
+            user,
+            TradingFixtures.brokerRecord(brokerOrderId = "APP-1"),
+            placedAt,
+        )
+
+        assertThat(orders.findRecorded(user, "B-1")?.progress)
+            .isEqualTo(OrderProgress(OrderStatus.FILLED, Quantity.of(10)))
+        assertThat(orders.findRecorded(other, "B-1")).isNull()
+        assertThat(orders.openBrokerOrderIds(user)).containsExactly("APP-1")
+        val rows =
+            write.queryForList(
+                "select broker_order_id, trigger_type, client_order_id, filled_amount_amount from broker_order order by broker_order_id"
+            )
+        assertThat(rows.map { it["trigger_type"] }).containsExactly("EXTERNAL", "MANUAL")
+        assertThat(rows.last()["client_order_id"]).isNotNull()
+        assertThat(rows.last()["filled_amount_amount"]).isEqualTo("700000")
+        assertThatThrownBy { orders.applyBrokerRecord(other, filled, placedAt) }
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test

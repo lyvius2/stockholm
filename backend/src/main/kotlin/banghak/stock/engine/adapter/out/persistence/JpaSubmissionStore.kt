@@ -134,6 +134,7 @@ class JpaSubmissionStore(
             reason = record.reason,
             sentAt = record.sentAt,
             updatedAt = record.sentAt,
+            replacesBrokerOrderId = record.replacesBrokerOrderId,
         )
     }
 
@@ -160,6 +161,7 @@ class JpaSubmissionStore(
             brokerOrderId = row.brokerOrderId,
             reason = row.reason,
             sentAt = row.sentAt,
+            replacesBrokerOrderId = row.replacesBrokerOrderId,
         )
     }
 

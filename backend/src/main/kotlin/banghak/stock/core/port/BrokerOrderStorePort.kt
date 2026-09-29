@@ -3,6 +3,9 @@ package banghak.stock.core.port
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.trading.BrokerOrder
+import banghak.stock.core.domain.trading.BrokerOrderRecord
+import banghak.stock.core.domain.trading.OrderOrigin
+import banghak.stock.core.domain.trading.RecordedOrder
 import java.time.Instant
 
 /**
@@ -19,4 +22,21 @@ interface BrokerOrderStorePort {
 
     /** [since] 이후에 낸 이 사용자·시장의 주문(체결·취소 포함). */
     fun findPlacedSince(userId: UserId, market: Market, since: Instant): List<BrokerOrder>
+
+    fun findRecorded(userId: UserId, brokerOrderId: String): RecordedOrder?
+
+    /**
+     * 로컬에 기록된 출처.
+     * 기록이 없으면 null(밖에서 낸 주문은 수동으로 기록됨).
+     */
+    fun findOrigin(userId: UserId, brokerOrderId: String): OrderOrigin?
+
+    /**
+     * 증권사가 알려 준 주문 상태·체결을 반영함.
+     * 처음 보는 주문(토스 앱 등 밖에서 낸 주문)은 외부 주문으로 새로 기록하고, 우리 주문의 의도·출처는 건드리지 않음.
+     */
+    fun applyBrokerRecord(userId: UserId, record: BrokerOrderRecord, at: Instant)
+
+    /** 로컬에 아직 열린 상태로 남아 있는 주문 번호. */
+    fun openBrokerOrderIds(userId: UserId): Set<String>
 }

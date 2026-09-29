@@ -11,13 +11,16 @@ import banghak.stock.core.domain.portfolio.BuyOrigin
 import banghak.stock.core.domain.portfolio.Lot
 import banghak.stock.core.domain.portfolio.LotId
 import banghak.stock.core.domain.trading.BrokerOrder
+import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.OrderKind
 import banghak.stock.core.domain.trading.OrderOrigin
+import banghak.stock.core.domain.trading.OrderProgress
 import banghak.stock.core.domain.trading.OrderSide
 import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.Quantity
+import banghak.stock.core.domain.trading.RecordedOrder
 import banghak.stock.core.domain.trading.TimeInForce
 import banghak.stock.core.port.BrokerOrderStorePort
 import banghak.stock.core.port.LotStorePort
@@ -59,6 +62,93 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
             .findPlacedSince(userId.value, market.name, since, TriggerCodec.EXTERNAL)
             .map(::toDomain)
 
+    @Transactional(readOnly = true)
+    override fun findRecorded(userId: UserId, brokerOrderId: String): RecordedOrder? =
+        repository.findOwned(userId.value, brokerOrderId)?.let {
+            RecordedOrder(
+                OrderProgress(statusOf(it.status), Quantity.of(it.filledQuantity)),
+                isPlacedByStockholm = it.triggerType != TriggerCodec.EXTERNAL,
+            )
+        }
+
+    @Transactional(readOnly = true)
+    override fun findOrigin(userId: UserId, brokerOrderId: String): OrderOrigin? =
+        repository.findOwned(userId.value, brokerOrderId)?.let { OrderOrigin.valueOf(it.origin) }
+
+    @Transactional
+    override fun applyBrokerRecord(userId: UserId, record: BrokerOrderRecord, at: Instant) {
+        val existing = repository.findById(record.brokerOrderId).orElse(null)
+        if (existing != null && existing.userId != userId.value)
+            throw InvalidValueException("주문 ${record.brokerOrderId} 은 다른 사용자의 기록임")
+        val row = existing ?: externalRow(userId, record, at)
+        row.kind = record.kind.name
+        row.timeInForce = record.timeInForce.name
+        row.limitPriceAmount = record.limitPrice?.amount
+        row.limitPriceCurrency = record.limitPrice?.currency?.name
+        row.quantity = record.quantity?.value
+        row.orderAmountAmount = record.orderAmount?.amount
+        row.orderAmountCurrency = record.orderAmount?.currency?.name
+        row.status = record.status.name
+        row.filledQuantity = record.filledQuantity.value
+        row.avgPriceAmount = record.averageFilledPrice?.amount
+        row.avgPriceCurrency = record.averageFilledPrice?.currency?.name
+        row.filledAmountAmount = record.filledAmount?.amount
+        row.filledAmountCurrency = record.filledAmount?.currency?.name
+        row.feeAmount = record.fee?.amount
+        row.taxAmount = record.tax?.amount
+        row.filledAt = record.filledAt
+        row.canceledAt = record.canceledAt
+        row.orderedAt = record.orderedAt
+        row.updatedAt = at
+        row.fetchedAt = at
+        repository.save(row)
+    }
+
+    @Transactional(readOnly = true)
+    override fun openBrokerOrderIds(userId: UserId): Set<String> =
+        repository.findIdsByUserIdAndStatuses(userId.value, OPEN_STATUSES).toSet()
+
+    // 처음 보는 주문은 Stockholm 밖에서 낸 것이라 멱등 키·트리거가 없고 출처는 수동으로 둠
+    private fun externalRow(userId: UserId, record: BrokerOrderRecord, at: Instant) =
+        BrokerOrderEntity(
+            brokerOrderId = record.brokerOrderId,
+            clientOrderId = null,
+            replacesBrokerOrderId = null,
+            userId = userId.value,
+            market = record.symbol.market.name,
+            code = record.symbol.code,
+            side = record.side.name,
+            kind = record.kind.name,
+            timeInForce = record.timeInForce.name,
+            limitPriceAmount = null,
+            limitPriceCurrency = null,
+            quantity = null,
+            orderAmountAmount = null,
+            orderAmountCurrency = null,
+            status = record.status.name,
+            filledQuantity = record.filledQuantity.value,
+            avgPriceAmount = null,
+            avgPriceCurrency = null,
+            filledAmountAmount = null,
+            filledAmountCurrency = null,
+            feeAmount = null,
+            taxAmount = null,
+            filledAt = null,
+            canceledAt = null,
+            rejectReason = null,
+            origin = OrderOrigin.MANUAL.name,
+            triggerType = TriggerCodec.EXTERNAL,
+            triggerJson = null,
+            remote = false,
+            highValueConfirmed = false,
+            orderedAt = record.orderedAt,
+            updatedAt = at,
+            fetchedAt = at,
+        )
+
+    private fun statusOf(name: String): OrderStatus =
+        OrderStatus.entries.firstOrNull { it.name == name } ?: OrderStatus.UNKNOWN
+
     // 실시간 이벤트가 먼저 와 행이 있으면 그 행의 상태·체결을 그대로 두고 의도만 채움
     private fun newRow(order: BrokerOrder): BrokerOrderEntity {
         val intent = order.intent
@@ -81,6 +171,8 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
             filledQuantity = order.filledQuantity.value,
             avgPriceAmount = order.averageFilledPrice?.amount,
             avgPriceCurrency = order.averageFilledPrice?.currency?.name,
+            filledAmountAmount = null,
+            filledAmountCurrency = null,
             feeAmount = null,
             taxAmount = null,
             filledAt = null,
@@ -121,12 +213,15 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
                     trigger = TriggerCodec.decode(row.triggerType, row.triggerJson),
                     intendedAt = row.orderedAt,
                 ),
-            status =
-                OrderStatus.entries.firstOrNull { it.name == row.status } ?: OrderStatus.UNKNOWN,
+            status = statusOf(row.status),
             filledQuantity = Quantity.of(row.filledQuantity),
             averageFilledPrice = money(row.avgPriceAmount, row.avgPriceCurrency),
             updatedAt = row.updatedAt,
         )
+    }
+
+    companion object {
+        private val OPEN_STATUSES = OrderStatus.entries.filter { it.isOpen }.map { it.name }
     }
 }
 

@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -28,6 +29,8 @@ class BrokerOrderEntity(
     @Column(name = "filled_quantity", nullable = false) var filledQuantity: BigDecimal,
     @Column(name = "avg_price_amount") var avgPriceAmount: BigDecimal?,
     @Column(name = "avg_price_currency") var avgPriceCurrency: String?,
+    @Column(name = "filled_amount_amount") var filledAmountAmount: BigDecimal?,
+    @Column(name = "filled_amount_currency") var filledAmountCurrency: String?,
     @Column(name = "fee_amount") var feeAmount: BigDecimal?,
     @Column(name = "tax_amount") var taxAmount: BigDecimal?,
     @Column(name = "filled_at") var filledAt: Instant?,
@@ -41,6 +44,7 @@ class BrokerOrderEntity(
     @Column(name = "ordered_at", nullable = false) var orderedAt: Instant,
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant,
     @Column(name = "fetched_at", nullable = false) var fetchedAt: Instant,
+    @Version @Column(nullable = false) var version: Long = 0,
 )
 
 @Entity
@@ -94,4 +98,5 @@ class OrderSubmissionEntity(
     @Column var reason: String?,
     @Column(name = "sent_at", nullable = false) val sentAt: Instant,
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant,
+    @Column(name = "replaces_broker_order_id") val replacesBrokerOrderId: String?,
 )

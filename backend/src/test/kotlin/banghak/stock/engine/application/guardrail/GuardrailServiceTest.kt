@@ -6,6 +6,7 @@ import banghak.stock.core.domain.guardrail.GuardrailVerdict
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.ExchangeRate
+import banghak.stock.core.domain.trading.ManualAmendTrigger
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderSide
 import banghak.stock.core.domain.trading.TradingFixtures
@@ -57,6 +58,20 @@ class GuardrailServiceTest {
         val verdict = service.evaluate(buy, GuardrailFixtures.key) as GuardrailVerdict.Rejected
 
         assertThat(verdict.violations.map { it.rule }).containsExactly("OppositeSideOpenOrder")
+    }
+
+    @Test
+    @DisplayName("정정할 원주문은 같은 방향 미체결로 세지 않지만, 다른 같은 방향 미체결은 여전히 노트를 남김")
+    fun amendmentDoesNotCountItsOwnOriginal() {
+        val amend = buy.copy(trigger = ManualAmendTrigger(TradingFixtures.device, "B-1"))
+        trading.openOrders += TradingFixtures.brokerRecord(intent = buy, brokerOrderId = "B-1")
+
+        assertThat(service.evaluate(amend, GuardrailFixtures.key))
+            .isEqualTo(GuardrailVerdict.Passed(emptyList()))
+
+        trading.openOrders += TradingFixtures.brokerRecord(intent = buy, brokerOrderId = "B-2")
+        assertThat(service.evaluate(amend, GuardrailFixtures.key).notes.map { it.rule })
+            .containsExactly("DuplicateIntent")
     }
 
     @Test

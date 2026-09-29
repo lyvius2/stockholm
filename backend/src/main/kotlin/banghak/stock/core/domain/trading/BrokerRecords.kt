@@ -88,6 +88,25 @@ data class BrokerOrderRecord(
 
     val isOpen: Boolean
         get() = status.isOpen
+
+    /**
+     * 잔량.
+     * 금액 주문(수량 없음)은 잔량 개념이 없어 0 임.
+     */
+    fun remaining(): Quantity = quantity?.minus(filledQuantity) ?: Quantity.ZERO
+
+    /**
+     * 사람의 정정이 이 주문에 맞는지 검사함.
+     * 지정가 주문만, 열려 있고 처리 중이 아닐 때만, 정정 수량은 잔량까지임(100주 중 24주 체결이면 76주).
+     * 잔량보다 많이 보내지 않으므로 토스가 수량을 어떻게 해석해도 의도보다 많이 사거나 팔지 않음.
+     */
+    fun requireAmendable(amendment: OrderAmendment) {
+        if (kind != OrderKind.LIMIT) throw InvalidValueException("지정가 주문만 정정할 수 있음: $kind")
+        if (!status.isChangeable) throw InvalidValueException("정정할 수 없는 상태임: $status")
+        val newQuantity = amendment.newQuantity ?: return
+        if (newQuantity.isGreaterThan(remaining()))
+            throw InvalidValueException("정정 수량 $newQuantity 이 잔량 ${remaining()} 을 넘음")
+    }
 }
 
 /**

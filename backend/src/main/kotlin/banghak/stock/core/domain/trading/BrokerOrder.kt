@@ -7,7 +7,8 @@ import java.time.Instant
 /**
  * 증권사에 접수된 주문.
  * 정정·취소는 토스가 새 주문 번호를 발급하므로 [replacesBrokerOrderId] 로 원주문 → 새 주문 체인을 이음.
- * 정정·취소 가능 여부는 여기서만 판정하고 화면 버튼과 로컬 API 검증이 같은 함수를 씀.
+ * 정정·취소 가능 여부는 [OrderStatus.isChangeable] 로 판정하고, 정정 내용 검사는 증권사
+ * 기록([BrokerOrderRecord.requireAmendable])에서 함.
  */
 data class BrokerOrder(
     val clientOrderId: ClientOrderId,
@@ -40,19 +41,8 @@ data class BrokerOrder(
      * 출처와 무관하게 자동 주문도 사람이 정정할 수 있음.
      */
     val canAmend: Boolean
-        get() = isOpen && !status.isInFlight
+        get() = status.isChangeable
 
     val canCancel: Boolean
-        get() = isOpen && !status.isInFlight
-
-    /**
-     * 정정 요청이 이 주문에 맞는지 검사함.
-     * 정정 수량은 잔량까지만 허용함(100주 중 24주 체결이면 76주).
-     */
-    fun requireAmendable(amendment: OrderAmendment) {
-        if (!canAmend) throw InvalidValueException("정정할 수 없는 상태임: $status")
-        val newQuantity = amendment.newQuantity ?: return
-        if (newQuantity.isGreaterThan(remaining()))
-            throw InvalidValueException("정정 수량 $newQuantity 이 잔량 ${remaining()} 을 넘음")
-    }
+        get() = status.isChangeable
 }
