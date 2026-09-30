@@ -54,6 +54,8 @@ resilience4j:
       toss-chart: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.InvalidValueException] }
       toss-market-info: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.InvalidValueException] }
       toss-stock: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.InvalidValueException] }
+      toss-ranking: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.InvalidValueException] }
+      toss-market-indicator: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.InvalidValueException] }
       # 주문 거부(400·404·409·422)는 증권사 장애가 아니므로 서킷에 세지 않음
       toss-order: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.OrderRejectedException, banghak.stock.core.domain.error.InvalidValueException] }
       toss-order-read: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.InvalidValueException] }
@@ -70,6 +72,8 @@ resilience4j:
       toss-chart: { base-config: toss, limit-for-period: 20 }
       toss-market-info: { base-config: toss, limit-for-period: 3 }
       toss-stock: { base-config: toss, limit-for-period: 5 }
+      toss-ranking: { base-config: toss, limit-for-period: 5 }
+      toss-market-indicator: { base-config: toss, limit-for-period: 10 }
       toss-stock-all: { base-config: toss, limit-for-period: 1 }
       toss-order: { base-config: toss, limit-for-period: 10 }
       toss-order-history: { base-config: toss, limit-for-period: 5 }

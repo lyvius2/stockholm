@@ -115,6 +115,19 @@ interface TossAccountClient {
         @Header(ACCOUNT_HEADER) accountSeq: Long,
         @Query("currency") currency: String,
     ): Call<TossEnvelope<TossBuyingPower>>
+
+    @GET("api/v1/sellable-quantity")
+    fun sellableQuantity(
+        @Tag caller: TossCaller,
+        @Header(ACCOUNT_HEADER) accountSeq: Long,
+        @Query("symbol") symbol: String,
+    ): Call<TossEnvelope<TossSellableQuantity>>
+
+    @GET("api/v1/commissions")
+    fun commissions(
+        @Tag caller: TossCaller,
+        @Header(ACCOUNT_HEADER) accountSeq: Long,
+    ): Call<TossEnvelope<List<TossCommission>>>
 }
 
 const val ACCOUNT_HEADER = "X-Tossinvest-Account"

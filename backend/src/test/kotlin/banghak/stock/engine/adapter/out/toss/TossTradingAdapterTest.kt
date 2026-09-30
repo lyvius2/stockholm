@@ -11,8 +11,10 @@ import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.Money
+import banghak.stock.core.domain.money.Percent
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.ClosedOrdersQuery
+import banghak.stock.core.domain.trading.CommissionRate
 import banghak.stock.core.domain.trading.OrderAmendRequest
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.OrderKind
@@ -158,6 +160,57 @@ class TossTradingAdapterTest {
                     )
                 )
         )
+    }
+
+    @Test
+    @DisplayName("판매 가능 수량은 종목과 계좌 순번으로 묻고, 수수료율은 아는 시장만 기간과 함께 옮김")
+    fun readsSellableQuantityAndCommissions() {
+        json(
+            get(urlPathEqualTo("/api/v1/sellable-quantity")),
+            """{"result":{"sellableQuantity":"1.5"}}""",
+        )
+        json(
+            get(urlPathEqualTo("/api/v1/commissions")),
+            """{"result":[{"marketCountry":"KR","commissionRate":"0.00015","startDate":"2026-01-01","endDate":null},{"marketCountry":"US","commissionRate":"0.001","startDate":null,"endDate":null},{"marketCountry":"JP","commissionRate":"0.002"}]}""",
+        )
+
+        val sellable = adapter.sellableQuantity(user, TradingFixtures.nvidia)
+        val rates = adapter.commissionRates(user)
+
+        assertThat(sellable).isEqualTo(Quantity.of("1.5"))
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/sellable-quantity"))
+                .withQueryParam("symbol", equalTo("NVDA"))
+                .withHeader(ACCOUNT_HEADER, equalTo("1"))
+        )
+        assertThat(rates)
+            .containsExactly(
+                CommissionRate(
+                    Market.KR,
+                    Percent.ofRatio("0.00015"),
+                    LocalDate.of(2026, 1, 1),
+                    null,
+                ),
+                CommissionRate(Market.US, Percent.ofRatio("0.001"), null, null),
+            )
+    }
+
+    @Test
+    @DisplayName("성공 응답에 판매 가능 수량·수수료율·매수 가능 금액이 빠지면 0 으로 읽지 않고 조회 실패로 올림")
+    fun missingRequiredFieldsAreFailures() {
+        json(get(urlPathEqualTo("/api/v1/sellable-quantity")), """{"result":{}}""")
+        json(
+            get(urlPathEqualTo("/api/v1/commissions")),
+            """{"result":[{"marketCountry":"KR"}]}""",
+        )
+        json(get(urlPathEqualTo("/api/v1/buying-power")), """{"result":{"currency":"KRW"}}""")
+
+        assertThatThrownBy { adapter.sellableQuantity(user, TradingFixtures.samsung) }
+            .isInstanceOf(BrokerUnavailableException::class.java)
+        assertThatThrownBy { adapter.commissionRates(user) }
+            .isInstanceOf(BrokerUnavailableException::class.java)
+        assertThatThrownBy { adapter.buyingPower(user, Currency.KRW) }
+            .isInstanceOf(BrokerUnavailableException::class.java)
     }
 
     @Test

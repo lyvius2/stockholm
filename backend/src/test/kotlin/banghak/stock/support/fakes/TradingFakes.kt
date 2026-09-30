@@ -24,6 +24,7 @@ import banghak.stock.core.domain.trading.CandlePage
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.ClosedOrdersPage
 import banghak.stock.core.domain.trading.ClosedOrdersQuery
+import banghak.stock.core.domain.trading.CommissionRate
 import banghak.stock.core.domain.trading.ConditionalOrderIntent
 import banghak.stock.core.domain.trading.FeedTopic
 import banghak.stock.core.domain.trading.FillIncrement
@@ -35,6 +36,8 @@ import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderProgress
 import banghak.stock.core.domain.trading.OrderReceipt
 import banghak.stock.core.domain.trading.OrderSubmission
+import banghak.stock.core.domain.trading.PriceLimits
+import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.Quote
 import banghak.stock.core.domain.trading.RecordedOrder
 import banghak.stock.core.domain.trading.SubmissionRecord
@@ -100,6 +103,20 @@ class FakeTradingPort : TradingPort {
     override fun buyingPower(userId: UserId, currency: Currency): Money {
         accountFailure?.let { throw it }
         return buyingPower[currency] ?: Money.zero(currency)
+    }
+
+    val sellable = mutableMapOf<Symbol, Quantity>()
+    val commissions = mutableListOf<CommissionRate>()
+    var commissionFailure: RuntimeException? = null
+
+    override fun sellableQuantity(userId: UserId, symbol: Symbol): Quantity {
+        accountFailure?.let { throw it }
+        return sellable[symbol] ?: Quantity.ZERO
+    }
+
+    override fun commissionRates(userId: UserId): List<CommissionRate> {
+        commissionFailure?.let { throw it }
+        return commissions
     }
 
     override fun placeAmendment(request: OrderAmendRequest): OrderReceipt {
@@ -168,6 +185,15 @@ class FakeMarketData : MarketDataPort {
     ): CandlePage = error("이 테스트에서 쓰지 않음")
 
     override fun orderBook(symbol: Symbol): OrderBook = error("이 테스트에서 쓰지 않음")
+
+    val priceLimits = mutableMapOf<Symbol, PriceLimits>()
+
+    var priceLimitsFailure: RuntimeException? = null
+
+    override fun priceLimits(symbol: Symbol): PriceLimits {
+        priceLimitsFailure?.let { throw it }
+        return priceLimits[symbol] ?: throw MarketDataUnavailableException("상하한가 없음")
+    }
 }
 
 class FakeMarketCalendar(private val days: Map<Market, TradingDay>) : MarketCalendarPort {

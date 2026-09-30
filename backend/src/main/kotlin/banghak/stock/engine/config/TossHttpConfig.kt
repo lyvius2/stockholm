@@ -5,9 +5,11 @@ import banghak.stock.engine.adapter.out.toss.TossAuthClient
 import banghak.stock.engine.adapter.out.toss.TossAuthInterceptor
 import banghak.stock.engine.adapter.out.toss.TossChartClient
 import banghak.stock.engine.adapter.out.toss.TossFeedSettings
+import banghak.stock.engine.adapter.out.toss.TossIndicatorClient
 import banghak.stock.engine.adapter.out.toss.TossMarketInfoClient
 import banghak.stock.engine.adapter.out.toss.TossOrderClient
 import banghak.stock.engine.adapter.out.toss.TossPriceClient
+import banghak.stock.engine.adapter.out.toss.TossRankingClient
 import banghak.stock.engine.adapter.out.toss.TossStockClient
 import banghak.stock.engine.adapter.out.toss.TossTokenAuthenticator
 import banghak.stock.engine.adapter.out.toss.TossTokenCache
@@ -52,6 +54,14 @@ class TossHttpConfig(
     @Bean
     fun tossStockClient(@Lazy tokens: TossTokenCache): TossStockClient =
         authorized(tokens).create(TossStockClient::class.java)
+
+    @Bean
+    fun tossRankingClient(@Lazy tokens: TossTokenCache): TossRankingClient =
+        authorized(tokens).create(TossRankingClient::class.java)
+
+    @Bean
+    fun tossIndicatorClient(@Lazy tokens: TossTokenCache): TossIndicatorClient =
+        authorized(tokens).create(TossIndicatorClient::class.java)
 
     @Bean
     fun tossAccountClient(@Lazy tokens: TossTokenCache): TossAccountClient =

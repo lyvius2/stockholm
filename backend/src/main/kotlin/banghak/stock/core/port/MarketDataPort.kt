@@ -6,6 +6,7 @@ import banghak.stock.core.domain.money.ExchangeRate
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.CandlePage
 import banghak.stock.core.domain.trading.OrderBook
+import banghak.stock.core.domain.trading.PriceLimits
 import banghak.stock.core.domain.trading.Quote
 import java.time.Instant
 
@@ -38,6 +39,12 @@ interface MarketDataPort {
      * 국내는 KRX·NXT 합산 호가라 매도 1호가가 매수 1호가보다 낮게 보일 수 있음.
      */
     fun orderBook(symbol: Symbol): OrderBook
+
+    /**
+     * 당일 상한가·하한가.
+     * 가격 제한이 없는 시장(미국)은 값이 비어 있음.
+     */
+    fun priceLimits(symbol: Symbol): PriceLimits
 
     fun exchangeRate(from: Currency, to: Currency): ExchangeRate
 

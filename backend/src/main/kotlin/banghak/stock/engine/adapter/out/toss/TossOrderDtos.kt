@@ -95,10 +95,11 @@ data class TossHoldings(
     val items: List<TossHoldingItem> = emptyList(),
 )
 
-data class TossBuyingPower(
-    val currency: String = "",
-    val cashBuyingPower: BigDecimal = BigDecimal.ZERO,
-)
+/**
+ * 금액은 기본값을 두지 않음.
+ * 성공 응답에서 빠진 값을 0원으로 읽지 않고 어댑터가 조회 실패로 올림.
+ */
+data class TossBuyingPower(val currency: String = "", val cashBuyingPower: BigDecimal? = null)
 
 /**
  * 조건주문 감시 조건 본문.
@@ -178,4 +179,18 @@ data class TossConditionalOrders(
     val conditionalOrders: List<TossConditionalOrder> = emptyList(),
     val nextCursor: String? = null,
     val hasNext: Boolean = false,
+)
+
+/** 빠진 수량을 0주로 읽지 않도록 기본값을 두지 않음. */
+data class TossSellableQuantity(val sellableQuantity: BigDecimal? = null)
+
+/**
+ * 수수료율은 소수 비율임(0.00015 = 0.015%).
+ * 빠진 수수료율을 0% 로 읽지 않도록 기본값을 두지 않음.
+ */
+data class TossCommission(
+    val marketCountry: String = "",
+    val commissionRate: BigDecimal? = null,
+    val startDate: String? = null,
+    val endDate: String? = null,
 )

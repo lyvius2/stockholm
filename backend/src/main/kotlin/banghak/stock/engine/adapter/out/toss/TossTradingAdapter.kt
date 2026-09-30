@@ -6,12 +6,14 @@ import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.Money
+import banghak.stock.core.domain.money.Percent
 import banghak.stock.core.domain.portfolio.BrokerHolding
 import banghak.stock.core.domain.portfolio.BrokerHoldings
 import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.ClosedOrdersPage
 import banghak.stock.core.domain.trading.ClosedOrdersQuery
+import banghak.stock.core.domain.trading.CommissionRate
 import banghak.stock.core.domain.trading.OrderAmendRequest
 import banghak.stock.core.domain.trading.OrderKind
 import banghak.stock.core.domain.trading.OrderReceipt
@@ -23,6 +25,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter
 import java.math.BigDecimal
 import java.time.Clock
+import java.time.LocalDate
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
@@ -208,11 +211,56 @@ class TossTradingAdapter(
             )
         if (result.currency != currency.name)
             throw BrokerUnavailableException("$currency 매수 가능 금액을 요청했는데 ${result.currency} 가 옴")
-        return Money.of(result.cashBuyingPower, currency)
+        return Money.of(required(result.cashBuyingPower, "매수 가능 금액"), currency)
     }
 
     @JvmName("buyingPowerFailed")
     final fun buyingPowerFailed(userId: UserId, currency: Currency, cause: Throwable): Money =
+        TossOrderResponses.readFallback(cause)
+
+    @RateLimiter(name = "toss-order-info")
+    @CircuitBreaker(name = "toss-order-read", fallbackMethod = "sellableQuantityFailed")
+    override fun sellableQuantity(userId: UserId, symbol: Symbol): Quantity =
+        Quantity.of(
+            required(
+                TossOrderResponses.readResultOf(
+                        accounts.sellableQuantity(
+                            TossCaller(userId),
+                            accountSeqs.accountSeq(userId),
+                            symbol.code,
+                        )
+                    )
+                    .sellableQuantity,
+                "판매 가능 수량",
+            )
+        )
+
+    @JvmName("sellableQuantityFailed")
+    final fun sellableQuantityFailed(userId: UserId, symbol: Symbol, cause: Throwable): Quantity =
+        TossOrderResponses.readFallback(cause)
+
+    // 모르는 시장의 수수료는 버림(토스는 모르는 값을 허용하라고 함)
+    @RateLimiter(name = "toss-order-info")
+    @CircuitBreaker(name = "toss-order-read", fallbackMethod = "commissionRatesFailed")
+    override fun commissionRates(userId: UserId): List<CommissionRate> =
+        TossOrderResponses.readResultOf(
+                accounts.commissions(TossCaller(userId), accountSeqs.accountSeq(userId))
+            )
+            .mapNotNull { commission ->
+                Market.entries
+                    .firstOrNull { it.name == commission.marketCountry }
+                    ?.let {
+                        CommissionRate(
+                            it,
+                            Percent(required(commission.commissionRate, "수수료율")),
+                            commission.startDate?.let(LocalDate::parse),
+                            commission.endDate?.let(LocalDate::parse),
+                        )
+                    }
+            }
+
+    @JvmName("commissionRatesFailed")
+    final fun commissionRatesFailed(userId: UserId, cause: Throwable): List<CommissionRate> =
         TossOrderResponses.readFallback(cause)
 
     // 금액 시장가(미국 금액 매수)는 유효 조건 없이 주문 금액만 보냄
@@ -233,6 +281,10 @@ class TossTradingAdapter(
     }
 
     private fun confirmationOf(isConfirmed: Boolean): Boolean? = if (isConfirmed) true else null
+
+    // 성공 응답에 필수 값이 없으면 0 으로 읽지 않고 조회 실패로 올림
+    private fun <T : Any> required(value: T?, label: String): T =
+        value ?: throw BrokerUnavailableException("토스 응답에 $label 값이 없음")
 
     private fun holdingOf(item: TossHoldingItem): BrokerHolding {
         val symbol = Symbol(Market.valueOf(item.marketCountry), item.symbol)

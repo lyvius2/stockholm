@@ -9,11 +9,17 @@ import banghak.stock.core.domain.error.MarketDataUnavailableException
 import banghak.stock.core.domain.error.SecretMissingException
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
+import banghak.stock.core.domain.market.IndicatorQuote
 import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.market.MarketIndicator
 import banghak.stock.core.domain.market.MarketSession
+import banghak.stock.core.domain.market.RankingPeriod
+import banghak.stock.core.domain.market.RankingQuery
+import banghak.stock.core.domain.market.RankingType
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.Money
+import banghak.stock.core.domain.money.Percent
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.engine.adapter.out.keychain.SecretReader
@@ -64,6 +70,7 @@ class TossMarketAdaptersTest {
     private val nvidia = Symbol(Market.US, "NVDA")
     private lateinit var marketData: TossMarketDataAdapter
     private lateinit var calendar: TossMarketCalendarAdapter
+    private lateinit var board: TossMarketBoardAdapter
     private lateinit var config: TossHttpConfig
 
     @BeforeEach
@@ -86,6 +93,12 @@ class TossMarketAdaptersTest {
                 callers,
             )
         calendar = TossMarketCalendarAdapter(config.tossMarketInfoClient(tokens), callers)
+        board =
+            TossMarketBoardAdapter(
+                config.tossRankingClient(tokens),
+                config.tossIndicatorClient(tokens),
+                callers,
+            )
         secrets.put(
             SecretKey.user(user, CredentialKind.TOSS.secretName("CLIENT_ID")),
             SecretValue.of("client-id-1"),
@@ -363,6 +376,118 @@ class TossMarketAdaptersTest {
 
         assertThatThrownBy { marketData.orderBook(samsung) }
             .isInstanceOf(MarketDataUnavailableException::class.java)
+    }
+
+    @Test
+    @DisplayName("상하한가는 국내는 값으로, 가격 제한이 없는 미국은 빈 값으로 옮김")
+    fun mapsPriceLimits() {
+        stubBody(
+            "/api/v1/price-limits",
+            """{"result":{"timestamp":"2026-09-28T09:00:00+09:00","upperLimitPrice":"91000","lowerLimitPrice":"49000","currency":"KRW"}}""",
+        )
+        val korean = marketData.priceLimits(samsung)
+
+        assertThat(korean.upper).isEqualTo(Money.of("91000", Currency.KRW))
+        assertThat(korean.lower).isEqualTo(Money.of("49000", Currency.KRW))
+        assertThat(korean.asOf).isEqualTo(Instant.parse("2026-09-28T00:00:00Z"))
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/price-limits"))
+                .withQueryParam("symbol", equalTo("005930"))
+        )
+
+        stubBody(
+            "/api/v1/price-limits",
+            """{"result":{"timestamp":"2026-09-28T09:00:00+09:00","upperLimitPrice":null,"lowerLimitPrice":null,"currency":"USD"}}""",
+        )
+        val us = marketData.priceLimits(nvidia)
+
+        assertThat(us.upper).isNull()
+        assertThat(us.lower).isNull()
+    }
+
+    @Test
+    @DisplayName("랭킹은 종류·시장·기간 코드·유의 종목 제외·조회 수로 묻고 순위·가격·등락률·거래를 옮김")
+    fun mapsRanking() {
+        stubBody(
+            "/api/v1/rankings",
+            """{"result":{"rankedAt":"2026-09-28T10:00:00+09:00","rankings":[
+                 {"rank":1,"symbol":"005930","currency":"KRW","price":{"lastPrice":"71000","basePrice":"70000","changeRate":"0.0142857"},"tradingVolume":"1200000","tradingAmount":"85200000000"},
+                 {"rank":2,"symbol":"000660","currency":"KRW","price":{"lastPrice":"100","basePrice":"0","changeRate":null},"tradingVolume":"10","tradingAmount":"1000"}]}}""",
+        )
+
+        val ranking =
+            board.ranking(
+                RankingQuery(Market.KR, RankingType.TOP_GAINERS, RankingPeriod.DAY_1, true, 50)
+            )
+
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/rankings"))
+                .withQueryParam("type", equalTo("TOP_GAINERS"))
+                .withQueryParam("marketCountry", equalTo("KR"))
+                .withQueryParam("duration", equalTo("1d"))
+                .withQueryParam("excludeInvestmentCaution", equalTo("true"))
+                .withQueryParam("count", equalTo("50"))
+        )
+        assertThat(ranking.rankedAt).isEqualTo(Instant.parse("2026-09-28T01:00:00Z"))
+        val first = ranking.stocks[0]
+        assertThat(first.rank).isEqualTo(1)
+        assertThat(first.symbol).isEqualTo(samsung)
+        assertThat(first.last).isEqualTo(Money.of("71000", Currency.KRW))
+        assertThat(first.changeRate).isEqualTo(Percent.ofRatio("0.0142857"))
+        assertThat(first.tradingAmount).isEqualTo(Money.of("85200000000", Currency.KRW))
+        assertThat(ranking.stocks[1].changeRate).isNull()
+    }
+
+    @Test
+    @DisplayName("집계되지 않은 랭킹은 빈 목록이고, 시장과 다른 통화가 오면 조회 실패로 봄")
+    fun emptyRankingAndCurrencyMismatch() {
+        val query =
+            RankingQuery(
+                Market.US,
+                RankingType.MARKET_TRADING_AMOUNT,
+                RankingPeriod.REALTIME,
+                false,
+            )
+        stubBody("/api/v1/rankings", """{"result":{"rankedAt":null,"rankings":[]}}""")
+
+        val empty = board.ranking(query)
+
+        assertThat(empty.rankedAt).isNull()
+        assertThat(empty.stocks).isEmpty()
+
+        stubBody(
+            "/api/v1/rankings",
+            """{"result":{"rankedAt":"2026-09-28T10:00:00+09:00","rankings":[{"rank":1,"symbol":"NVDA","currency":"KRW","price":{"lastPrice":"1","basePrice":"1"},"tradingVolume":"1","tradingAmount":"1"}]}}""",
+        )
+        assertThatThrownBy { board.ranking(query) }
+            .isInstanceOf(MarketDataUnavailableException::class.java)
+    }
+
+    @Test
+    @DisplayName("시장 지표는 심볼을 콤마로 묻고, 시각 없는 값은 시각 없이, 모르는 심볼은 버림")
+    fun mapsIndicatorQuotes() {
+        stubBody(
+            "/api/v1/market-indicators/prices",
+            """{"result":[{"symbol":"KOSPI","timestamp":"2026-09-28T10:00:00+09:00","lastPrice":"2650.12"},{"symbol":"KR_BOND_3Y","timestamp":null,"lastPrice":"3.25"},{"symbol":"NEW_INDEX","timestamp":null,"lastPrice":"1"}]}""",
+        )
+
+        val quotes =
+            board.indicatorQuotes(listOf(MarketIndicator.KOSPI, MarketIndicator.KR_BOND_3Y))
+
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/market-indicators/prices"))
+                .withQueryParam("symbols", equalTo("KOSPI,KR_BOND_3Y"))
+        )
+        assertThat(quotes)
+            .containsExactly(
+                IndicatorQuote(
+                    MarketIndicator.KOSPI,
+                    BigDecimal("2650.12"),
+                    Instant.parse("2026-09-28T01:00:00Z"),
+                ),
+                IndicatorQuote(MarketIndicator.KR_BOND_3Y, BigDecimal("3.25"), null),
+            )
+        assertThat(board.indicatorQuotes(emptyList())).isEmpty()
     }
 
     private fun stubToken(token: String) {

@@ -39,6 +39,12 @@ interface TossPriceClient {
         @Tag caller: TossCaller,
         @Query("symbol") symbol: String,
     ): Call<TossEnvelope<TossOrderbook>>
+
+    @GET("api/v1/price-limits")
+    fun priceLimits(
+        @Tag caller: TossCaller,
+        @Query("symbol") symbol: String,
+    ): Call<TossEnvelope<TossPriceLimits>>
 }
 
 /** MARKET_DATA_CHART 그룹(초당 20). */
@@ -95,4 +101,26 @@ interface TossStockClient {
         @Tag caller: TossCaller,
         @Path("symbol") symbol: String,
     ): Call<TossEnvelope<List<TossStockWarning>>>
+}
+
+/** RANKING 그룹(초당 5). */
+interface TossRankingClient {
+    @GET("api/v1/rankings")
+    fun rankings(
+        @Tag caller: TossCaller,
+        @Query("type") type: String,
+        @Query("marketCountry") marketCountry: String,
+        @Query("duration") duration: String,
+        @Query("excludeInvestmentCaution") excludeInvestmentCaution: Boolean,
+        @Query("count") count: Int,
+    ): Call<TossEnvelope<TossRankings>>
+}
+
+/** MARKET_INDICATOR 그룹(초당 10). */
+interface TossIndicatorClient {
+    @GET("api/v1/market-indicators/prices")
+    fun prices(
+        @Tag caller: TossCaller,
+        @Query("symbols") symbols: String,
+    ): Call<TossEnvelope<List<TossIndicatorPrice>>>
 }

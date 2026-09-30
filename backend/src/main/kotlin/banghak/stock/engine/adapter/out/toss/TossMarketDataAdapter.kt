@@ -10,6 +10,7 @@ import banghak.stock.core.domain.trading.Candle
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.CandlePage
 import banghak.stock.core.domain.trading.OrderBook
+import banghak.stock.core.domain.trading.PriceLimits
 import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.Quote
 import banghak.stock.core.port.MarketDataPort
@@ -113,6 +114,25 @@ class TossMarketDataAdapter(
     }
 
     fun orderBookUnavailable(symbol: Symbol, cause: Throwable): OrderBook =
+        TossResponses.marketFallback(cause)
+
+    @RateLimiter(name = "toss-market-data")
+    @CircuitBreaker(name = "toss-market-data", fallbackMethod = "priceLimitsUnavailable")
+    override fun priceLimits(symbol: Symbol): PriceLimits {
+        val limits =
+            TossResponses.marketResultOf(
+                prices.priceLimits(callers.publicMarketCaller(), symbol.code).execute()
+            )
+        val currency = requireMarketCurrency(symbol, limits.currency)
+        return PriceLimits(
+            symbol,
+            limits.upperLimitPrice?.let { Money.of(it, currency) },
+            limits.lowerLimitPrice?.let { Money.of(it, currency) },
+            parseInstant(limits.timestamp),
+        )
+    }
+
+    fun priceLimitsUnavailable(symbol: Symbol, cause: Throwable): PriceLimits =
         TossResponses.marketFallback(cause)
 
     @RateLimiter(name = "toss-market-info")

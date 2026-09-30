@@ -123,3 +123,36 @@ data class TossStockWarning(
     val startDate: String? = null,
     val endDate: String? = null,
 )
+
+data class TossPriceLimits(
+    val timestamp: String = "",
+    val upperLimitPrice: BigDecimal? = null,
+    val lowerLimitPrice: BigDecimal? = null,
+    val currency: String = "",
+)
+
+data class TossRankings(
+    val rankedAt: String? = null,
+    val rankings: List<TossRankingItem> = emptyList(),
+)
+
+data class TossRankingItem(
+    val rank: Int = 0,
+    val symbol: String = "",
+    val currency: String = "",
+    val price: TossRankingPrice = TossRankingPrice(),
+    val tradingVolume: BigDecimal = BigDecimal.ZERO,
+    val tradingAmount: BigDecimal = BigDecimal.ZERO,
+)
+
+data class TossRankingPrice(
+    val lastPrice: BigDecimal = BigDecimal.ZERO,
+    val basePrice: BigDecimal = BigDecimal.ZERO,
+    val changeRate: BigDecimal? = null,
+)
+
+data class TossIndicatorPrice(
+    val symbol: String = "",
+    val timestamp: String? = null,
+    val lastPrice: BigDecimal = BigDecimal.ZERO,
+)

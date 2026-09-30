@@ -2,15 +2,18 @@ package banghak.stock.core.port
 
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.portfolio.BrokerHoldings
 import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.ClosedOrdersPage
 import banghak.stock.core.domain.trading.ClosedOrdersQuery
+import banghak.stock.core.domain.trading.CommissionRate
 import banghak.stock.core.domain.trading.OrderAmendRequest
 import banghak.stock.core.domain.trading.OrderReceipt
 import banghak.stock.core.domain.trading.OrderSubmission
+import banghak.stock.core.domain.trading.Quantity
 
 /**
  * 증권사 주문·계좌 포트.
@@ -47,4 +50,13 @@ interface TradingPort {
 
     /** 통화별 현금 매수 가능 금액. */
     fun buyingPower(userId: UserId, currency: Currency): Money
+
+    /**
+     * 지금 팔 수 있는 수량.
+     * 미체결 매도에 묶인 수량은 빠져 있음.
+     */
+    fun sellableQuantity(userId: UserId, symbol: Symbol): Quantity
+
+    /** 계좌의 시장별 매매 수수료율. */
+    fun commissionRates(userId: UserId): List<CommissionRate>
 }
