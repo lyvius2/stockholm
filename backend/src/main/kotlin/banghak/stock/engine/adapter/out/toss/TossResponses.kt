@@ -27,6 +27,10 @@ internal object TossResponses {
         throw marketFailure(response.code(), errorCode(response))
     }
 
+    /** 성공 응답에 필수 값이 없으면 0 으로 읽지 않고 시세 없음으로 올림. */
+    fun <T : Any> required(value: T?, label: String): T =
+        value ?: throw MarketDataUnavailableException("토스 응답에 $label 값이 없음")
+
     /**
      * 조회 fallback.
      * 이미 도메인 예외면 그대로, 연결 실패 등은 시세 없음으로 바꿈.

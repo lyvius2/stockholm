@@ -70,7 +70,7 @@ class TossMarketBoardAdapter(
                 requested[price.symbol]?.let {
                     IndicatorQuote(
                         it,
-                        price.lastPrice,
+                        TossResponses.required(price.lastPrice, "${price.symbol} 값"),
                         price.timestamp?.let { at -> OffsetDateTime.parse(at).toInstant() },
                     )
                 }
@@ -92,11 +92,12 @@ class TossMarketBoardAdapter(
         return RankedStock(
             rank = item.rank,
             symbol = Symbol(query.market, item.symbol),
-            last = Money.of(item.price.lastPrice, currency),
-            base = Money.of(item.price.basePrice, currency),
+            last = Money.of(TossResponses.required(item.price.lastPrice, "랭킹 현재가"), currency),
+            base = Money.of(TossResponses.required(item.price.basePrice, "랭킹 기준가"), currency),
             changeRate = item.price.changeRate?.let { Percent(it) },
-            tradingVolume = item.tradingVolume,
-            tradingAmount = Money.of(item.tradingAmount, currency),
+            tradingVolume = TossResponses.required(item.tradingVolume, "랭킹 거래량"),
+            tradingAmount =
+                Money.of(TossResponses.required(item.tradingAmount, "랭킹 거래대금"), currency),
         )
     }
 

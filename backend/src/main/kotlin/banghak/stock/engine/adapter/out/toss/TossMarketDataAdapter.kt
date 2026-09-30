@@ -52,7 +52,7 @@ class TossMarketDataAdapter(
                     .prices(callers.publicMarketCaller(), symbols.joinToString(",") { it.code })
                     .execute()
             )
-        return result.mapNotNull { price -> byCode[price.symbol]?.let { toQuote(it, price) } }
+        return result.mapNotNull { price -> byCode[price.symbol]?.let { quoteOrNull(it, price) } }
     }
 
     fun quotesUnavailable(symbols: List<Symbol>, cause: Throwable): List<Quote> =
@@ -103,7 +103,12 @@ class TossMarketDataAdapter(
             )
         val currency = requireMarketCurrency(symbol, book.currency)
         val levels = { entries: List<TossOrderbookEntry> ->
-            entries.map { OrderBook.Level(Money.of(it.price, currency), Quantity.of(it.volume)) }
+            entries.map {
+                OrderBook.Level(
+                    Money.of(TossResponses.required(it.price, "호가 가격"), currency),
+                    Quantity.of(TossResponses.required(it.volume, "호가 잔량")),
+                )
+            }
         }
         return OrderBook(
             symbol,
@@ -177,16 +182,24 @@ class TossMarketDataAdapter(
             throw MarketDataUnavailableException(
                 "요청한 환율 ${from}→${to} 와 다른 ${rate.baseCurrency}→${rate.quoteCurrency} 가 옴"
             )
-        return ExchangeRate(from, to, rate.rate, parseInstant(rate.validFrom))
+        return ExchangeRate(
+            from,
+            to,
+            TossResponses.required(rate.rate, "환율"),
+            parseInstant(rate.validFrom),
+        )
     }
 
+    // 가격이 빠진 종목은 0원으로 읽지 않고 그 종목만 뺌(호출자는 현재가 없음으로 다룸).
     // 시각이 없는 현재가는 가장 오래된 시각으로 둬 신선도 검사에서 걸러지게 함
-    private fun toQuote(symbol: Symbol, price: TossPrice): Quote =
-        Quote(
+    private fun quoteOrNull(symbol: Symbol, price: TossPrice): Quote? {
+        val last = price.lastPrice ?: return null
+        return Quote(
             symbol,
-            Money.of(price.lastPrice, requireMarketCurrency(symbol, price.currency)),
+            Money.of(last, requireMarketCurrency(symbol, price.currency)),
             price.timestamp?.let(::parseInstant) ?: Instant.EPOCH,
         )
+    }
 
     // 토스 1분봉 timestamp 는 봉 종료 시각, 일봉은 그날 00:00(KST)임
     private fun toCandle(symbol: Symbol, interval: CandleInterval, candle: TossCandle): Candle {
@@ -196,11 +209,11 @@ class TossMarketDataAdapter(
             symbol,
             interval,
             openTime,
-            Money.of(candle.openPrice, currency),
-            Money.of(candle.highPrice, currency),
-            Money.of(candle.lowPrice, currency),
-            Money.of(candle.closePrice, currency),
-            Quantity.of(candle.volume),
+            Money.of(TossResponses.required(candle.openPrice, "봉 시가"), currency),
+            Money.of(TossResponses.required(candle.highPrice, "봉 고가"), currency),
+            Money.of(TossResponses.required(candle.lowPrice, "봉 저가"), currency),
+            Money.of(TossResponses.required(candle.closePrice, "봉 종가"), currency),
+            Quantity.of(TossResponses.required(candle.volume, "봉 거래량")),
         )
     }
 

@@ -189,7 +189,7 @@ class TossConditionalOrderAdapter(
             type = enumOf(order.type, "조건주문 타입"),
             status = enumOf<ConditionalOrderStatus>(order.status, "조건주문 상태"),
             symbol = Symbol(market, order.symbol),
-            quantity = Quantity.of(order.quantity),
+            quantity = Quantity.of(TossOrderResponses.required(order.quantity, "조건주문 수량")),
             kind = enumOf(order.orderType, "호가 유형"),
             expireDate = order.expireDate?.let(LocalDate::parse),
             first = legOf(order.first, market),

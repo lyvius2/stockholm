@@ -23,7 +23,6 @@ import banghak.stock.core.port.TradingPort
 import banghak.stock.shared.config.RuntimeProfiles
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter
-import java.math.BigDecimal
 import java.time.Clock
 import java.time.LocalDate
 import org.springframework.context.annotation.Profile
@@ -189,7 +188,7 @@ class TossTradingAdapter(
             )
         return BrokerHoldings(
             result.items.map(::holdingOf),
-            Money.of(result.marketValue.amount.krw ?: BigDecimal.ZERO, Currency.KRW),
+            Money.of(required(result.marketValue.amount.krw, "보유 평가금액"), Currency.KRW),
             clock.instant(),
         )
     }
@@ -284,19 +283,19 @@ class TossTradingAdapter(
 
     // 성공 응답에 필수 값이 없으면 0 으로 읽지 않고 조회 실패로 올림
     private fun <T : Any> required(value: T?, label: String): T =
-        value ?: throw BrokerUnavailableException("토스 응답에 $label 값이 없음")
+        TossOrderResponses.required(value, label)
 
     private fun holdingOf(item: TossHoldingItem): BrokerHolding {
         val symbol = Symbol(Market.valueOf(item.marketCountry), item.symbol)
         val currency = Currency.valueOf(item.currency)
         return BrokerHolding(
             symbol = symbol,
-            quantity = Quantity.of(item.quantity),
-            averagePurchasePrice = Money.of(item.averagePurchasePrice, currency),
-            lastPrice = Money.of(item.lastPrice, currency),
-            purchaseAmount = Money.of(item.marketValue.purchaseAmount, currency),
-            marketValue = Money.of(item.marketValue.amount, currency),
-            profitLoss = Money.of(item.profitLoss.amount, currency),
+            quantity = Quantity.of(required(item.quantity, "보유 수량")),
+            averagePurchasePrice = Money.of(required(item.averagePurchasePrice, "평균단가"), currency),
+            lastPrice = Money.of(required(item.lastPrice, "보유 종목 현재가"), currency),
+            purchaseAmount = Money.of(required(item.marketValue.purchaseAmount, "매입금액"), currency),
+            marketValue = Money.of(required(item.marketValue.amount, "평가금액"), currency),
+            profitLoss = Money.of(required(item.profitLoss.amount, "평가손익"), currency),
         )
     }
 

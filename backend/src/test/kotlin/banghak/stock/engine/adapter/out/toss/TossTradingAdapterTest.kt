@@ -214,6 +214,24 @@ class TossTradingAdapterTest {
     }
 
     @Test
+    @DisplayName("보유 수량이나 체결 수량이 빠진 성공 응답은 0주로 읽지 않고 조회 실패로 올림")
+    fun missingQuantitiesAreFailures() {
+        json(
+            get(urlPathEqualTo("/api/v1/holdings")),
+            """{"result":{"marketValue":{"amount":{"krw":"700000","usd":null}},"items":[{"symbol":"005930","marketCountry":"KR","currency":"KRW","lastPrice":"70000","averagePurchasePrice":"65000","marketValue":{"purchaseAmount":"650000","amount":"700000"},"profitLoss":{"amount":"50000"}}]}}""",
+        )
+        json(
+            get(urlPathEqualTo("/api/v1/orders/ORD-9")),
+            """{"result":{"orderId":"ORD-9","symbol":"005930","side":"BUY","orderType":"LIMIT","timeInForce":"DAY","status":"FILLED","price":"70000","quantity":"10","orderAmount":null,"currency":"KRW","orderedAt":"2026-09-30T09:30:00.000+09:00","canceledAt":null,"execution":{"averageFilledPrice":"70000","filledAmount":"700000","commission":"0","tax":"0","filledAt":null,"settlementDate":null}}}""",
+        )
+
+        assertThatThrownBy { adapter.holdings(user) }
+            .isInstanceOf(BrokerUnavailableException::class.java)
+        assertThatThrownBy { adapter.lookupOrder(user, "ORD-9") }
+            .isInstanceOf(BrokerUnavailableException::class.java)
+    }
+
+    @Test
     @DisplayName("보낸 뒤 응답이 늦으면 결과 모름으로 올리고 주문 POST 를 다시 보내지 않음")
     fun readTimeoutIsUnknownAndNeverRetried() {
         server.stubFor(

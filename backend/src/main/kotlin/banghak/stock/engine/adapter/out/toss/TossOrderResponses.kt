@@ -80,6 +80,10 @@ internal object TossOrderResponses {
         throw readFailure(response.code(), errorOf(response).code)
     }
 
+    /** 성공 응답에 필수 값이 없으면 0 으로 읽지 않고 조회 실패로 올림. */
+    fun <T : Any> required(value: T?, label: String): T =
+        value ?: throw BrokerUnavailableException("토스 응답에 $label 값이 없음")
+
     /**
      * 돈이 걸린 경로의 fallback.
      * 새로 주문하거나 재시도하지 않음.

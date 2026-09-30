@@ -119,7 +119,7 @@ class TossStockCatalogAdapter(
             status = statusOf(symbol, info.status),
             listedOn = info.listDate?.let { dateOf(symbol, it) },
             delistedOn = info.delistDate?.let { dateOf(symbol, it) },
-            sharesOutstanding = info.sharesOutstanding,
+            sharesOutstanding = TossResponses.required(info.sharesOutstanding, "$symbol 발행 주식 수"),
             leverageFactor = info.leverageFactor,
             krDetail = info.koreanMarketDetail?.let { krDetailOf(symbol, it) },
         )

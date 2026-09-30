@@ -36,7 +36,7 @@ data class TossModifyRequest(
 data class TossOrderReceipt(val orderId: String = "", val clientOrderId: String? = null)
 
 data class TossExecution(
-    val filledQuantity: BigDecimal = BigDecimal.ZERO,
+    val filledQuantity: BigDecimal? = null,
     val averageFilledPrice: BigDecimal? = null,
     val filledAmount: BigDecimal? = null,
     val commission: BigDecimal? = null,
@@ -73,19 +73,19 @@ data class TossCurrencyAmount(val krw: BigDecimal? = null, val usd: BigDecimal? 
 data class TossHoldingsValue(val amount: TossCurrencyAmount = TossCurrencyAmount())
 
 data class TossHoldingValue(
-    val purchaseAmount: BigDecimal = BigDecimal.ZERO,
-    val amount: BigDecimal = BigDecimal.ZERO,
+    val purchaseAmount: BigDecimal? = null,
+    val amount: BigDecimal? = null,
 )
 
-data class TossHoldingProfit(val amount: BigDecimal = BigDecimal.ZERO)
+data class TossHoldingProfit(val amount: BigDecimal? = null)
 
 data class TossHoldingItem(
     val symbol: String = "",
     val marketCountry: String = "",
     val currency: String = "",
-    val quantity: BigDecimal = BigDecimal.ZERO,
-    val lastPrice: BigDecimal = BigDecimal.ZERO,
-    val averagePurchasePrice: BigDecimal = BigDecimal.ZERO,
+    val quantity: BigDecimal? = null,
+    val lastPrice: BigDecimal? = null,
+    val averagePurchasePrice: BigDecimal? = null,
     val marketValue: TossHoldingValue = TossHoldingValue(),
     val profitLoss: TossHoldingProfit = TossHoldingProfit(),
 )
@@ -167,7 +167,7 @@ data class TossConditionalOrder(
     val status: String = "",
     val symbol: String = "",
     val market: String = "",
-    val quantity: BigDecimal = BigDecimal.ZERO,
+    val quantity: BigDecimal? = null,
     val orderType: String = "",
     val expireDate: String? = null,
     val first: TossCondition = TossCondition(),

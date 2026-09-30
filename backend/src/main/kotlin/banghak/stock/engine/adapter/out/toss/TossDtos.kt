@@ -19,10 +19,14 @@ data class TossTokenResponse(
     @JsonProperty("expires_in") val expiresIn: Long = 0,
 )
 
+/**
+ * 가격·수량·금액 필드는 기본값을 두지 않음.
+ * 성공 응답에서 빠진 값을 0 으로 읽지 않고 어댑터가 조회 실패로 올림(이 파일의 다른 응답도 같음).
+ */
 data class TossPrice(
     val symbol: String = "",
     val timestamp: String? = null,
-    val lastPrice: BigDecimal = BigDecimal.ZERO,
+    val lastPrice: BigDecimal? = null,
     val currency: String = "",
 )
 
@@ -30,18 +34,18 @@ data class TossCandles(val candles: List<TossCandle> = emptyList(), val nextBefo
 
 data class TossCandle(
     val timestamp: String = "",
-    val openPrice: BigDecimal = BigDecimal.ZERO,
-    val highPrice: BigDecimal = BigDecimal.ZERO,
-    val lowPrice: BigDecimal = BigDecimal.ZERO,
-    val closePrice: BigDecimal = BigDecimal.ZERO,
-    val volume: BigDecimal = BigDecimal.ZERO,
+    val openPrice: BigDecimal? = null,
+    val highPrice: BigDecimal? = null,
+    val lowPrice: BigDecimal? = null,
+    val closePrice: BigDecimal? = null,
+    val volume: BigDecimal? = null,
     val currency: String = "",
 )
 
 data class TossExchangeRate(
     val baseCurrency: String = "",
     val quoteCurrency: String = "",
-    val rate: BigDecimal = BigDecimal.ZERO,
+    val rate: BigDecimal? = null,
     val validFrom: String = "",
     val validUntil: String = "",
 )
@@ -81,8 +85,8 @@ data class TossOrderbook(
 )
 
 data class TossOrderbookEntry(
-    val price: BigDecimal = BigDecimal.ZERO,
-    val volume: BigDecimal = BigDecimal.ZERO,
+    val price: BigDecimal? = null,
+    val volume: BigDecimal? = null,
 )
 
 data class TossListedStock(
@@ -105,7 +109,7 @@ data class TossStockInfo(
     val currency: String = "",
     val listDate: String? = null,
     val delistDate: String? = null,
-    val sharesOutstanding: BigDecimal = BigDecimal.ZERO,
+    val sharesOutstanding: BigDecimal? = null,
     val leverageFactor: BigDecimal? = null,
     val koreanMarketDetail: TossKrMarketDetail? = null,
 )
@@ -141,18 +145,18 @@ data class TossRankingItem(
     val symbol: String = "",
     val currency: String = "",
     val price: TossRankingPrice = TossRankingPrice(),
-    val tradingVolume: BigDecimal = BigDecimal.ZERO,
-    val tradingAmount: BigDecimal = BigDecimal.ZERO,
+    val tradingVolume: BigDecimal? = null,
+    val tradingAmount: BigDecimal? = null,
 )
 
 data class TossRankingPrice(
-    val lastPrice: BigDecimal = BigDecimal.ZERO,
-    val basePrice: BigDecimal = BigDecimal.ZERO,
+    val lastPrice: BigDecimal? = null,
+    val basePrice: BigDecimal? = null,
     val changeRate: BigDecimal? = null,
 )
 
 data class TossIndicatorPrice(
     val symbol: String = "",
     val timestamp: String? = null,
-    val lastPrice: BigDecimal = BigDecimal.ZERO,
+    val lastPrice: BigDecimal? = null,
 )

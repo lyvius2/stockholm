@@ -505,6 +505,53 @@ class TossMarketAdaptersTest {
         assertThat(board.indicatorQuotes(emptyList())).isEmpty()
     }
 
+    @Test
+    @DisplayName("현재가가 빠진 종목은 0원으로 읽지 않고 그 종목만 빼며, 나머지 종목은 돌려줌")
+    fun missingPriceDropsOnlyThatQuote() {
+        stubBody(
+            "/api/v1/prices",
+            """{"result":[{"symbol":"005930","timestamp":"2026-09-28T09:00:00+09:00","currency":"KRW"},{"symbol":"000660","timestamp":"2026-09-28T09:00:00+09:00","lastPrice":"180000","currency":"KRW"}]}""",
+        )
+
+        val quotes = marketData.quotes(listOf(samsung, hynix))
+
+        assertThat(quotes.map { it.symbol }).containsExactly(hynix)
+    }
+
+    @Test
+    @DisplayName("봉 가격·환율·호가·랭킹 값이 빠진 성공 응답은 0 으로 읽지 않고 조회 실패로 올림")
+    fun missingValuesAreFailuresNotZero() {
+        stubBody(
+            "/api/v1/candles",
+            """{"result":{"candles":[{"timestamp":"2026-09-23T00:00:00.000+09:00","openPrice":"1","highPrice":"1","lowPrice":"1","volume":"1","currency":"KRW"}],"nextBefore":null}}""",
+        )
+        stubBody(
+            "/api/v1/exchange-rate",
+            """{"result":{"baseCurrency":"USD","quoteCurrency":"KRW","validFrom":"2026-09-27T23:57:36.000+09:00","validUntil":"2026-09-28T00:02:34.000+09:00"}}""",
+        )
+        stubBody(
+            "/api/v1/orderbook",
+            """{"result":{"timestamp":null,"currency":"KRW","asks":[{"price":"70100"}],"bids":[]}}""",
+        )
+        stubBody(
+            "/api/v1/rankings",
+            """{"result":{"rankedAt":"2026-09-28T10:00:00+09:00","rankings":[{"rank":1,"symbol":"005930","currency":"KRW","price":{"basePrice":"70000"},"tradingVolume":"1","tradingAmount":"1"}]}}""",
+        )
+
+        assertThatThrownBy { marketData.candlePage(samsung, CandleInterval.DAY_1, null, 1) }
+            .isInstanceOf(MarketDataUnavailableException::class.java)
+        assertThatThrownBy { marketData.exchangeRate(Currency.USD, Currency.KRW) }
+            .isInstanceOf(MarketDataUnavailableException::class.java)
+        assertThatThrownBy { marketData.orderBook(samsung) }
+            .isInstanceOf(MarketDataUnavailableException::class.java)
+        assertThatThrownBy {
+                board.ranking(
+                    RankingQuery(Market.KR, RankingType.TOP_GAINERS, RankingPeriod.DAY_1, false)
+                )
+            }
+            .isInstanceOf(MarketDataUnavailableException::class.java)
+    }
+
     private fun stubToken(token: String) {
         server.stubFor(post(urlPathEqualTo("/oauth2/token")).willReturn(tokenBody(token)))
     }

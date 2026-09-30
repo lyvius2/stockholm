@@ -30,7 +30,7 @@ internal object TossOrderMapping {
             quantity = order.quantity?.let(Quantity::of),
             orderAmount = money(order.orderAmount),
             status = statusOf(order.status),
-            filledQuantity = execution?.filledQuantity?.let(Quantity::of) ?: Quantity.ZERO,
+            filledQuantity = filledQuantityOf(execution),
             averageFilledPrice = money(execution?.averageFilledPrice),
             filledAmount = money(execution?.filledAmount),
             fee = money(execution?.commission),
@@ -40,6 +40,11 @@ internal object TossOrderMapping {
             canceledAt = order.canceledAt?.let(::parse),
         )
     }
+
+    // 체결 정보가 아예 없으면 체결 전이고, 있는데 수량이 빠졌으면 0주로 읽지 않고 조회 실패로 봄
+    private fun filledQuantityOf(execution: TossExecution?): Quantity =
+        if (execution == null) Quantity.ZERO
+        else Quantity.of(TossOrderResponses.required(execution.filledQuantity, "체결 수량"))
 
     /**
      * 토스 주문 상태 10개 → 도메인 상태.
