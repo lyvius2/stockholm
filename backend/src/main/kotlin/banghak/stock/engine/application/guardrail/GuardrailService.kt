@@ -1,6 +1,8 @@
 package banghak.stock.engine.application.guardrail
 
 import banghak.stock.core.domain.error.MarketDataUnavailableException
+import banghak.stock.core.domain.guardrail.ConditionalGuardrailContext
+import banghak.stock.core.domain.guardrail.ConditionalOrderGuardrails
 import banghak.stock.core.domain.guardrail.GuardrailContext
 import banghak.stock.core.domain.guardrail.GuardrailFinding
 import banghak.stock.core.domain.guardrail.GuardrailVerdict
@@ -14,6 +16,7 @@ import banghak.stock.core.domain.portfolio.DepositBalance
 import banghak.stock.core.domain.portfolio.PortfolioSnapshot
 import banghak.stock.core.domain.portfolio.Position
 import banghak.stock.core.domain.trading.ClientOrderId
+import banghak.stock.core.domain.trading.ConditionalOrderIntent
 import banghak.stock.core.domain.trading.ManualAmendTrigger
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.Quote
@@ -48,6 +51,20 @@ class GuardrailService(
         // 그 전에는 자동 주문을 모두 거부함
         if (intent.isAutomatic) return AUTOMATIC_NOT_READY
         return ManualOrderGuardrails.standard().evaluate(contextOf(intent, clientOrderId))
+    }
+
+    // 조건주문은 계좌·장 상태가 발동 시점에 달라지므로 등록 내용(만료일·금액)만 판정함
+    override fun evaluateConditional(intent: ConditionalOrderIntent): GuardrailVerdict {
+        val market = intent.market
+        val now = clock.instant()
+        return ConditionalOrderGuardrails.evaluate(
+            ConditionalGuardrailContext(
+                intent = intent,
+                today = now.atZone(market.zone).toLocalDate(),
+                fxToKrw = if (market.currency == Currency.KRW) null else krwRateOf(market.currency),
+                now = now,
+            )
+        )
     }
 
     private fun contextOf(intent: OrderIntent, clientOrderId: ClientOrderId): GuardrailContext {

@@ -2,6 +2,7 @@ package banghak.stock.core.usecase
 
 import banghak.stock.core.domain.guardrail.GuardrailVerdict
 import banghak.stock.core.domain.trading.ClientOrderId
+import banghak.stock.core.domain.trading.ConditionalOrderIntent
 import banghak.stock.core.domain.trading.OrderIntent
 
 /**
@@ -16,4 +17,10 @@ interface EvaluateGuardrailUseCase {
      * [clientOrderId] 는 이 주문을 보낼 때 쓸 멱등 키이며 같은 키의 재접수를 막는 데 씀.
      */
     fun evaluate(intent: OrderIntent, clientOrderId: ClientOrderId): GuardrailVerdict
+
+    /**
+     * 조건주문 등록·수정을 판정함.
+     * 감시와 발동은 토스 서버가 하므로 등록 순간이 Stockholm 가드레일의 유일한 관문임.
+     */
+    fun evaluateConditional(intent: ConditionalOrderIntent): GuardrailVerdict
 }

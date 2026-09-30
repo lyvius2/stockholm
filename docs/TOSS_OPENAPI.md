@@ -241,6 +241,8 @@
 - 수정 `POST .../{conditionalOrderId}/modify`: 전체 재설정(`type`·`quantity`·`orderType`·`expireDate`·`first`[·`second`]), 타입 전환 가능. **기존을 취소하고 새로 만드는 방식이라 새 `conditionalOrderId`가 발급되고 옛 ID는 무효.**
 - 취소 `DELETE .../{conditionalOrderId}`. 조회 `GET /api/v1/conditional-orders?status=OPEN|CLOSED`(OPEN = WATCHING·PAUSED·ORDERING·ORDERED, 커서 페이지 최대 100), 상세 `GET .../{id}`(CONDITIONAL_ORDER_HISTORY). **다른 채널(앱)에서 등록한 조건주문도 함께 반환.**
 - 조건주문은 토스 서버에서 감시하므로 클라이언트가 꺼져 있어도 작동한다.
+- 조회 응답(`ConditionalOrderDetailResponse`)에 `clientOrderId` 가 없고, 감시 조건(`first`/`second`)에는 **매매 방향이 없다**(`type` STOP/PROFIT_RATE, `status`, `triggerPrice`, `targetProfitRate`, `orderPrice`, `triggeredOrderId`). 조건 상태에는 그룹에 없는 `HOLDING`(OTO 둘째 대기)·`CANCELED`(OCO 반대편 자동 취소)가 있다. `createdAt` 은 KST 오프셋 ISO.
+- 수정 본문에는 `symbol`·`clientOrderId` 가 없다(수정은 멱등 키 없음). 수정·등록 응답은 `conditionalOrderId`, 취소는 204 본문 없음. 목록은 `hasNext`·`nextCursor`.
 
 ## 9. 시세 데이터의 성질 (FAQ)
 
@@ -329,6 +331,7 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | 1억 확인·30억 한도 | 가드레일 `HighValueOrder`(노트·거부), `OrderSubmission.isHighValueConfirmed` |
 | 반대 방향 미체결 409 | 가드레일 `OppositeSideOpenOrder`로 선제 차단 |
 | 정정: 국내 가격+수량, 미국 가격만, 새 orderId. 정정·취소 요청에는 멱등 키가 없고(이미 정정·취소된 주문에는 409), **주문 응답에 원주문 연결 정보가 없음** | `OrderAmendRequest` 검증, `placeAmendment`. `AmendOrderService`: 원주문을 상세 조회로 확인 → 가드레일 → `order_submission`(원주문 번호) → 정정. 국내 정정 수량은 잔량(잔량 이하라 해석과 무관하게 초과 매매 없음). 결과 모름은 원주문 상태로만 판정하고 새 주문 번호는 사람 확인. `CancelOrderService`: 결과 모름은 실시간 채널·재동기에 맡김 |
+| 조건주문: 조회에 멱등 키·매매 방향 없음, 수정은 새 번호(멱등 키 없음), 취소 204, 국내는 KRX 정규장에서만 발동 | `ConditionalOrderPort`(`TossConditionalOrderAdapter`, 엔드포인트는 `TossOrderClient`). 지정가만. `ConditionalOrderService`: 가드레일(`evaluateConditional`) → `conditional_submission` → 등록/수정. 결과 모름은 `PendingConditionalOrderResolver` 가 목록 속성 대조(등록)·기존 조건주문 상태(수정)로 확인하고 다시 보내지 않음. 발동된 주문은 일반 주문 채널로 들어와 외부(수동) 출처 |
 | 캔들 1분봉 = 종료 시각 | 어댑터가 `openTime = timestamp − 1분` |
 | 현재가에 전일 종가 없음 | `Quote(symbol, last, asOf)`, 등락은 일봉으로 |
 | 해외 지수 없음 | F23 지수 티커는 ETF 프록시 + FRED(MARKET_INDEX_TICKER_DESIGN) |
@@ -360,3 +363,4 @@ API로 받은 정보는 **투자자 본인의 매매 목적으로만** 쓴다. �
 | 2026-09-29 | 13장: 재동기에 종료 주문 포함, 이벤트 반영 실패 복구 |
 | 2026-09-29 | 13장: 정정 결과 확인 방식(원주문 상태), 국내 정정 수량의 근거 |
 | 2026-09-29 | 13장: 체결 시각 환율, 시각 파라미터 형식 |
+| 2026-09-30 | 8장: 조건주문 조회 응답에 멱등 키·매매 방향 없음, 수정 본문·응답 형태. 13장: 조건주문 적용 메모 |

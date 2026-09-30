@@ -12,6 +12,8 @@ CREATE INDEX idx_broker_order_user_client_order ON broker_order (user_id, client
 CREATE INDEX idx_broker_order_user_status ON broker_order (user_id, status);
 -- index idx_broker_order_user_symbol_time
 CREATE INDEX idx_broker_order_user_symbol_time ON broker_order (user_id, market, code, ordered_at);
+-- index idx_conditional_submission_user_state
+CREATE INDEX idx_conditional_submission_user_state ON conditional_submission (user_id, state);
 -- index idx_dart_corp_stock_code
 CREATE INDEX idx_dart_corp_stock_code ON dart_corp (stock_code);
 -- index idx_edgar_ticker_cik
@@ -74,6 +76,8 @@ CREATE TABLE audit_log ( audit_id TEXT NOT NULL PRIMARY KEY, occurred_at TEXT NO
 CREATE TABLE broker_order ( broker_order_id TEXT NOT NULL PRIMARY KEY, client_order_id TEXT, replaces_broker_order_id TEXT, user_id TEXT NOT NULL, market TEXT NOT NULL, code TEXT NOT NULL, side TEXT NOT NULL, kind TEXT NOT NULL, time_in_force TEXT NOT NULL, limit_price_amount TEXT, limit_price_currency TEXT, quantity TEXT, order_amount_amount TEXT, order_amount_currency TEXT, status TEXT NOT NULL, filled_quantity TEXT NOT NULL, avg_price_amount TEXT, avg_price_currency TEXT, fee_amount TEXT, tax_amount TEXT, filled_at TEXT, canceled_at TEXT, reject_reason TEXT, origin TEXT NOT NULL, trigger_type TEXT NOT NULL, trigger_json TEXT, remote INTEGER NOT NULL DEFAULT 0, high_value_confirmed INTEGER NOT NULL DEFAULT 0, ordered_at TEXT NOT NULL, updated_at TEXT NOT NULL, fetched_at TEXT NOT NULL , filled_amount_amount TEXT, filled_amount_currency TEXT, version INTEGER NOT NULL DEFAULT 0, queued_quantity TEXT, queued_amount TEXT, queued_fee TEXT, queued_tax TEXT);
 -- table candle
 CREATE TABLE candle ( market TEXT NOT NULL, code TEXT NOT NULL, interval TEXT NOT NULL, open_time TEXT NOT NULL, open TEXT NOT NULL, high TEXT NOT NULL, low TEXT NOT NULL, close TEXT NOT NULL, currency TEXT NOT NULL, volume TEXT NOT NULL, adjusted INTEGER NOT NULL DEFAULT 1, source TEXT NOT NULL, is_final INTEGER NOT NULL DEFAULT 1, fetched_at TEXT NOT NULL, PRIMARY KEY (market, code, interval, open_time) );
+-- table conditional_submission
+CREATE TABLE conditional_submission ( client_order_id TEXT NOT NULL PRIMARY KEY, user_id TEXT NOT NULL, device_id TEXT NOT NULL, market TEXT NOT NULL, code TEXT NOT NULL, type TEXT NOT NULL, quantity TEXT NOT NULL, currency TEXT NOT NULL, first_side TEXT NOT NULL, first_trigger_price TEXT NOT NULL, first_order_price TEXT NOT NULL, second_side TEXT, second_trigger_price TEXT, second_order_price TEXT, expire_date TEXT NOT NULL, intended_at TEXT NOT NULL, high_value_confirmed INTEGER NOT NULL, replaces_conditional_order_id TEXT, state TEXT NOT NULL, conditional_order_id TEXT, reason TEXT, sent_at TEXT NOT NULL, updated_at TEXT NOT NULL );
 -- table credential_meta
 CREATE TABLE credential_meta ( credential_id TEXT NOT NULL PRIMARY KEY, kind TEXT NOT NULL, scope TEXT NOT NULL, user_id TEXT REFERENCES app_user (user_id) ON DELETE CASCADE, last4 TEXT, status TEXT NOT NULL, status_detail TEXT, verified_at TEXT, response_ms INTEGER, extra_json TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL );
 -- table dart_corp

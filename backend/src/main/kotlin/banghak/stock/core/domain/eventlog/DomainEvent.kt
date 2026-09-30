@@ -10,12 +10,15 @@ import banghak.stock.core.domain.money.Percent
 import banghak.stock.core.domain.portfolio.BuyOrigin
 import banghak.stock.core.domain.portfolio.LotId
 import banghak.stock.core.domain.trading.ClientOrderId
+import banghak.stock.core.domain.trading.ConditionLeg
+import banghak.stock.core.domain.trading.ConditionalOrderType
 import banghak.stock.core.domain.trading.OrderKind
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderSide
 import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.Quantity
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * 동기화·감사·projection의 원천이 되는 도메인 이벤트.
@@ -97,6 +100,32 @@ data class OrderResultUnknown(val clientOrderId: ClientOrderId, val reason: Stri
  * [reason] 은 증권사 오류 코드임.
  */
 data class OrderRejected(val clientOrderId: ClientOrderId, val reason: String) : DomainEvent
+
+/**
+ * 조건주문 등록·수정 요청.
+ * 수정이면 [replacesConditionalOrderId] 가 원래 조건주문임.
+ * 결과는 [ConditionalOrderRegistered]·[OrderResultUnknown]·[OrderRejected] 가 같은 [clientOrderId] 로 이음.
+ */
+data class ConditionalOrderRequested(
+    val clientOrderId: ClientOrderId,
+    val symbol: Symbol,
+    val type: ConditionalOrderType,
+    val quantity: Quantity,
+    val first: ConditionLeg,
+    val second: ConditionLeg?,
+    val expireDate: LocalDate,
+    val replacesConditionalOrderId: String?,
+) : DomainEvent
+
+data class ConditionalOrderRegistered(
+    val clientOrderId: ClientOrderId,
+    val conditionalOrderId: String,
+) : DomainEvent
+
+data class ConditionalOrderCancelRequested(
+    val clientOrderId: ClientOrderId,
+    val conditionalOrderId: String,
+) : DomainEvent
 
 // guardrail / automation
 data class GuardrailEvaluated(

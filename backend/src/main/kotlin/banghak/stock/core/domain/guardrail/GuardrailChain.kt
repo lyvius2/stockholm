@@ -8,11 +8,6 @@ package banghak.stock.core.domain.guardrail
 class GuardrailChain(rules: List<Guardrail>) {
     private val rules = rules.sortedBy { it.name }
 
-    fun evaluate(context: GuardrailContext): GuardrailVerdict {
-        val findings = rules.filter { it.appliesTo(context.intent) }.map { it.check(context) }
-        val violations = findings.filterIsInstance<GuardrailFinding.Violation>()
-        val notes = findings.filterIsInstance<GuardrailFinding.Note>()
-        return if (violations.isEmpty()) GuardrailVerdict.Passed(notes)
-        else GuardrailVerdict.Rejected(violations, notes)
-    }
+    fun evaluate(context: GuardrailContext): GuardrailVerdict =
+        GuardrailVerdict.of(rules.filter { it.appliesTo(context.intent) }.map { it.check(context) })
 }

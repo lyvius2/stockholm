@@ -1,5 +1,6 @@
 package banghak.stock.engine.application.trading
 
+import banghak.stock.core.domain.error.BrokerAccessDeniedException
 import banghak.stock.core.domain.error.BrokerUnavailableException
 import banghak.stock.core.domain.error.ConfirmationRequiredException
 import banghak.stock.core.domain.error.GuardrailViolationException
@@ -311,6 +312,17 @@ class ManualOrderServiceTest {
         assertThat(submissions.records.getValue(key).state).isEqualTo(SubmissionState.REJECTED)
         assertThat(submissions.records.getValue(otherKey).state).isEqualTo(SubmissionState.NOT_SENT)
         assertThat(recorded().filter { it == OrderRejected::class.java }).hasSize(2)
+        assertThat(orders.orders).isEmpty()
+    }
+
+    @Test
+    @DisplayName("토스가 401·403 으로 거부하면 접수되지 않은 것이라 확인 대상으로 남기지 않고 거부로 기록함")
+    fun accessDeniedIsRejectedAtOnce() {
+        trading.placeResults += BrokerAccessDeniedException("토스가 주문을 거부함")
+
+        assertThatThrownBy { place() }.isInstanceOf(BrokerAccessDeniedException::class.java)
+
+        assertThat(submissions.records.getValue(key).state).isEqualTo(SubmissionState.REJECTED)
         assertThat(orders.orders).isEmpty()
     }
 

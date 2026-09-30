@@ -81,6 +81,15 @@ sealed interface GuardrailVerdict {
         val violations: List<GuardrailFinding.Violation>,
         override val notes: List<GuardrailFinding.Note>,
     ) : GuardrailVerdict
+
+    companion object {
+        /** 규칙마다의 판정을 모아 전체 판정을 만듦. */
+        fun of(findings: List<GuardrailFinding>): GuardrailVerdict {
+            val violations = findings.filterIsInstance<GuardrailFinding.Violation>()
+            val notes = findings.filterIsInstance<GuardrailFinding.Note>()
+            return if (violations.isEmpty()) Passed(notes) else Rejected(violations, notes)
+        }
+    }
 }
 
 /**

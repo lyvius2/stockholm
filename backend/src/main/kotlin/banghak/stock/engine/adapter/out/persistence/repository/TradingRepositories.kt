@@ -1,6 +1,7 @@
 package banghak.stock.engine.adapter.out.persistence.repository
 
 import banghak.stock.engine.adapter.out.persistence.entity.BrokerOrderEntity
+import banghak.stock.engine.adapter.out.persistence.entity.ConditionalSubmissionEntity
 import banghak.stock.engine.adapter.out.persistence.entity.FillQueueEntity
 import banghak.stock.engine.adapter.out.persistence.entity.LotDisposalEntity
 import banghak.stock.engine.adapter.out.persistence.entity.LotEntity
@@ -96,4 +97,27 @@ interface OrderSubmissionRepository : JpaRepository<OrderSubmissionEntity, Strin
         "select s.brokerOrderId from OrderSubmissionEntity s where s.userId = :userId and s.brokerOrderId is not null"
     )
     fun findClaimedBrokerOrderIds(@Param("userId") userId: String): List<String>
+}
+
+interface ConditionalSubmissionRepository : JpaRepository<ConditionalSubmissionEntity, String> {
+    @Query(
+        "select s from ConditionalSubmissionEntity s where s.userId = :userId and s.clientOrderId = :clientOrderId"
+    )
+    fun findOwned(
+        @Param("userId") userId: String,
+        @Param("clientOrderId") clientOrderId: String,
+    ): ConditionalSubmissionEntity?
+
+    @Query(
+        "select s from ConditionalSubmissionEntity s where s.userId = :userId and s.state in :states order by s.sentAt"
+    )
+    fun findByUserIdAndStates(
+        @Param("userId") userId: String,
+        @Param("states") states: Collection<String>,
+    ): List<ConditionalSubmissionEntity>
+
+    @Query(
+        "select s.conditionalOrderId from ConditionalSubmissionEntity s where s.userId = :userId and s.conditionalOrderId is not null"
+    )
+    fun findClaimedConditionalOrderIds(@Param("userId") userId: String): List<String>
 }

@@ -37,19 +37,31 @@ internal object TossOrderResponses {
      * 주문·정정·취소처럼 상태를 바꾸는 요청.
      * 보낸 뒤의 실패는 결과를 모르는 것으로 봄.
      */
-    fun receiptOf(call: Call<TossEnvelope<TossOrderReceipt>>): TossOrderReceipt {
-        val response =
-            try {
-                call.execute()
-            } catch (e: IOException) {
-                throw sendFailure(e)
-            }
+    fun receiptOf(call: Call<TossEnvelope<TossOrderReceipt>>): TossOrderReceipt =
+        mutationResultOf(call)
+
+    /** 결과 본문이 있는 변경 요청(조건주문 등록·수정 포함). */
+    fun <T> mutationResultOf(call: Call<TossEnvelope<T>>): T {
+        val response = send(call)
         if (response.isSuccessful) {
             return response.body()?.result
-                ?: throw OrderResultUnknownException("토스가 주문 번호 없이 성공 응답을 줌")
+                ?: throw OrderResultUnknownException("토스가 결과 없이 성공 응답을 줌")
         }
         throw mutationFailure(response.code(), errorOf(response))
     }
+
+    /** 본문 없이 성공하는 변경 요청(조건주문 취소 204). */
+    fun completionOf(call: Call<Unit>) {
+        val response = send(call)
+        if (!response.isSuccessful) throw mutationFailure(response.code(), errorOf(response))
+    }
+
+    private fun <T> send(call: Call<T>): Response<T> =
+        try {
+            call.execute()
+        } catch (e: IOException) {
+            throw sendFailure(e)
+        }
 
     /**
      * 조회 요청.

@@ -19,6 +19,9 @@ object SyncScopes {
             is OrderFilled,
             is OrderResultUnknown,
             is OrderRejected,
+            is ConditionalOrderRequested,
+            is ConditionalOrderRegistered,
+            is ConditionalOrderCancelRequested,
             is GuardrailEvaluated,
             is SimulatedOrderRecorded -> SyncScope.LOCAL
             is AutomationSettingChanged,

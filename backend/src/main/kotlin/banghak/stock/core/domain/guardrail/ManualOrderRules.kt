@@ -6,6 +6,7 @@ import banghak.stock.core.domain.guardrail.GuardrailFinding.Violation
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.MarketSession
 import banghak.stock.core.domain.money.Currency
+import banghak.stock.core.domain.money.ExchangeRate
 import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.OrderKind
@@ -114,45 +115,54 @@ class DuplicateIntent : Guardrail {
 class HighValueOrder : Guardrail {
     override val name = NAME
 
-    override fun check(context: GuardrailContext): GuardrailFinding {
-        val notionalKrw =
-            notionalInKrw(context) ?: return Violation(name, "주문 금액을 판정할 신선한 현재가·환율이 없음")
-        if (notionalKrw > GuardrailDefaults.MAX_ORDER_VALUE)
-            return Violation(
-                name,
-                "30억원을 넘는 주문은 낼 수 없음",
-                GuardrailDefaults.MAX_ORDER_VALUE,
-                notionalKrw,
-            )
-        if (notionalKrw >= GuardrailDefaults.HIGH_VALUE_ORDER)
-            return Note(name, "1억원 이상 고액 주문. 확인이 필요함")
-        return Clear
-    }
+    override fun check(context: GuardrailContext): GuardrailFinding = judge(notionalInKrw(context))
 
     // 오래된 현재가·환율로 금액을 낮게 잡으면 확인 노트나 30억 제한을 놓치므로 신선한 값만 씀
     private fun notionalInKrw(context: GuardrailContext): Money? {
         val intent = context.intent
         val needsQuote = intent.kind == OrderKind.MARKET && intent.side == OrderSide.SELL
         val quote =
-            context.quote?.takeIf { isFresh(it.asOf, GuardrailDefaults.QUOTE_MAX_AGE, context) }
+            context.quote?.takeIf { isFresh(it.asOf, GuardrailDefaults.QUOTE_MAX_AGE, context.now) }
         if (needsQuote && quote == null) return null
-        val notional = intent.notional(quote?.last)
-        if (notional.currency == Currency.KRW) return notional
-        val fx =
-            context.fxToKrw?.takeIf {
-                it.from == notional.currency &&
-                    it.to == Currency.KRW &&
-                    isFresh(it.asOf, GuardrailDefaults.FX_MAX_AGE, context)
-            } ?: return null
-        return notional.convert(fx)
+        return toKrw(intent.notional(quote?.last), context.fxToKrw, context.now)
     }
-
-    private fun isFresh(asOf: Instant, maxAge: Duration, context: GuardrailContext): Boolean =
-        Duration.between(asOf, context.now) <= maxAge
 
     companion object {
         /** 이 노트를 사람이 확인하면 증권사에 고액 확인(`confirmHighValueOrder`)을 보냄. */
         const val NAME = "HighValueOrder"
+
+        /**
+         * 원화 환산 주문 금액으로 고액 여부를 판정함.
+         * 금액을 모르면(신선한 현재가·환율 없음) 거부함.
+         */
+        fun judge(notionalKrw: Money?): GuardrailFinding {
+            if (notionalKrw == null) return Violation(NAME, "주문 금액을 판정할 신선한 현재가·환율이 없음")
+            if (notionalKrw > GuardrailDefaults.MAX_ORDER_VALUE)
+                return Violation(
+                    NAME,
+                    "30억원을 넘는 주문은 낼 수 없음",
+                    GuardrailDefaults.MAX_ORDER_VALUE,
+                    notionalKrw,
+                )
+            if (notionalKrw >= GuardrailDefaults.HIGH_VALUE_ORDER)
+                return Note(NAME, "1억원 이상 고액 주문. 확인이 필요함")
+            return Clear
+        }
+
+        /**
+         * 원화로 환산함.
+         * 해외 금액인데 신선한 환율이 없으면 null.
+         */
+        fun toKrw(notional: Money, fxToKrw: ExchangeRate?, now: Instant): Money? {
+            if (notional.currency == Currency.KRW) return notional
+            val fx =
+                fxToKrw?.takeIf {
+                    it.from == notional.currency &&
+                        it.to == Currency.KRW &&
+                        isFresh(it.asOf, GuardrailDefaults.FX_MAX_AGE, now)
+                } ?: return null
+            return notional.convert(fx)
+        }
     }
 }
 
@@ -173,3 +183,6 @@ object ManualOrderGuardrails {
             )
         )
 }
+
+private fun isFresh(asOf: Instant, maxAge: Duration, now: Instant): Boolean =
+    Duration.between(asOf, now) <= maxAge

@@ -165,3 +165,32 @@ class OrderSubmissionEntity(
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant,
     @Column(name = "replaces_broker_order_id") val replacesBrokerOrderId: String?,
 )
+
+/** 날짜 열(`expire_date`)은 ISO `YYYY-MM-DD` 문자열로 두고 저장소가 변환함. */
+@Entity
+@Table(name = "conditional_submission")
+class ConditionalSubmissionEntity(
+    @Id @Column(name = "client_order_id") val clientOrderId: String,
+    @Column(name = "user_id", nullable = false) val userId: String,
+    @Column(name = "device_id", nullable = false) val deviceId: String,
+    @Column(nullable = false) val market: String,
+    @Column(nullable = false) val code: String,
+    @Column(nullable = false) val type: String,
+    @Column(nullable = false) val quantity: BigDecimal,
+    @Column(nullable = false) val currency: String,
+    @Column(name = "first_side", nullable = false) val firstSide: String,
+    @Column(name = "first_trigger_price", nullable = false) val firstTriggerPrice: BigDecimal,
+    @Column(name = "first_order_price", nullable = false) val firstOrderPrice: BigDecimal,
+    @Column(name = "second_side") val secondSide: String?,
+    @Column(name = "second_trigger_price") val secondTriggerPrice: BigDecimal?,
+    @Column(name = "second_order_price") val secondOrderPrice: BigDecimal?,
+    @Column(name = "expire_date", nullable = false) val expireDate: String,
+    @Column(name = "intended_at", nullable = false) val intendedAt: Instant,
+    @Column(name = "high_value_confirmed", nullable = false) val highValueConfirmed: Boolean,
+    @Column(name = "replaces_conditional_order_id") val replacesConditionalOrderId: String?,
+    @Column(nullable = false) var state: String,
+    @Column(name = "conditional_order_id") var conditionalOrderId: String?,
+    @Column var reason: String?,
+    @Column(name = "sent_at", nullable = false) val sentAt: Instant,
+    @Column(name = "updated_at", nullable = false) var updatedAt: Instant,
+)

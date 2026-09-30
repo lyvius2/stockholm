@@ -13,6 +13,8 @@ import banghak.stock.core.domain.money.Percent
 import banghak.stock.core.domain.portfolio.BuyOrigin
 import banghak.stock.core.domain.portfolio.LotId
 import banghak.stock.core.domain.trading.ClientOrderId
+import banghak.stock.core.domain.trading.ConditionLeg
+import banghak.stock.core.domain.trading.ConditionalOrderType
 import banghak.stock.core.domain.trading.OrderKind
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderSide
@@ -20,11 +22,12 @@ import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.Quantity
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-/** 이벤트 37종 전부가 JSON 을 거쳐 같은 값으로 돌아오고, 금액 자릿수가 보존됨. */
+/** 이벤트 40종 전부가 JSON 을 거쳐 같은 값으로 돌아오고, 금액 자릿수가 보존됨. */
 class EventPayloadCodecTest {
     private val codec = EventPayloadCodec()
     private val t0 = Instant.parse("2026-09-27T00:00:00Z")
@@ -92,6 +95,40 @@ class EventPayloadCodecTest {
             ),
             OrderResultUnknown(key, "timeout"),
             OrderRejected(key, "insufficient-buying-power"),
+            ConditionalOrderRequested(
+                key,
+                samsung,
+                ConditionalOrderType.OCO,
+                Quantity.of(10),
+                ConditionLeg(
+                    OrderSide.SELL,
+                    Money.of("80000", Currency.KRW),
+                    Money.of("79900", Currency.KRW),
+                ),
+                ConditionLeg(
+                    OrderSide.SELL,
+                    Money.of("60000", Currency.KRW),
+                    Money.of("59900", Currency.KRW),
+                ),
+                LocalDate.of(2026, 10, 30),
+                "CO-0",
+            ),
+            ConditionalOrderRequested(
+                key,
+                nvidia,
+                ConditionalOrderType.SINGLE,
+                Quantity.of(1),
+                ConditionLeg(
+                    OrderSide.BUY,
+                    Money.of("120.50", Currency.USD),
+                    Money.of("120.50", Currency.USD),
+                ),
+                null,
+                LocalDate.of(2026, 10, 30),
+                null,
+            ),
+            ConditionalOrderRegistered(key, "CO-1"),
+            ConditionalOrderCancelRequested(key, "CO-1"),
             GuardrailEvaluated(key, false, listOf("TotalExposureCap", "DailyBuyCap")),
             AutomationSettingChanged(Market.KR, OrderSide.BUY, ExecutionStage.APPROVAL_REQUIRED),
             LimitsLowered("totalExposure.KR", "9000000"),
@@ -128,7 +165,7 @@ class EventPayloadCodecTest {
         )
 
     @Test
-    @DisplayName("이벤트 37종 전부가 JSON 왕복 뒤 같은 값임")
+    @DisplayName("이벤트 40종 전부가 JSON 왕복 뒤 같은 값임")
     fun everyEventKindRoundTrips() {
         val covered = samples.map { it::class }.toSet()
         assertThat(covered).containsExactlyInAnyOrderElementsOf(DomainEvent::class.sealedSubclasses)

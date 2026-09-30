@@ -24,6 +24,7 @@ import banghak.stock.core.domain.trading.CandlePage
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.ClosedOrdersPage
 import banghak.stock.core.domain.trading.ClosedOrdersQuery
+import banghak.stock.core.domain.trading.ConditionalOrderIntent
 import banghak.stock.core.domain.trading.FeedTopic
 import banghak.stock.core.domain.trading.FillIncrement
 import banghak.stock.core.domain.trading.FillSummary
@@ -405,6 +406,13 @@ class ScriptedGuardrail(var verdict: GuardrailVerdict = GuardrailVerdict.Passed(
 
     override fun evaluate(intent: OrderIntent, clientOrderId: ClientOrderId): GuardrailVerdict {
         evaluated += intent to clientOrderId
+        return verdict
+    }
+
+    val evaluatedConditional = mutableListOf<ConditionalOrderIntent>()
+
+    override fun evaluateConditional(intent: ConditionalOrderIntent): GuardrailVerdict {
+        evaluatedConditional += intent
         return verdict
     }
 }

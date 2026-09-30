@@ -1,13 +1,11 @@
 package banghak.stock.engine.application.trading
 
+import banghak.stock.core.domain.error.BrokerAccessDeniedException
 import banghak.stock.core.domain.error.BrokerUnavailableException
-import banghak.stock.core.domain.error.ConfirmationRequiredException
-import banghak.stock.core.domain.error.GuardrailViolationException
 import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.error.OrderRejectedException
 import banghak.stock.core.domain.error.OrderResultUnknownException
 import banghak.stock.core.domain.guardrail.GuardrailVerdict
-import banghak.stock.core.domain.guardrail.HighValueOrder
 import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.trading.ClientOrderId
@@ -61,10 +59,10 @@ class SubmissionDispatcher(
         verdict: GuardrailVerdict,
         confirmedRules: Set<String>,
     ): OrderSubmission {
-        val submission = OrderSubmission(intent, clientOrderId, isHighValueConfirmed(verdict))
+        val submission =
+            OrderSubmission(intent, clientOrderId, GuardrailApproval.isHighValueConfirmed(verdict))
         journal.recordEvaluated(deviceId, submission, verdict)
-        requirePassed(verdict)
-        requireConfirmed(verdict, confirmedRules)
+        GuardrailApproval.requireApproved(verdict, confirmedRules)
         return submission
     }
 
@@ -86,6 +84,10 @@ class SubmissionDispatcher(
             journal.recordUnknown(record, e.message.orEmpty())
             OrderPlacement.Pending(record.clientOrderId)
         } catch (e: OrderRejectedException) {
+            journal.recordRejected(record, SubmissionState.REJECTED, e.message.orEmpty())
+            throw e
+        } catch (e: BrokerAccessDeniedException) {
+            // 401·403 은 토스가 명시적으로 거부한 응답이라 주문이 접수되지 않았음
             journal.recordRejected(record, SubmissionState.REJECTED, e.message.orEmpty())
             throw e
         } catch (e: BrokerUnavailableException) {
@@ -133,18 +135,4 @@ class SubmissionDispatcher(
     private fun existing(record: SubmissionRecord): SubmissionRecord =
         submissions.find(record.submission.intent.userId, record.clientOrderId)
             ?: throw InvalidValueException("멱등 키 ${record.clientOrderId} 가 다른 사용자의 요청에 쓰였음")
-
-    private fun requirePassed(verdict: GuardrailVerdict) {
-        if (verdict is GuardrailVerdict.Rejected)
-            throw GuardrailViolationException(verdict.violations.map { "${it.rule}: ${it.reason}" })
-    }
-
-    private fun requireConfirmed(verdict: GuardrailVerdict, confirmedRules: Set<String>) {
-        val unconfirmed = verdict.notes.filterNot { it.rule in confirmedRules }
-        if (unconfirmed.isNotEmpty())
-            throw ConfirmationRequiredException(unconfirmed.map { "${it.rule}: ${it.text}" })
-    }
-
-    private fun isHighValueConfirmed(verdict: GuardrailVerdict): Boolean =
-        verdict.notes.any { it.rule == HighValueOrder.NAME }
 }

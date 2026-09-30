@@ -99,3 +99,83 @@ data class TossBuyingPower(
     val currency: String = "",
     val cashBuyingPower: BigDecimal = BigDecimal.ZERO,
 )
+
+/**
+ * 조건주문 감시 조건 본문.
+ * 우리는 지정가만 쓰므로 주문 가격을 늘 보냄.
+ */
+data class TossConditionRequest(
+    val orderSide: String,
+    val triggerPrice: String,
+    val orderPrice: String,
+)
+
+/**
+ * 조건주문 등록 본문.
+ * SINGLE 은 둘째 조건을 보내지 않음.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class TossConditionalOrderRequest(
+    val symbol: String,
+    val type: String,
+    val quantity: String,
+    val orderType: String,
+    val clientOrderId: String,
+    val expireDate: String,
+    val first: TossConditionRequest,
+    val second: TossConditionRequest?,
+    val confirmHighValueOrder: Boolean?,
+)
+
+/**
+ * 조건주문 수정 본문.
+ * 전체를 다시 설정하며 종목과 멱등 키는 없음.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+data class TossConditionalModifyRequest(
+    val type: String,
+    val quantity: String,
+    val orderType: String,
+    val expireDate: String,
+    val first: TossConditionRequest,
+    val second: TossConditionRequest?,
+    val confirmHighValueOrder: Boolean?,
+)
+
+data class TossConditionalOrderReceipt(
+    val conditionalOrderId: String = "",
+    val clientOrderId: String? = null,
+)
+
+/**
+ * 조건주문 조회의 감시 조건.
+ * 매매 방향은 오지 않음.
+ */
+data class TossCondition(
+    val type: String = "",
+    val status: String = "",
+    val triggerPrice: BigDecimal? = null,
+    val targetProfitRate: BigDecimal? = null,
+    val orderPrice: BigDecimal? = null,
+    val triggeredOrderId: String? = null,
+)
+
+data class TossConditionalOrder(
+    val conditionalOrderId: String = "",
+    val type: String = "",
+    val status: String = "",
+    val symbol: String = "",
+    val market: String = "",
+    val quantity: BigDecimal = BigDecimal.ZERO,
+    val orderType: String = "",
+    val expireDate: String? = null,
+    val first: TossCondition = TossCondition(),
+    val second: TossCondition? = null,
+    val createdAt: String = "",
+)
+
+data class TossConditionalOrders(
+    val conditionalOrders: List<TossConditionalOrder> = emptyList(),
+    val nextCursor: String? = null,
+    val hasNext: Boolean = false,
+)

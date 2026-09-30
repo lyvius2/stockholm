@@ -73,6 +73,8 @@ resilience4j:
       toss-stock-all: { base-config: toss, limit-for-period: 1 }
       toss-order: { base-config: toss, limit-for-period: 10 }
       toss-order-history: { base-config: toss, limit-for-period: 5 }
+      toss-conditional-order: { base-config: toss, limit-for-period: 5 }
+      toss-conditional-order-history: { base-config: toss, limit-for-period: 10 }
       # ORDER_INFO 는 초당 6 이지만 09:00~09:10 에는 3 이라 낮은 쪽으로 둠
       toss-order-info: { base-config: toss, limit-for-period: 3 }
       toss-asset: { base-config: toss, limit-for-period: 5 }
