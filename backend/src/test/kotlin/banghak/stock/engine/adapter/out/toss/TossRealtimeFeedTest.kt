@@ -123,6 +123,10 @@ class TossRealtimeFeedTest {
                     events += event
                 }
 
+                override fun onOrderEventLost(owner: UserId) {
+                    events += LostOrderEvent(owner)
+                }
+
                 override fun onState(state: FeedState) {
                     events += state
                 }
@@ -363,6 +367,26 @@ class TossRealtimeFeedTest {
         assertThat((next() as OrderEvent).record.brokerOrderId).isEqualTo("ORD-MINE")
         assertThat(events.poll(200, TimeUnit.MILLISECONDS)).isNull()
     }
+
+    @Test
+    @DisplayName("체결 수량이 빠져 읽지 못한 내 주문 이벤트는 버리되 재동기가 필요함을 알리고, 다음 이벤트는 그대로 넘김")
+    fun unreadableOrderEventAsksForResync() {
+        val server = upgrade()
+        feed.declare(user, setOf(FeedTopic.MyOrders(user)))
+        acknowledge(server)
+        next()
+
+        server.send(
+            orderFrame(topicSeq = "1", dataSeq = "1", orderId = "ORD-BROKEN")
+                .replace("\"filledQuantity\":\"10\",", "")
+        )
+        server.send(orderFrame(topicSeq = "1", dataSeq = "1", orderId = "ORD-NEXT"))
+
+        assertThat(next()).isEqualTo(LostOrderEvent(user))
+        assertThat((next() as OrderEvent).record.brokerOrderId).isEqualTo("ORD-NEXT")
+    }
+
+    private data class LostOrderEvent(val owner: UserId)
 
     private fun upgrade(): ServerSide =
         ServerSide().also { ws.enqueue(MockResponse.Builder().webSocketUpgrade(it).build()) }

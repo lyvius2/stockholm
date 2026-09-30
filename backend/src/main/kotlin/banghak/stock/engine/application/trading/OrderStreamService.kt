@@ -76,6 +76,12 @@ class OrderStreamService(
         }
     }
 
+    // 읽지 못한 이벤트는 내용을 몰라 주문 전체를 다시 받아 맞춤(다음 구독 맞추기 때, 1분 안)
+    override fun onOrderEventLost(owner: UserId) {
+        log.warn("읽지 못한 주문 이벤트가 있음. 재동기로 맞춤")
+        resyncPending += owner
+    }
+
     override fun onState(state: FeedState) {
         val owner = state.owner
         if (!state.isOrderStreamLive(owner)) {

@@ -289,7 +289,11 @@ internal class TossFeedConnection(
                 TossOrderMapping.recordOf(order),
             )
         }
-            .onFailure { log.warn("토스 주문 이벤트를 해석하지 못함({})", it::class.simpleName) }
+            .onFailure {
+                // 이 이벤트는 다시 오지 않으므로 받는 쪽이 주문을 다시 조회해 맞추게 알림
+                log.warn("토스 주문 이벤트를 해석하지 못함({}). 재동기를 요청함", it::class.simpleName)
+                inbox.orderLost(owner)
+            }
             .getOrNull()
     }
 

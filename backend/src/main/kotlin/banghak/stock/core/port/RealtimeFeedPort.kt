@@ -39,5 +39,11 @@ interface FeedListener {
 
     fun onOrderEvent(event: OrderEvent) {}
 
+    /**
+     * [owner] 의 주문 이벤트 하나를 받았으나 읽지 못해 넘기지 못함.
+     * 연결이 살아 있어도 그 이벤트는 다시 오지 않으므로, 받는 쪽은 증권사 주문을 다시 조회해 맞춰야 함.
+     */
+    fun onOrderEventLost(owner: UserId) {}
+
     fun onState(state: FeedState) {}
 }

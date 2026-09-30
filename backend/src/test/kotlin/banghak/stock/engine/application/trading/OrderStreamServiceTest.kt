@@ -188,6 +188,19 @@ class OrderStreamServiceTest {
         }
 
         @Test
+        @DisplayName("읽지 못한 이벤트가 있었다고 알림이 오면 연결이 살아 있어도 다음 맞추기 때 주문을 다시 받아 반영함")
+        fun lostEventIsRecoveredByResync() {
+            orders.recordAccepted(TradingFixtures.brokerOrder(brokerOrderId = "B-1"), false)
+            trading.closedOrders += record("B-1", OrderStatus.FILLED, filled = 10)
+
+            service.onOrderEventLost(user)
+            assertThat(orders.findProgress(user, "B-1")?.status).isEqualTo(OrderStatus.PENDING)
+            service.syncOrderStreams()
+
+            assertThat(orders.findProgress(user, "B-1")?.status).isEqualTo(OrderStatus.FILLED)
+        }
+
+        @Test
         @DisplayName("같은 주문을 다른 쪽이 먼저 고쳐 버전이 어긋나면 다시 읽어 반영함")
         fun retriesOnVersionConflict() {
             orders.applyFailures += OptimisticLockingFailureException("버전 충돌")

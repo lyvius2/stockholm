@@ -1,5 +1,6 @@
 package banghak.stock.engine.adapter.out.toss
 
+import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.trading.FeedState
 import banghak.stock.core.domain.trading.OrderBook
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory
  * 읽기 스레드는 넣기만 하고, 가상 스레드 하나가 순서대로 수신자에게 넘김.
  * 시세는 유실 허용 채널이라 종목별 최신값으로 합쳐 쌓이지 않게 함.
  * 내 주문 이벤트는 순서를 지켜 모두 넘기되, 밀린 개수가 상한을 넘으면 [onOverflow] 로 알려 연결을 끊게 함(재연결 뒤 재동기).
- * 상태 알림은 드물고 잃으면 안 되므로 상한 없이 넘김.
+ * 상태 알림과 읽지 못한 주문 이벤트 알림은 드물고 잃으면 안 되므로 상한 없이 넘김.
  */
 internal class TossFeedInbox(
     private val orderCapacity: Int,
@@ -29,6 +30,8 @@ internal class TossFeedInbox(
         data object Market : Work
 
         data class Order(val event: OrderEvent) : Work
+
+        data class OrderLost(val owner: UserId) : Work
 
         data class State(val state: FeedState) : Work
     }
@@ -59,6 +62,12 @@ internal class TossFeedInbox(
         }
         queue.put(Work.Order(event))
     }
+
+    /**
+     * 읽지 못한 주문 이벤트가 있음을 알림.
+     * 잃으면 안 되므로 상한 없이 넘김.
+     */
+    fun orderLost(owner: UserId) = queue.put(Work.OrderLost(owner))
 
     fun state(state: FeedState) = queue.put(Work.State(state))
 
@@ -94,6 +103,7 @@ internal class TossFeedInbox(
                 pendingOrders.decrementAndGet()
                 notifyAll { it.onOrderEvent(work.event) }
             }
+            is Work.OrderLost -> notifyAll { it.onOrderEventLost(work.owner) }
             is Work.State -> notifyAll { it.onState(work.state) }
         }
     }
