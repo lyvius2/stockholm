@@ -191,12 +191,27 @@ class TossMarketAdaptersTest {
 
         assertThat(minute.candles.first().openTime).isEqualTo(kst("2026-09-23T19:59:00"))
         assertThat(minute.candles.first().volume).isEqualTo(Quantity.of(97106))
-        assertThat(minute.nextBefore).isEqualTo(kst("2026-09-23T19:57:00"))
+        assertThat(minute.nextBefore).isEqualTo(kst("2026-09-23T19:56:00"))
         assertThat(day.candles.first().openTime).isEqualTo(kst("2026-09-23T00:00:00"))
         assertThat(day.candles.first().close).isEqualTo(Money.of("286500", Currency.KRW))
         server.verify(
             getRequestedFor(urlPathEqualTo("/api/v1/candles"))
                 .withQueryParam("before", equalTo("2026-09-24T00:00:00+09:00"))
+        )
+    }
+
+    @Test
+    @DisplayName("1분봉의 이어 받기 위치는 시작 시각으로 주고받고, 토스에는 종료 시각으로 바꿔 보냄")
+    fun minuteCursorRoundTrips() {
+        stubResult("/api/v1/candles", "candles-005930-1m", interval = "1m")
+        val first = marketData.candlePage(samsung, CandleInterval.MINUTE_1, null, 3)
+
+        marketData.candlePage(samsung, CandleInterval.MINUTE_1, first.nextBefore, 3)
+
+        // 픽스처의 nextBefore 는 19:57(종료 시각) = 19:56 에 시작한 봉
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/candles"))
+                .withQueryParam("before", equalTo("2026-09-23T19:57:00+09:00"))
         )
     }
 

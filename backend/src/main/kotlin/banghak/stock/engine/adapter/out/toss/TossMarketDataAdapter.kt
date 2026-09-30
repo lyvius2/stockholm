@@ -76,13 +76,13 @@ class TossMarketDataAdapter(
                         symbol.code,
                         intervalCode(interval),
                         count,
-                        before?.let(::toKst),
+                        before?.let { toKst(stampOf(interval, it)) },
                     )
                     .execute()
             )
         return CandlePage(
             page.candles.map { toCandle(symbol, interval, it) },
-            page.nextBefore?.let(::parseInstant),
+            page.nextBefore?.let { openTimeOf(interval, parseInstant(it)) },
         )
     }
 
@@ -190,9 +190,7 @@ class TossMarketDataAdapter(
 
     // 토스 1분봉 timestamp 는 봉 종료 시각, 일봉은 그날 00:00(KST)임
     private fun toCandle(symbol: Symbol, interval: CandleInterval, candle: TossCandle): Candle {
-        val stamp = parseInstant(candle.timestamp)
-        val openTime =
-            if (interval == CandleInterval.MINUTE_1) stamp.minus(interval.length) else stamp
+        val openTime = openTimeOf(interval, parseInstant(candle.timestamp))
         val currency = requireMarketCurrency(symbol, candle.currency)
         return Candle(
             symbol,
@@ -205,6 +203,13 @@ class TossMarketDataAdapter(
             Quantity.of(candle.volume),
         )
     }
+
+    // 토스 봉 시각(`timestamp`·`before`·`nextBefore`)은 1분봉이면 종료 시각이라 시작 시각과 1분 차이 남
+    private fun openTimeOf(interval: CandleInterval, stamp: Instant): Instant =
+        if (interval == CandleInterval.MINUTE_1) stamp.minus(interval.length) else stamp
+
+    private fun stampOf(interval: CandleInterval, openTime: Instant): Instant =
+        if (interval == CandleInterval.MINUTE_1) openTime.plus(interval.length) else openTime
 
     // 응답 통화를 종목 통화로 덮어쓰지 않음.
     // 다르면 환산 없이 잘못된 금액이 가드레일로 가므로 조회 실패로 봄

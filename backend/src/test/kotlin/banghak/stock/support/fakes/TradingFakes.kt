@@ -19,6 +19,7 @@ import banghak.stock.core.domain.portfolio.LotId
 import banghak.stock.core.domain.portfolio.QueuedFill
 import banghak.stock.core.domain.trading.BrokerOrder
 import banghak.stock.core.domain.trading.BrokerOrderRecord
+import banghak.stock.core.domain.trading.Candle
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.CandlePage
 import banghak.stock.core.domain.trading.ClientOrderId
@@ -177,12 +178,26 @@ class FakeMarketData : MarketDataPort {
         return rates[from to to]?.copy(asOf = at) ?: throw MarketDataUnavailableException("환율 없음")
     }
 
+    val candles = mutableListOf<Candle>()
+    var candlePageSize = MarketDataPort.MAX_CANDLES
+    var candleReads = 0
+
+    // 포트 계약대로 최신순으로 주고, 다음 위치는 남은 봉 중 가장 최근 봉의 시작 시각임
     override fun candlePage(
         symbol: Symbol,
         interval: CandleInterval,
         before: Instant?,
         count: Int,
-    ): CandlePage = error("이 테스트에서 쓰지 않음")
+    ): CandlePage {
+        candleReads++
+        val matching =
+            candles
+                .filter { it.symbol == symbol && it.interval == interval }
+                .filter { before == null || !it.openTime.isAfter(before) }
+                .sortedByDescending { it.openTime }
+        val size = minOf(count, candlePageSize)
+        return CandlePage(matching.take(size), matching.getOrNull(size)?.openTime)
+    }
 
     override fun orderBook(symbol: Symbol): OrderBook = error("이 테스트에서 쓰지 않음")
 

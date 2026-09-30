@@ -53,6 +53,7 @@ data class Candle(
 
 /**
  * 봉 한 페이지.
- * [nextBefore] 를 다음 요청에 그대로 넘기며 null 이면 끝임.
+ * [nextBefore] 는 다음 페이지에서 가장 최근인 봉의 시작 시각이며, 다음 요청에 그대로 넘김.
+ * null 이면 끝임.
  */
 data class CandlePage(val candles: List<Candle>, val nextBefore: Instant?)

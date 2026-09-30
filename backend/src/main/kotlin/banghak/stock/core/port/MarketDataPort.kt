@@ -24,8 +24,10 @@ interface MarketDataPort {
     fun quotes(symbols: List<Symbol>): List<Quote>
 
     /**
-     * 봉 한 페이지.
-     * [before] 가 null 이면 가장 최근 봉부터, [count] 는 [MAX_CANDLES] 까지.
+     * 봉 한 페이지(최신순).
+     * [before] 가 null 이면 가장 최근 봉부터, 있으면 시작 시각이 [before] 이하인 봉부터 줌.
+     * [count] 는 [MAX_CANDLES] 까지.
+     * 돌려준 [CandlePage.nextBefore] 를 그대로 넘기면 이어지는 과거 봉을 받음.
      */
     fun candlePage(
         symbol: Symbol,
