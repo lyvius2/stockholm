@@ -6,7 +6,9 @@ import banghak.stock.core.domain.trading.FeedTopic
 /** 실시간 구독을 원하는 기능. */
 enum class FeedDemand {
     /** 사용자 본인의 주문 상태(`personal:order`). */
-    MY_ORDERS
+    MY_ORDERS,
+    /** 화면이 보는 종목의 체결·호가(admin 연결). */
+    MARKET_STREAM,
 }
 
 /**

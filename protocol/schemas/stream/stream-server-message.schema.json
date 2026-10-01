@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/stream/stream-server-message.schema.json",
+  "title": "StreamServerMessage",
+  "description": "로컬 WebSocket(/ws)으로 데몬이 화면에 보내는 메시지. 시세는 종목별 최신값만 250ms 마다 묶어 보내고, feedState 는 바로 보냄. 금액은 문자열(decimal), 시각은 ISO-8601 UTC.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type"
+  ],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "quote",
+        "orderBook",
+        "liveCandle",
+        "feedState"
+      ]
+    },
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "quote": {
+      "$ref": "#/$defs/quote"
+    },
+    "orderBook": {
+      "$ref": "#/$defs/orderBook"
+    },
+    "liveCandle": {
+      "$ref": "#/$defs/candle"
+    },
+    "feedState": {
+      "$ref": "#/$defs/feedState"
+    }
+  },
+  "$defs": {
+    "quote": {
+      "title": "StreamQuote",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "last",
+        "asOf"
+      ],
+      "properties": {
+        "last": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "asOf": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        }
+      }
+    },
+    "level": {
+      "title": "StreamOrderBookLevel",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "price",
+        "quantity"
+      ],
+      "properties": {
+        "price": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "quantity": {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        }
+      }
+    },
+    "orderBook": {
+      "title": "StreamOrderBook",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asks",
+        "bids",
+        "asOf"
+      ],
+      "description": "매도 호가는 낮은 가격부터, 매수 호가는 높은 가격부터.",
+      "properties": {
+        "asks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/level"
+          }
+        },
+        "bids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/level"
+          }
+        },
+        "asOf": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        }
+      }
+    },
+    "candle": {
+      "title": "StreamLiveCandle",
+      "type": "object",
+      "additionalProperties": false,
+      "description": "진행 중인 1분봉. 체결이 빠질 수 있어 근사값이며 닫힌 봉은 차트 조회로 다시 받음.",
+      "required": [
+        "openTime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "properties": {
+        "openTime": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        "open": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "high": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "low": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "close": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "volume": {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        }
+      }
+    },
+    "feedState": {
+      "title": "StreamFeedState",
+      "type": "object",
+      "additionalProperties": false,
+      "description": "isLive 가 false 면 증권사 시세 연결이 끊긴 것이라 화면은 지연을 표시함. unavailableSymbols 는 연결은 됐지만 이 화면이 구독한 종목 중 증권사가 거절했거나 구독 한도 밖이라 시세가 오지 않는 종목임.",
+      "required": [
+        "isLive",
+        "unavailableSymbols"
+      ],
+      "properties": {
+        "isLive": {
+          "type": "boolean"
+        },
+        "unavailableSymbols": {
+          "type": "array",
+          "items": {
+            "$ref": "../common/_values.schema.json#/$defs/symbol"
+          }
+        }
+      }
+    }
+  }
+}

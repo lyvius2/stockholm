@@ -13,10 +13,13 @@ import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.trading.Candle
 import banghak.stock.core.domain.trading.CandleCoverage
 import banghak.stock.core.domain.trading.CandleInterval
+import banghak.stock.core.domain.trading.StreamMessage
+import banghak.stock.core.domain.trading.StreamViewerId
 import banghak.stock.core.port.CandleStorePort
 import banghak.stock.core.port.StockCatalogPort
 import banghak.stock.core.port.StockFlagsCachePort
 import banghak.stock.core.port.StockMasterPort
+import banghak.stock.core.port.StreamPushPort
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -153,4 +156,16 @@ class MemoryCandleStore : CandleStorePort {
     }
 
     fun count(): Int = candles.size
+}
+
+/** 화면 연결에 민 메시지를 모아 둠. */
+class FakeStreamPush : StreamPushPort {
+    val pushed = mutableListOf<Pair<StreamViewerId, List<StreamMessage>>>()
+
+    override fun push(viewer: StreamViewerId, messages: List<StreamMessage>) {
+        pushed += viewer to messages
+    }
+
+    fun messagesTo(viewer: StreamViewerId): List<StreamMessage> =
+        pushed.filter { it.first == viewer }.flatMap { it.second }
 }

@@ -541,3 +541,4 @@ public final class SecretMissingException extends DomainException {}
 | 2026-10-01 | `FeedListener.onOrderEventLost(owner)`: 읽지 못한 주문 이벤트가 있으면 받는 쪽이 주문을 다시 조회해 맞춤 |
 | 2026-10-01 | `CandleCoverage`(`contains`·`olderCursor`·`mergeNewest`·`mergeOlder`·`trimmedTo`, 1분봉 보존 90일), 포트 `CandleStorePort`, `Chart.isDelayed`, usecase `PurgeCandlesUseCase` |
 | 2026-10-01 | `LiveCandle`(실시간 체결 → 진행 중인 1분봉, 근사값이라 저장하지 않음), usecase `LookupLiveCandleUseCase` |
+| 2026-10-01 | 로컬 스트림: `StreamViewerId`·`StreamMessage`(QuoteUpdate·OrderBookUpdate·LiveCandleUpdate·MarketFeedState)·`StreamWatch`(화면당 20종목), usecase `MarketStreamUseCase`(watch·leave·flush), 포트 `StreamPushPort`, `FeedDemand.MARKET_STREAM` |

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/stream/stream-client-message.schema.json",
+  "title": "StreamClientMessage",
+  "description": "로컬 WebSocket(/ws)으로 화면이 데몬에 보내는 메시지. subscribe 는 보는 종목 전체를 선언함(빠진 종목은 해제).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "symbols"],
+  "properties": {
+    "type": { "type": "string", "enum": ["subscribe"] },
+    "symbols": {
+      "type": "array",
+      "maxItems": 20,
+      "items": { "$ref": "../common/_values.schema.json#/$defs/symbol" }
+    }
+  }
+}

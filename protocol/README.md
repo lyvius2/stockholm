@@ -18,7 +18,8 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 |---|---|
 | `schemas/common/` | 봉투(`envelope`)와 공용 값 정의 `_values`(밑줄 시작 = `$defs` 만 있어 타입을 만들지 않고 `$ref` 로만 씀) |
 | `schemas/events/` | 이벤트 로그 payload(동기화 대상) |
-| `schemas/api/` | 로컬 REST/WebSocket 요청·응답 |
+| `schemas/api/` | 로컬 REST 요청·응답 |
+| `schemas/stream/` | 로컬 WebSocket(`/ws`) 메시지. 화면 → `stream-client-message`(subscribe: 보는 종목 전체 선언), 데몬 → `stream-server-message`(quote·orderBook·liveCandle·feedState, 배열로 묶어 보냄). Kotlin 은 어댑터 DTO(`engine/adapter/in/ws/StreamMessages.kt`)가 원본이고 테스트 `LocalStreamHandlerTest` 가 스키마 적합성을 검사함 |
 | `schemas/relay/` | relay 경유 메시지(7단계) |
 
 ## 생성
@@ -32,3 +33,4 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | 날짜 | 변경 |
 |---|---|
 | 2026-09-27 | `schemas/api/*` 7개 추가(setup-state·credential-kind·credential-check·user·login·totp-enrollment·error). Kotlin 생성 범위를 common·events로 한정, TS 이름은 `--acronym-style original` |
+| 2026-10-01 | `schemas/stream/` 추가(로컬 WebSocket 메시지) |

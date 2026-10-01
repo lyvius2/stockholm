@@ -47,6 +47,7 @@ dependencies {
     implementation(platform(libs.jackson2.bom))
 
     implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.websocket)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.aspectj)
