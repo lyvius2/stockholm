@@ -9,6 +9,7 @@ import banghak.stock.core.port.CandleStorePort
 import banghak.stock.core.port.MarketDataPort
 import banghak.stock.shared.config.RuntimeProfiles
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
@@ -41,27 +42,39 @@ class CandleHistory(
     // 보존 기간 정리가 봉을 지우는 동안 옛 보유 구간으로 다시 저장하지 않게 조회 전체와 배타로 둠
     private val purgeLock = ReentrantReadWriteLock()
 
+    // 가장 최근 쪽을 토스에서 마지막으로 받은 시각(종목·봉 단위별)
+    private val refreshedAt = ConcurrentHashMap<Pair<Symbol, CandleInterval>, Instant>()
+
     /**
      * 시작 시각이 [before] 이하인 봉을 최신순으로 [count] 개까지(null 이면 가장 최근부터).
      * 토스에서 받는 구간은 한 번에 200개까지라 [count] 보다 적게 올 수 있으며, 이어 받을 위치는 돌려준 페이지의 `nextBefore` 임.
+     * [maxAge] 는 가장 최근 쪽을 다시 받지 않고 저장된 것으로 때워도 되는 시간임(0이면 매번 다시 받음).
+     * 전일 종가처럼 하루에 한 번 바뀌는 값은 길게 줘 보유 종목마다 토스를 부르지 않게 함.
      */
-    fun page(symbol: Symbol, interval: CandleInterval, before: Instant?, count: Int): Result =
-        purgeLock.read {
-            seriesLocks
-                .computeIfAbsent(symbol to interval) { ReentrantLock() }
-                .withLock {
-                    val coverage = store.coverage(symbol, interval)
-                    when {
-                        before == null -> newest(symbol, interval, coverage, count)
-                        coverage == null -> fresh(uncovered(symbol, interval, before, count))
-                        coverage.contains(before) -> fresh(stored(coverage, before, count))
-                        before.isAfter(coverage.to) -> newest(symbol, interval, coverage, count)
-                        coverage.reachedStart -> fresh(CandlePage(emptyList(), null))
-                        before == coverage.olderCursor() -> fresh(older(coverage, before, count))
-                        else -> fresh(detached(symbol, interval, before, count))
-                    }
+    fun page(
+        symbol: Symbol,
+        interval: CandleInterval,
+        before: Instant?,
+        count: Int,
+        maxAge: Duration = Duration.ZERO,
+    ): Result = purgeLock.read {
+        seriesLocks
+            .computeIfAbsent(symbol to interval) { ReentrantLock() }
+            .withLock {
+                val coverage = store.coverage(symbol, interval)
+                when {
+                    before == null && coverage != null && isFreshEnough(symbol, interval, maxAge) ->
+                        fresh(stored(coverage, coverage.to, count))
+                    before == null -> newest(symbol, interval, coverage, count)
+                    coverage == null -> fresh(uncovered(symbol, interval, before, count))
+                    coverage.contains(before) -> fresh(stored(coverage, before, count))
+                    before.isAfter(coverage.to) -> newest(symbol, interval, coverage, count)
+                    coverage.reachedStart -> fresh(CandlePage(emptyList(), null))
+                    before == coverage.olderCursor() -> fresh(older(coverage, before, count))
+                    else -> fresh(detached(symbol, interval, before, count))
                 }
-        }
+            }
+    }
 
     /** 보존 기간이 지난 1분봉을 지움. */
     fun purgeExpired(): Int = purgeLock.write {
@@ -87,6 +100,7 @@ class CandleHistory(
             }
         val merged = coverage?.mergeNewest(page) ?: CandleCoverage.of(symbol, interval, page)
         store.save(page.candles, merged, clock.instant())
+        refreshedAt[symbol to interval] = clock.instant()
         if (merged == null) return fresh(CandlePage(emptyList(), null))
         return fresh(stored(merged, merged.to, count))
     }
@@ -137,6 +151,11 @@ class CandleHistory(
         count: Int,
     ): CandlePage =
         marketData.candlePage(symbol, interval, before, minOf(count, MarketDataPort.MAX_CANDLES))
+
+    private fun isFreshEnough(symbol: Symbol, interval: CandleInterval, maxAge: Duration): Boolean {
+        val last = refreshedAt[symbol to interval] ?: return false
+        return Duration.between(last, clock.instant()) < maxAge
+    }
 
     private fun fresh(page: CandlePage) = Result(page, isDelayed = false)
 
