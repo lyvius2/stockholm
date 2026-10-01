@@ -1,6 +1,10 @@
 package banghak.stock.engine.application.market
 
 import banghak.stock.core.domain.error.InvalidValueException
+import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.market.MarketSession
+import banghak.stock.core.domain.market.SessionWindow
+import banghak.stock.core.domain.market.TradingDay
 import banghak.stock.core.domain.trading.Candle
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.ChartResolution
@@ -11,8 +15,11 @@ import banghak.stock.core.usecase.ChartQuery
 import banghak.stock.support.MutableClock
 import banghak.stock.support.fakes.FakeMarketData
 import banghak.stock.support.fakes.MemoryCandleStore
+import banghak.stock.support.fakes.MemoryMarketCalendarStore
+import banghak.stock.support.fakes.ScriptedMarketCalendar
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -23,7 +30,12 @@ class ChartServiceTest {
     private val samsung = TradingFixtures.samsung
     private val marketData = FakeMarketData()
     private val clock = MutableClock(Instant.parse("2026-10-10T00:00:00Z"))
-    private val service = ChartService(CandleHistory(marketData, MemoryCandleStore(), clock))
+    private val calendar = ScriptedMarketCalendar()
+    private val service =
+        ChartService(
+            CandleHistory(marketData, MemoryCandleStore(), clock),
+            TradingCalendar(calendar, MemoryMarketCalendarStore(), clock),
+        )
     private val open = kst("2026-09-30T09:00:00")
 
     @Test
@@ -108,6 +120,50 @@ class ChartServiceTest {
         assertThat(chart.bars.map { it.openTime })
             .containsExactly(kst("2026-09-28T00:00:00"), kst("2026-10-05T00:00:00"))
         assertThat(chart.bars.first().volume).isEqualTo(Quantity.of(3))
+    }
+
+    @Test
+    @DisplayName("60분봉은 장 달력의 세션 경계에서 나뉨: 국내 15:00~15:29(정규장)와 15:30~(애프터)가 다른 봉")
+    fun hourBarsSplitAtSessionBoundary() {
+        val date = LocalDate.of(2026, 9, 30)
+        calendar.days[Market.KR to date] =
+            TradingDay(
+                Market.KR,
+                date,
+                listOf(
+                    SessionWindow(
+                        MarketSession.REGULAR,
+                        kst("2026-09-30T09:00:00"),
+                        kst("2026-09-30T15:30:00"),
+                    ),
+                    SessionWindow(
+                        MarketSession.AFTER,
+                        kst("2026-09-30T15:30:00"),
+                        kst("2026-09-30T20:00:00"),
+                    ),
+                ),
+            )
+        // 15:00 부터 1분봉 60개(15:00~15:59)
+        repeat(60) { index ->
+            val price = krw("70000")
+            marketData.candles +=
+                Candle(
+                    samsung,
+                    CandleInterval.MINUTE_1,
+                    kst("2026-09-30T15:00:00").plus(Duration.ofMinutes(index.toLong())),
+                    price,
+                    price,
+                    price,
+                    price,
+                    Quantity.of(1),
+                )
+        }
+
+        val chart = service.chart(query(ChartResolution.MINUTE_60, count = 5))
+
+        assertThat(chart.bars.map { it.openTime })
+            .containsExactly(kst("2026-09-30T15:00:00"), kst("2026-09-30T15:30:00"))
+        assertThat(chart.bars.map { it.volume }).containsExactly(Quantity.of(30), Quantity.of(30))
     }
 
     @Test

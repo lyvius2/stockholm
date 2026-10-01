@@ -1,10 +1,12 @@
 package banghak.stock.engine.application.market
 
+import banghak.stock.core.domain.error.MarketDataUnavailableException
 import banghak.stock.core.domain.trading.Candle
 import banghak.stock.core.domain.trading.CandleRollup
 import banghak.stock.core.domain.trading.Chart
 import banghak.stock.core.domain.trading.ChartBar
 import banghak.stock.core.domain.trading.MovingAverage
+import banghak.stock.core.domain.trading.SessionStartLookup
 import banghak.stock.core.usecase.ChartQuery
 import banghak.stock.core.usecase.LoadChartUseCase
 import banghak.stock.core.usecase.PurgeCandlesUseCase
@@ -20,14 +22,15 @@ import org.springframework.stereotype.Service
  */
 @Service
 @Profile(RuntimeProfiles.ENGINE)
-class ChartService(private val history: CandleHistory) : LoadChartUseCase, PurgeCandlesUseCase {
+class ChartService(private val history: CandleHistory, private val calendar: TradingCalendar) :
+    LoadChartUseCase, PurgeCandlesUseCase {
     override fun purgeExpired() {
         history.purgeExpired()
     }
 
     override fun chart(query: ChartQuery): Chart {
         val fetched = fetch(query)
-        val rolled = CandleRollup.rollUp(fetched.candles, query.resolution)
+        val rolled = CandleRollup.rollUp(fetched.candles, query.resolution, sessionsOf(query))
         // 더 과거가 남았으면 가장 오래된 묶음은 봉이 덜 찼을 수 있어 버리고 다음 조회가 다시 받음
         val complete = if (fetched.hasOlder) rolled.drop(1) else rolled
         val skipped = (complete.size - query.count).coerceAtLeast(0)
@@ -42,6 +45,20 @@ class ChartService(private val history: CandleHistory) : LoadChartUseCase, Purge
             nextBefore = nextBeforeOf(query, bars, fetched.hasOlder || skipped > 0),
             isDelayed = fetched.isDelayed,
         )
+    }
+
+    // 분 단위만 세션 경계에서 나눔(60분봉의 미국 09:30 ET·국내 15:30).
+    // 달력을 받지 못한 날은 시계 묶음으로 둠(차트가 멈추는 것보다 나음)
+    private fun sessionsOf(query: ChartQuery): SessionStartLookup {
+        if (!query.resolution.isIntraday) return SessionStartLookup.NONE
+        val market = query.symbol.market
+        return SessionStartLookup { openTime ->
+            try {
+                calendar.sessionStartAt(market, openTime)
+            } catch (e: MarketDataUnavailableException) {
+                null
+            }
+        }
     }
 
     // 묶음이 요청한 수보다 하나 더 모일 때까지 받음(가장 오래된 묶음은 버릴 수 있으므로)

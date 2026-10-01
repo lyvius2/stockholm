@@ -49,3 +49,22 @@ class CandleCoverageEntity(
     @Column(name = "reached_start", nullable = false) var reachedStart: Boolean,
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant,
 )
+
+@Embeddable
+data class MarketDateKey(
+    @Column(name = "market") val market: String,
+    @Column(name = "trading_date") val tradingDate: String,
+) : Serializable
+
+/**
+ * 세션 목록은 JSON 문자열로 둠(`sessions_json`).
+ * 휴장일은 빈 배열.
+ */
+@Entity
+@Table(name = "market_calendar")
+class MarketCalendarEntity(
+    @EmbeddedId val key: MarketDateKey,
+    @Column(name = "sessions_json", nullable = false) var sessionsJson: String,
+    @Column(name = "is_holiday", nullable = false) var isHoliday: Boolean,
+    @Column(name = "fetched_at", nullable = false) var fetchedAt: Instant,
+)

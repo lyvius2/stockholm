@@ -542,3 +542,4 @@ public final class SecretMissingException extends DomainException {}
 | 2026-10-01 | `CandleCoverage`(`contains`·`olderCursor`·`mergeNewest`·`mergeOlder`·`trimmedTo`, 1분봉 보존 90일), 포트 `CandleStorePort`, `Chart.isDelayed`, usecase `PurgeCandlesUseCase` |
 | 2026-10-01 | `LiveCandle`(실시간 체결 → 진행 중인 1분봉, 근사값이라 저장하지 않음), usecase `LookupLiveCandleUseCase` |
 | 2026-10-01 | 로컬 스트림: `StreamViewerId`·`StreamMessage`(QuoteUpdate·OrderBookUpdate·LiveCandleUpdate·MarketFeedState)·`StreamWatch`(화면당 20종목), usecase `MarketStreamUseCase`(watch·leave·flush), 포트 `StreamPushPort`, `FeedDemand.MARKET_STREAM` |
+| 2026-10-01 | `SessionStartLookup`·`ChartResolution.bucketStart(openTime, sessionStart)`(분 단위 묶음을 세션 시작에서 나눔)·`isIntraday`, 포트 `MarketCalendarStorePort`, usecase `SyncMarketCalendarUseCase` |

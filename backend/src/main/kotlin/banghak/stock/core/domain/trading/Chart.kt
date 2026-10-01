@@ -34,14 +34,16 @@ enum class ChartResolution(val base: CandleInterval, private val minutes: Long?)
      * [openTime] 에 시작한 기준 봉이 들어갈 묶음의 시작 시각.
      * 분 단위는 시계에 맞춤(10분봉은 매시 00·10·20…분).
      * 프리·애프터·데이마켓까지 세션이 여럿이라 장 시작이 아니라 시계를 기준으로 함.
-     * 세션을 구분하지 않으므로 경계가 묶음 중간에 오면 두 세션의 봉이 한 묶음에 섞임.
+     * [sessionStart] 가 시계 묶음 중간에 오면 거기서 묶음을 나눠 두 세션이 한 봉에 섞이지 않게 함.
      * 60분봉만 해당함(미국 정규장 시작 09:30, 국내 정규장 종료 15:30).
      * 주는 월요일, 월은 1일, 년은 1월 1일에 시작함.
      */
-    fun bucketStart(openTime: Instant): Instant {
+    fun bucketStart(openTime: Instant, sessionStart: Instant? = null): Instant {
         if (minutes != null) {
             val size = Duration.ofMinutes(minutes).seconds
-            return Instant.ofEpochSecond(Math.floorDiv(openTime.epochSecond, size) * size)
+            val clockStart = Instant.ofEpochSecond(Math.floorDiv(openTime.epochSecond, size) * size)
+            return if (sessionStart != null && sessionStart.isAfter(clockStart)) sessionStart
+            else clockStart
         }
         val day = openTime.atZone(DAILY_ZONE).toLocalDate()
         val first: LocalDate =
@@ -53,6 +55,10 @@ enum class ChartResolution(val base: CandleInterval, private val minutes: Long?)
             }
         return first.atStartOfDay(DAILY_ZONE).toInstant()
     }
+
+    /** 분 단위 봉만 세션 경계에서 나뉨. */
+    val isIntraday: Boolean
+        get() = minutes != null
 
     companion object {
         // 토스 일봉 시각은 그 거래일 0시(국내 실측은 한국 시간).
@@ -76,14 +82,32 @@ data class ChartBar(
     val volume: Quantity,
 )
 
+/**
+ * 봉 시각이 들어 있는 장 세션의 시작 시각.
+ * 모르거나 장 밖이면 null.
+ */
+fun interface SessionStartLookup {
+    fun sessionStartAt(openTime: Instant): Instant?
+
+    companion object {
+        /** 세션을 구분하지 않음(시계 묶음만). */
+        val NONE = SessionStartLookup { null }
+    }
+}
+
 /** 기준 봉을 차트 봉 단위로 묶음. */
 object CandleRollup {
     /**
      * 시가는 묶음의 첫 봉, 종가는 마지막 봉, 고가·저가는 묶음 안의 최고·최저, 거래량은 합임.
      * 입력 순서는 상관없고 결과는 시각 오름차순임.
      * 봉이 없는 구간은 묶음을 만들지 않음.
+     * [sessions] 는 분 단위 묶음을 세션 경계에서 나누는 데 씀.
      */
-    fun rollUp(candles: List<Candle>, resolution: ChartResolution): List<ChartBar> {
+    fun rollUp(
+        candles: List<Candle>,
+        resolution: ChartResolution,
+        sessions: SessionStartLookup = SessionStartLookup.NONE,
+    ): List<ChartBar> {
         if (candles.isEmpty()) return emptyList()
         val symbol = candles.first().symbol
         candles.forEach {
@@ -96,7 +120,7 @@ object CandleRollup {
         return candles
             .distinctBy { it.openTime }
             .sortedBy { it.openTime }
-            .groupBy { resolution.bucketStart(it.openTime) }
+            .groupBy { resolution.bucketStart(it.openTime, sessions.sessionStartAt(it.openTime)) }
             .map { (start, bucket) -> barOf(symbol, resolution, start, bucket) }
     }
 

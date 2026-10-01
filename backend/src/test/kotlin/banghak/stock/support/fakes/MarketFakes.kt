@@ -10,18 +10,22 @@ import banghak.stock.core.domain.market.StockFlags
 import banghak.stock.core.domain.market.StockProfile
 import banghak.stock.core.domain.market.StockWarning
 import banghak.stock.core.domain.market.Symbol
+import banghak.stock.core.domain.market.TradingDay
 import banghak.stock.core.domain.trading.Candle
 import banghak.stock.core.domain.trading.CandleCoverage
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.StreamMessage
 import banghak.stock.core.domain.trading.StreamViewerId
 import banghak.stock.core.port.CandleStorePort
+import banghak.stock.core.port.MarketCalendarPort
+import banghak.stock.core.port.MarketCalendarStorePort
 import banghak.stock.core.port.StockCatalogPort
 import banghak.stock.core.port.StockFlagsCachePort
 import banghak.stock.core.port.StockMasterPort
 import banghak.stock.core.port.StreamPushPort
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 /** 시장별 목록·종목 정보·유의사항을 손으로 채우는 종목 정보 포트. */
 class FakeStockCatalog : StockCatalogPort {
@@ -168,4 +172,33 @@ class FakeStreamPush : StreamPushPort {
 
     fun messagesTo(viewer: StreamViewerId): List<StreamMessage> =
         pushed.filter { it.first == viewer }.flatMap { it.second }
+}
+
+/**
+ * 날짜별 장 달력 가짜.
+ * 넣어 둔 날은 그것을, 없는 날은 휴장(세션 없음)을 돌려주며 호출 횟수를 셈.
+ */
+class ScriptedMarketCalendar : MarketCalendarPort {
+    val days = mutableMapOf<Pair<Market, LocalDate>, TradingDay>()
+    val requests = mutableListOf<Pair<Market, LocalDate>>()
+    var failure: RuntimeException? = null
+
+    override fun tradingDay(market: Market, date: LocalDate): TradingDay {
+        requests += market to date
+        failure?.let { throw it }
+        return days[market to date] ?: TradingDay(market, date, emptyList())
+    }
+}
+
+class MemoryMarketCalendarStore : MarketCalendarStorePort {
+    private val rows = mutableMapOf<Pair<Market, LocalDate>, MarketCalendarStorePort.Stored>()
+
+    override fun find(market: Market, date: LocalDate): MarketCalendarStorePort.Stored? =
+        rows[market to date]
+
+    override fun save(day: TradingDay, fetchedAt: Instant) {
+        rows[day.market to day.date] = MarketCalendarStorePort.Stored(day, fetchedAt)
+    }
+
+    fun count(): Int = rows.size
 }

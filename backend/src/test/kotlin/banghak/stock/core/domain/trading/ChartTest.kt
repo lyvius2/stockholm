@@ -91,6 +91,50 @@ class ChartTest {
         }
 
         @Test
+        @DisplayName("세션 시작을 알면 60분봉을 거기서 나눔: 미국 프리 09:00~09:29 와 정규장 09:30~ 이 다른 봉")
+        fun splitsHourBarAtSessionStart() {
+            val regularOpen = OffsetDateTime.parse("2026-09-30T09:30:00-04:00").toInstant()
+            val preMarket = usMinute("2026-09-30T09:29:00-04:00", price = "100.00", volume = 5)
+            val regular = usMinute("2026-09-30T09:30:00-04:00", price = "101.00", volume = 900)
+            val later = usMinute("2026-09-30T10:00:00-04:00", price = "102.00", volume = 1)
+            val sessions = SessionStartLookup {
+                if (it.isBefore(regularOpen))
+                    OffsetDateTime.parse("2026-09-30T04:00:00-04:00").toInstant()
+                else regularOpen
+            }
+
+            val bars =
+                CandleRollup.rollUp(
+                    listOf(preMarket, regular, later),
+                    ChartResolution.MINUTE_60,
+                    sessions,
+                )
+
+            assertThat(bars.map { it.openTime })
+                .containsExactly(
+                    OffsetDateTime.parse("2026-09-30T09:00:00-04:00").toInstant(),
+                    regularOpen,
+                    OffsetDateTime.parse("2026-09-30T10:00:00-04:00").toInstant(),
+                )
+            assertThat(bars[1].volume).isEqualTo(Quantity.of(900))
+            // 세션 시작이 시계 묶음 시작과 같거나 앞서면 시계 묶음 그대로
+            assertThat(
+                    ChartResolution.MINUTE_60.bucketStart(
+                        regularOpen.plusSeconds(60 * 15),
+                        regularOpen,
+                    )
+                )
+                .isEqualTo(regularOpen)
+            assertThat(
+                    ChartResolution.MINUTE_60.bucketStart(
+                        OffsetDateTime.parse("2026-09-30T10:20:00-04:00").toInstant(),
+                        regularOpen,
+                    )
+                )
+                .isEqualTo(OffsetDateTime.parse("2026-09-30T10:00:00-04:00").toInstant())
+        }
+
+        @Test
         @DisplayName("봉이 없는 구간은 묶음을 만들지 않고, 같은 시각의 봉이 겹쳐 와도 한 번만 셈")
         fun skipsGapsAndDuplicates() {
             val first = minute("09:00", 100, 100, 100, 100, 10)

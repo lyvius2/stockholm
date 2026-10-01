@@ -4,6 +4,8 @@ import banghak.stock.engine.adapter.out.persistence.entity.CandleCoverageEntity
 import banghak.stock.engine.adapter.out.persistence.entity.CandleEntity
 import banghak.stock.engine.adapter.out.persistence.entity.CandleKey
 import banghak.stock.engine.adapter.out.persistence.entity.CandleSeriesKey
+import banghak.stock.engine.adapter.out.persistence.entity.MarketCalendarEntity
+import banghak.stock.engine.adapter.out.persistence.entity.MarketDateKey
 import banghak.stock.engine.adapter.out.persistence.entity.StockKey
 import banghak.stock.engine.adapter.out.persistence.entity.StockWarningEntity
 import java.time.Instant
@@ -34,3 +36,5 @@ interface CandleCoverageRepository : JpaRepository<CandleCoverageEntity, CandleS
     @Query("select c from CandleCoverageEntity c where c.key.interval = :interval")
     fun findSeries(@Param("interval") interval: String): List<CandleCoverageEntity>
 }
+
+interface MarketCalendarRepository : JpaRepository<MarketCalendarEntity, MarketDateKey>
