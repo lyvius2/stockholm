@@ -10,6 +10,10 @@ import banghak.stock.core.domain.market.StockFlags
 import banghak.stock.core.domain.market.StockProfile
 import banghak.stock.core.domain.market.StockWarning
 import banghak.stock.core.domain.market.Symbol
+import banghak.stock.core.domain.trading.Candle
+import banghak.stock.core.domain.trading.CandleCoverage
+import banghak.stock.core.domain.trading.CandleInterval
+import banghak.stock.core.port.CandleStorePort
 import banghak.stock.core.port.StockCatalogPort
 import banghak.stock.core.port.StockFlagsCachePort
 import banghak.stock.core.port.StockMasterPort
@@ -101,4 +105,52 @@ class MemoryStockFlagsCache : StockFlagsCachePort {
     override fun save(flags: StockFlags) {
         this.flags[flags.symbol] = flags
     }
+}
+
+/**
+ * 봉 저장소 가짜.
+ * 포트 계약(범위 양 끝 포함, 최신순, 같은 시각은 덮어씀)을 그대로 지킴.
+ */
+class MemoryCandleStore : CandleStorePort {
+    private val candles = mutableMapOf<Triple<Symbol, CandleInterval, Instant>, Candle>()
+    private val coverages = mutableMapOf<Pair<Symbol, CandleInterval>, CandleCoverage>()
+    var reads = 0
+
+    override fun coverage(symbol: Symbol, interval: CandleInterval): CandleCoverage? =
+        coverages[symbol to interval]
+
+    override fun candles(
+        symbol: Symbol,
+        interval: CandleInterval,
+        from: Instant,
+        before: Instant,
+        limit: Int,
+    ): List<Candle> {
+        reads++
+        return candles.values
+            .filter { it.symbol == symbol && it.interval == interval }
+            .filter { !it.openTime.isBefore(from) && !it.openTime.isAfter(before) }
+            .sortedByDescending { it.openTime }
+            .take(limit)
+    }
+
+    override fun save(candles: List<Candle>, coverage: CandleCoverage?, fetchedAt: Instant) {
+        candles.forEach { this.candles[Triple(it.symbol, it.interval, it.openTime)] = it }
+        if (coverage != null) coverages[coverage.symbol to coverage.interval] = coverage
+    }
+
+    override fun purge(interval: CandleInterval, olderThan: Instant): Int {
+        val expired =
+            candles.filterValues { it.interval == interval && it.openTime.isBefore(olderThan) }.keys
+        expired.toList().forEach(candles::remove)
+        coverages
+            .filterKeys { it.second == interval }
+            .forEach { (key, coverage) ->
+                val trimmed = coverage.trimmedTo(olderThan)
+                if (trimmed == null) coverages.remove(key) else coverages[key] = trimmed
+            }
+        return expired.size
+    }
+
+    fun count(): Int = candles.size
 }

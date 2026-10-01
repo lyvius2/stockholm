@@ -539,3 +539,5 @@ public final class SecretMissingException extends DomainException {}
 | 2026-09-30 | 차트: `ChartResolution`(1·3·5·10·30·60분은 1분봉, 일·주·월·년은 일봉 기준, `bucketStart` — 분은 시계 정렬, 주는 월요일·월은 1일·년은 1월 1일, 날짜는 한국 시간)·`ChartBar`·`CandleRollup`·`MovingAverage`(종가 5·20·60·120, 거래량 20, 기간이 안 찬 자리는 비움)·`Chart`. `MarketDataPort.candlePage` 의 `before`·`nextBefore` 를 봉 시작 시각 기준으로 통일(토스 1분봉 종료 시각 변환은 어댑터). usecase `LoadChartUseCase`(`ChartQuery`, 1~500봉) |
 | 2026-09-30 | `ChartResolution.bucketStart`: 60분봉은 세션 경계(미국 09:30 ET, 국내 15:30)에서 세션이 섞임을 명시 [사용자 결정 대기]. 미국 일봉의 날짜 해석은 실측 전 |
 | 2026-10-01 | `FeedListener.onOrderEventLost(owner)`: 읽지 못한 주문 이벤트가 있으면 받는 쪽이 주문을 다시 조회해 맞춤 |
+| 2026-10-01 | `CandleCoverage`(`contains`·`olderCursor`·`mergeNewest`·`mergeOlder`·`trimmedTo`, 1분봉 보존 90일), 포트 `CandleStorePort`, `Chart.isDelayed`, usecase `PurgeCandlesUseCase` |
+| 2026-10-01 | `LiveCandle`(실시간 체결 → 진행 중인 1분봉, 근사값이라 저장하지 않음), usecase `LookupLiveCandleUseCase` |

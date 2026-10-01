@@ -181,6 +181,7 @@ class FakeMarketData : MarketDataPort {
     val candles = mutableListOf<Candle>()
     var candlePageSize = MarketDataPort.MAX_CANDLES
     var candleReads = 0
+    var candleFailure: RuntimeException? = null
 
     // 포트 계약대로 최신순으로 주고, 다음 위치는 남은 봉 중 가장 최근 봉의 시작 시각임
     override fun candlePage(
@@ -190,6 +191,7 @@ class FakeMarketData : MarketDataPort {
         count: Int,
     ): CandlePage {
         candleReads++
+        candleFailure?.let { throw it }
         val matching =
             candles
                 .filter { it.symbol == symbol && it.interval == interval }

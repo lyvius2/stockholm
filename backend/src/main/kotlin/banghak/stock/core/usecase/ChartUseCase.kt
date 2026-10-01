@@ -37,3 +37,11 @@ interface LoadChartUseCase {
      */
     fun chart(query: ChartQuery): Chart
 }
+
+/**
+ * 보존 기간(1분봉 90일)이 지난 봉 정리.
+ * 일봉은 지우지 않음.
+ */
+interface PurgeCandlesUseCase {
+    fun purgeExpired()
+}

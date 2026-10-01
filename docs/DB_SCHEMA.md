@@ -449,6 +449,7 @@ erDiagram
 - 지금 마스터는 **토스만으로** 채운다(`/stocks/all` 시장별 목록 → `/stocks` 200건씩): 이름·영문명·초성·ISIN·증권 종류·우선주·상장일·상장폐지·레버리지·NXT·`listing_board`. 약명·업종·시총·`source_json`은 KRX·DART 보강(3단계)이 채우며 토스 upsert는 이 열을 덮어쓰지 않는다. 매일 07:00 KST 이후 첫 확인 때 갱신(스케줄러가 1분마다 확인, 실패 시 30분 뒤 재시도), 모든 시장이 성공해야 `installation.stock_master_synced_at`을 남긴다. 받은 종목 정보가 목록보다 적으면(형식 검증으로 건너뛴 코드는 목록 단계에서 이미 빠짐) 받은 것은 저장하되 그 시장을 실패로 본다. 목록에 없는 종목은 같은 `listing_board` 안에서만 `delisted=1`, 빈 목록이면 표시를 건너뛴다(KR_ETC는 실측 0건).
 - `stock_warning`은 초 단위로 바뀌는 VI·경고 플래그의 **현재값**만 담는 짧은 TTL(10초) 캐시(보유·관심·후보 종목만). 이력은 두지 않는다. `StockFlags`는 마스터 동기화 때 복사하지 않고 항상 이 표에서 읽는다. 거래정지는 장중에도 바뀌어 캐시를 채울 때 종목 정보를 다시 받는다. `administrative`·`trading_halted`는 NULL(모름)을 허용한다 — 토스는 관리종목을 주지 않고 미국 거래정지도 주지 않는다.
 - `candle`은 **토스가 주는 1분봉·일봉만** 저장한다. 3·5·10·30·60분·주·월·년은 조회 시 집계하고 메모리 캐시(파생물 저장 안 함). `is_final=0`은 진행 중인 봉(재연결 시 REST로 덮어씀). 보존: 1분봉 90일, 일봉 영구. KR 일봉은 2022-11-23 이전을 `krx_daily_price`에서 합성하므로 `source`가 다르다.
+- `candle_coverage(market, code, interval PK, covered_from, covered_to, reached_start, updated_at)`(V2.11)는 저장한 봉이 **빠짐없이 이어지는 구간**이다. 장이 닫힌 시간에는 봉이 없어 `candle` 만으로는 빠진 구간을 알 수 없으므로 받은 범위를 따로 적는다. 구간 안은 저장소에서 읽고, 구간 바로 앞 과거를 받으면 늘리고, 새로 받은 최근 봉이 구간과 닿지 않으면(오래 꺼져 있었음) 새 구간만 남긴다. `reached_start=1` 이면 그보다 과거는 토스에도 없다. 보존 기간 정리(1분봉 90일, 매일 07:30 KST)는 봉을 지우고 구간 시작을 그만큼 당긴다.
 - `market_index_quote(index_code PK, value, change_amount, change_ratio, as_of, closed, source, fetched_at)`는 F23 지수 티커의 마지막 값(5분 갱신, 이력 없음, 재시작·리포트용). 일별 종가 이력은 `krx_index_daily`.
 - `exchange_rate`는 토스 환율의 시계열(매수 시점 환율·분기 말 환율 조회용). 최신값은 메모리.
 - KRX 원본 세 표는 KRX_DESIGN 4장 그대로. 결측 `"-"`는 NULL. 수정주가 아님.
@@ -1384,6 +1385,7 @@ erDiagram
 | V2.3 | 2 | `stock_warning.unknown_warning` 추가(캐시를 비운 뒤, 기본값 0 이 안전으로 읽히지 않게) |
 | V2.4 | 2 | `order_submission`(주문 요청 기록, 멱등 키 PK) |
 | V2.6 | 2 | `order_submission.replaces_broker_order_id`(정정 요청의 원주문) |
+| V2.11 | 2 | `candle_coverage`(저장한 봉이 이어지는 구간) |
 | V2.10 | 2 | `conditional_submission`(조건주문 요청 기록, 멱등 키 PK) |
 | V2.9 | 2 | `broker_order.queued_quantity/amount/fee/tax`(대기열에 넣은 누적 요약) |
 | V2.8 | 2 | `fill_queue`(체결 증분 아웃박스), `lot_ledger`(원장 시작 시각), `lot.opening`(기초 lot) |
@@ -1427,3 +1429,4 @@ erDiagram
 | 2026-09-29 | V2.8: `fill_queue`·`lot_ledger`·`lot.opening` |
 | 2026-09-29 | V2.9: `broker_order.queued_*`(대기열에 넣은 요약), `fill_queue.SKIPPED` 의미를 수량 대조 기준으로 |
 | 2026-09-30 | V2.10: 조건주문 요청 기록 `conditional_submission` |
+| 2026-10-01 | V2.11: `candle_coverage`. `candle` 을 쓰기 시작함(jOOQ 일괄 upsert, `is_final` 은 받은 시각에 끝나지 않은 봉이면 0) |

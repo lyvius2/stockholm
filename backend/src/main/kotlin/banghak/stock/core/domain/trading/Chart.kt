@@ -167,10 +167,12 @@ object MovingAverage {
  * [bars] 는 시각 오름차순이고, 평균 목록은 [bars] 와 같은 길이·순서임.
  * [closeAverages] 의 키는 이동평균 기간(봉 수)임.
  * [nextBefore] 를 다음 조회에 넘기면 더 과거의 봉을 받고, null 이면 더 없음.
+ * [isDelayed] 가 true 면 증권사를 받지 못해 저장해 둔 봉을 준 것이라 화면이 지연을 표시함.
  */
 data class Chart(
     val bars: List<ChartBar>,
     val closeAverages: Map<Int, List<Money?>>,
     val volumeAverage: List<BigDecimal?>,
     val nextBefore: Instant?,
+    val isDelayed: Boolean = false,
 )

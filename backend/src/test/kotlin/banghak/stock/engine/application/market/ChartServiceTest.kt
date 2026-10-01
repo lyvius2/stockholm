@@ -8,7 +8,9 @@ import banghak.stock.core.domain.trading.Quantity
 import banghak.stock.core.domain.trading.TradingFixtures
 import banghak.stock.core.domain.trading.TradingFixtures.krw
 import banghak.stock.core.usecase.ChartQuery
+import banghak.stock.support.MutableClock
 import banghak.stock.support.fakes.FakeMarketData
+import banghak.stock.support.fakes.MemoryCandleStore
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -20,7 +22,8 @@ import org.junit.jupiter.api.Test
 class ChartServiceTest {
     private val samsung = TradingFixtures.samsung
     private val marketData = FakeMarketData()
-    private val service = ChartService(marketData)
+    private val clock = MutableClock(Instant.parse("2026-10-10T00:00:00Z"))
+    private val service = ChartService(CandleHistory(marketData, MemoryCandleStore(), clock))
     private val open = kst("2026-09-30T09:00:00")
 
     @Test
