@@ -43,6 +43,16 @@ class JooqStockMasterAdapter(
     }
 
     @Transactional(readOnly = true)
+    override fun isListed(symbol: Symbol): Boolean =
+        dsl.fetchExists(
+            dsl.selectOne()
+                .from(STOCK_MASTER)
+                .where(MARKET.eq(symbol.market.name))
+                .and(CODE.eq(symbol.code))
+                .and(DELISTED.eq(0))
+        )
+
+    @Transactional(readOnly = true)
     override fun lastSyncedAt(): Instant? =
         installations.findAll().firstOrNull()?.stockMasterSyncedAt
 

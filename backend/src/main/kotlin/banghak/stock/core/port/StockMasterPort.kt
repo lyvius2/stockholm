@@ -17,6 +17,9 @@ interface StockMasterPort {
     fun markDelistedExcept(board: ListingBoard, listed: Set<Symbol>, at: Instant)
 
     /** 마지막으로 모든 시장을 빠짐없이 동기화한 시각. */
+    /** 종목 마스터에 있고 상장폐지가 아닌지. */
+    fun isListed(symbol: Symbol): Boolean
+
     fun lastSyncedAt(): Instant?
 
     fun recordSync(at: Instant)

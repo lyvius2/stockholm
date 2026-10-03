@@ -1,9 +1,12 @@
 package banghak.stock.engine.adapter.out.persistence.entity
 
 import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
+import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.io.Serializable
 import java.time.Instant
 
 @Entity
@@ -25,4 +28,19 @@ class AppUserEntity(
     @Column(name = "slack_user_id") var slackUserId: String?,
     @Column(name = "created_at", nullable = false) val createdAt: Instant,
     @Column(name = "updated_at", nullable = false) var updatedAt: Instant,
+)
+
+@Embeddable
+data class UserSettingKey(
+    @Column(name = "user_id") val userId: String,
+    @Column(name = "key") val key: String,
+) : Serializable
+
+@Entity
+@Table(name = "user_setting")
+class UserSettingEntity(
+    @EmbeddedId val id: UserSettingKey,
+    @Column(name = "value_json", nullable = false) var valueJson: String,
+    @Column(name = "updated_at", nullable = false) var updatedAt: Instant,
+    @Column(name = "updated_by_device_id") var updatedByDeviceId: String?,
 )

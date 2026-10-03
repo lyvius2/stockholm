@@ -1,6 +1,10 @@
 package banghak.stock.support.fakes
 
+import banghak.stock.core.domain.account.UserSetting
+import banghak.stock.core.domain.account.UserSettingKey
 import banghak.stock.core.domain.error.MarketDataUnavailableException
+import banghak.stock.core.domain.identity.DeviceId
+import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.KrTradingDetail
 import banghak.stock.core.domain.market.ListingBoard
 import banghak.stock.core.domain.market.ListingStatus
@@ -23,6 +27,7 @@ import banghak.stock.core.port.StockCatalogPort
 import banghak.stock.core.port.StockFlagsCachePort
 import banghak.stock.core.port.StockMasterPort
 import banghak.stock.core.port.StreamPushPort
+import banghak.stock.core.port.UserSettingsPort
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -101,6 +106,30 @@ class MemoryStockMaster : StockMasterPort {
 
     override fun recordSync(at: Instant) {
         syncedAt = at
+    }
+
+    val listed = mutableSetOf<Symbol>()
+    var onIsListed: (() -> Unit)? = null
+
+    override fun isListed(symbol: Symbol): Boolean {
+        onIsListed?.invoke()
+        return symbol in listed
+    }
+}
+
+class MemoryUserSettings : UserSettingsPort {
+    val rows = mutableMapOf<Pair<UserId, UserSettingKey>, UserSetting>()
+    var failure: RuntimeException? = null
+    var onFind: (() -> Unit)? = null
+
+    override fun find(userId: UserId, key: UserSettingKey): UserSetting? {
+        failure?.let { throw it }
+        onFind?.invoke()
+        return rows[userId to key]
+    }
+
+    override fun save(setting: UserSetting, updatedBy: DeviceId) {
+        rows[setting.userId to setting.key] = setting
     }
 }
 

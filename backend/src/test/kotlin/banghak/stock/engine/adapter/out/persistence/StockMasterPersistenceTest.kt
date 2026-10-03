@@ -77,6 +77,20 @@ class StockMasterPersistenceTest : EngineDatabaseTest() {
     }
 
     @Test
+    @DisplayName("마스터에 있고 상장폐지가 아닌 종목만 상장 중으로 봄")
+    fun isListedExcludesDelistedAndUnknown() {
+        master.saveAll(
+            listOf(profile(samsung, ListingBoard.KOSPI), profile(hynix, ListingBoard.KOSPI)),
+            at,
+        )
+        master.markDelistedExcept(ListingBoard.KOSPI, setOf(samsung), at)
+
+        assertThat(master.isListed(samsung)).isTrue()
+        assertThat(master.isListed(hynix)).isFalse()
+        assertThat(master.isListed(kosdaq)).isFalse()
+    }
+
+    @Test
     @DisplayName("600건도 한 번에 저장됨(한 문장 500행 단위로 나눔)")
     fun savesMoreRowsThanOneStatement() {
         val many =

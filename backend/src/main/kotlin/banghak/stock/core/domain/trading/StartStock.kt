@@ -52,8 +52,11 @@ object StartStockResolver {
         return StartStock(defaultSymbol(candidates.defaultMarket), StartStockReason.DEFAULT)
     }
 
-    // 평가금액 같으면 매입원가 큰 쪽, 그래도 같으면 종목 코드 순
-    private fun largestPosition(valuations: List<PositionValuation>): Symbol? =
+    /**
+     * ⑵ 평가금액 같으면 매입원가 큰 쪽, 그래도 같으면 종목 코드 순.
+     * 보유가 없으면 null.
+     */
+    fun largestPosition(valuations: List<PositionValuation>): Symbol? =
         valuations
             .sortedWith(
                 compareByDescending<PositionValuation> { it.valuationKrw }
@@ -63,7 +66,8 @@ object StartStockResolver {
             .firstOrNull()
             ?.symbol
 
-    private fun defaultSymbol(market: Market): Symbol =
+    /** ⑶ 기본 시장의 기본 종목 상수. */
+    fun defaultSymbol(market: Market): Symbol =
         when (market) {
             Market.KR -> Symbol.DEFAULT_KR
             Market.US -> Symbol.DEFAULT_US
