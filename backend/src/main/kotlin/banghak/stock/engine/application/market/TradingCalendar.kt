@@ -2,6 +2,7 @@ package banghak.stock.engine.application.market
 
 import banghak.stock.core.domain.error.MarketDataUnavailableException
 import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.market.MarketSession
 import banghak.stock.core.domain.market.SessionWindow
 import banghak.stock.core.domain.market.TradingDay
 import banghak.stock.core.port.MarketCalendarPort
@@ -57,13 +58,21 @@ class TradingCalendar(
      * 한 날의 달력을 받지 못해도 다른 날의 세션은 찾음.
      * 장 밖이거나 그 날 달력을 모르면 null.
      */
-    fun sessionStartAt(market: Market, at: Instant): Instant? {
+    fun sessionStartAt(market: Market, at: Instant): Instant? = windowAt(market, at)?.start
+
+    /**
+     * [at] 의 장 세션.
+     * 장 밖이거나 달력을 모르면 CLOSED.
+     */
+    fun sessionAt(market: Market, at: Instant): MarketSession =
+        windowAt(market, at)?.session ?: MarketSession.CLOSED
+
+    private fun windowAt(market: Market, at: Instant): SessionWindow? {
         val date = at.atZone(market.zone).toLocalDate()
         return listOf(date.minusDays(1), date, date.plusDays(1))
             .asSequence()
             .flatMap { sessionsOrEmpty(market, it) }
             .firstOrNull { it.contains(at) }
-            ?.start
     }
 
     // 날짜 하나가 실패해도 시장과 나머지 날짜는 계속 받되, 한 시장에서 연달아 실패하면 그 시장은 다음으로 미룸

@@ -545,3 +545,4 @@ public final class SecretMissingException extends DomainException {}
 | 2026-10-01 | `SessionStartLookup`·`ChartResolution.bucketStart(openTime, sessionStart)`(분 단위 묶음을 세션 시작에서 나눔)·`isIntraday`, 포트 `MarketCalendarStorePort`, usecase `SyncMarketCalendarUseCase` |
 | 2026-10-02 | F18: `HoldingValuation`·`MarketValuation`·`PortfolioValuation`·`PortfolioValuator`(현재가 없으면 증권사 값, 매수금액 0이면 수익률 없음, 미국 보유 + 환율 없음이면 전체 원화 없음), usecase `LookupPortfolioValuationUseCase` |
 | 2026-10-02 | F19: `UserSettingKey`(LAST_VIEWED_STOCK·DEFAULT_MARKET)·`UserSetting`·`LastViewedStock`·`UserSettingCodec`(JSON), 포트 `UserSettingsPort`·`StockMasterPort.isListed`, usecase `LookupStartStockUseCase`·`RecordLastViewedStockUseCase`·`LookupUserSettingsUseCase` |
+| 2026-10-03 | F11: `Mover`·`MoverBoard`(급등 5·급락 5, 세션, 지연)·`RankChange`(New·Same·Up·Down)·`MoverRanker`(현재가로 등락률 재계산, 기준가 0 제외, 같으면 코드 순), usecase `LookupMoversUseCase` |
