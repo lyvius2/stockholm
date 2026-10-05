@@ -2,6 +2,7 @@ package banghak.stock.core.domain.market
 
 import java.math.BigDecimal
 import java.time.Instant
+import java.time.LocalDate
 
 /**
  * 토스가 주는 시장 지표.
@@ -26,3 +27,13 @@ enum class MarketIndicator(val isIndex: Boolean) {
  * 등락은 주지 않아 전일 종가(지표 일봉)로 따로 계산해야 함.
  */
 data class IndicatorQuote(val indicator: MarketIndicator, val value: BigDecimal, val asOf: Instant?)
+
+/**
+ * 시장 지표 일봉의 종가.
+ * [date] 는 그 거래일(토스 시각은 거래일 0시 KST).
+ */
+data class IndicatorDailyClose(
+    val indicator: MarketIndicator,
+    val date: LocalDate,
+    val close: BigDecimal,
+)

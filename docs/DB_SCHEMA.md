@@ -451,7 +451,7 @@ erDiagram
 - `candle`은 **토스가 주는 1분봉·일봉만** 저장한다. 3·5·10·30·60분·주·월·년은 조회 시 집계하고 메모리 캐시(파생물 저장 안 함). `is_final=0`은 진행 중인 봉(재연결 시 REST로 덮어씀). 보존: 1분봉 90일, 일봉 영구. KR 일봉은 2022-11-23 이전을 `krx_daily_price`에서 합성하므로 `source`가 다르다.
 - `market_calendar` 을 쓰기 시작함(차트 ③ 다음). 지난 날은 한 번 받으면 바뀌지 않으므로 다시 받지 않고, 오늘·앞날은 `fetched_at` 이 한 시간을 넘으면 다시 받는다. 기동 40초 뒤와 하루 한 번 최근 90일~내일을 미리 받는다(달력 호출 초당 3회). 60분봉의 세션 경계 나눔이 이 표를 쓴다.
 - `candle_coverage(market, code, interval PK, covered_from, covered_to, reached_start, updated_at)`(V2.11)는 저장한 봉이 **빠짐없이 이어지는 구간**이다. 장이 닫힌 시간에는 봉이 없어 `candle` 만으로는 빠진 구간을 알 수 없으므로 받은 범위를 따로 적는다. 구간 안은 저장소에서 읽고, 구간 바로 앞 과거를 받으면 늘리고, 새로 받은 최근 봉이 구간과 닿지 않으면(오래 꺼져 있었음) 새 구간만 남긴다. `reached_start=1` 이면 그보다 과거는 토스에도 없다. 보존 기간 정리(1분봉 90일, 매일 07:30 KST)는 봉을 지우고 구간 시작을 그만큼 당긴다.
-- `market_index_quote(index_code PK, value, change_amount, change_ratio, as_of, closed, source, fetched_at)`는 F23 지수 티커의 마지막 값(5분 갱신, 이력 없음, 재시작·리포트용). 일별 종가 이력은 `krx_index_daily`.
+- `market_index_quote(index_code PK, value, change_amount, change_ratio, as_of, closed, source, fetched_at)`는 F23 지수 티커의 마지막 값(5분 갱신, 이력 없음, 재시작·리포트용). 일별 종가 이력은 `krx_index_daily`. 사용 시작(2026-10-03): `source` 는 `TOSS`·`FRED`, ETF 프록시면 `TOSS_ETF:SPY` 처럼 티커를 붙임.
 - `exchange_rate`는 토스 환율의 시계열(매수 시점 환율·분기 말 환율 조회용). 최신값은 메모리.
 - KRX 원본 세 표는 KRX_DESIGN 4장 그대로. 결측 `"-"`는 NULL. 수정주가 아님.
 
@@ -1432,3 +1432,4 @@ erDiagram
 | 2026-09-30 | V2.10: 조건주문 요청 기록 `conditional_submission` |
 | 2026-10-01 | V2.11: `candle_coverage`. `candle` 을 쓰기 시작함(jOOQ 일괄 upsert, `is_final` 은 받은 시각에 끝나지 않은 봉이면 0) |
 | 2026-10-01 | `market_calendar` 사용 시작(cache-aside, 90일 미리 받기) |
+| 2026-10-03 | `market_index_quote` 사용 시작(F23) |

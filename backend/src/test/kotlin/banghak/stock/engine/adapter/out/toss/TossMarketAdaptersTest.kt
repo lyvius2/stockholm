@@ -9,6 +9,7 @@ import banghak.stock.core.domain.error.MarketDataUnavailableException
 import banghak.stock.core.domain.error.SecretMissingException
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.domain.identity.UserId
+import banghak.stock.core.domain.market.IndicatorDailyClose
 import banghak.stock.core.domain.market.IndicatorQuote
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.MarketIndicator
@@ -549,6 +550,43 @@ class TossMarketAdaptersTest {
                     RankingQuery(Market.KR, RankingType.TOP_GAINERS, RankingPeriod.DAY_1, false)
                 )
             }
+            .isInstanceOf(MarketDataUnavailableException::class.java)
+    }
+
+    @Test
+    @DisplayName("지표 일봉 종가는 거래일(KST 날짜)과 함께 최신순으로 오고, 종가가 빠지면 조회 실패")
+    fun mapsIndicatorDailyCloses() {
+        stubBody(
+            "/api/v1/market-indicators/KOSPI/candles",
+            """{"result":{"candles":[{"timestamp":"2026-09-28T00:00:00+09:00","openPrice":"1","highPrice":"1","lowPrice":"1","closePrice":"2650.12","volume":"1"},{"timestamp":"2026-09-25T00:00:00+09:00","closePrice":"2600.00"}],"nextBefore":null}}""",
+        )
+
+        val closes = board.dailyCloses(MarketIndicator.KOSPI, 2)
+
+        server.verify(
+            getRequestedFor(urlPathEqualTo("/api/v1/market-indicators/KOSPI/candles"))
+                .withQueryParam("interval", equalTo("1d"))
+                .withQueryParam("count", equalTo("2"))
+        )
+        assertThat(closes)
+            .containsExactly(
+                IndicatorDailyClose(
+                    MarketIndicator.KOSPI,
+                    LocalDate.of(2026, 9, 28),
+                    BigDecimal("2650.12"),
+                ),
+                IndicatorDailyClose(
+                    MarketIndicator.KOSPI,
+                    LocalDate.of(2026, 9, 25),
+                    BigDecimal("2600.00"),
+                ),
+            )
+
+        stubBody(
+            "/api/v1/market-indicators/KOSPI/candles",
+            """{"result":{"candles":[{"timestamp":"2026-09-28T00:00:00+09:00"}],"nextBefore":null}}""",
+        )
+        assertThatThrownBy { board.dailyCloses(MarketIndicator.KOSPI, 1) }
             .isInstanceOf(MarketDataUnavailableException::class.java)
     }
 

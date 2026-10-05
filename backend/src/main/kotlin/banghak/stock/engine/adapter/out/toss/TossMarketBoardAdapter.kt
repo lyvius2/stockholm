@@ -1,6 +1,8 @@
 package banghak.stock.engine.adapter.out.toss
 
+import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.error.MarketDataUnavailableException
+import banghak.stock.core.domain.market.IndicatorDailyClose
 import banghak.stock.core.domain.market.IndicatorQuote
 import banghak.stock.core.domain.market.MarketIndicator
 import banghak.stock.core.domain.market.RankedStock
@@ -10,12 +12,14 @@ import banghak.stock.core.domain.market.RankingQuery
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.money.Percent
+import banghak.stock.core.port.MarketDataPort
 import banghak.stock.core.port.MarketIndicatorPort
 import banghak.stock.core.port.RankingPort
 import banghak.stock.shared.config.RuntimeProfiles
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter
 import java.time.OffsetDateTime
+import java.time.ZoneId
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
@@ -82,6 +86,33 @@ class TossMarketBoardAdapter(
         cause: Throwable,
     ): List<IndicatorQuote> = TossResponses.marketFallback(cause)
 
+    // 토스 지표 일봉 시각은 그 거래일 0시 KST
+    @RateLimiter(name = "toss-market-indicator-chart")
+    @CircuitBreaker(name = "toss-market-indicator", fallbackMethod = "dailyClosesUnavailable")
+    override fun dailyCloses(indicator: MarketIndicator, count: Int): List<IndicatorDailyClose> {
+        if (count !in 1..MarketDataPort.MAX_CANDLES)
+            throw InvalidValueException("지표 봉 개수는 1~${MarketDataPort.MAX_CANDLES}: $count")
+        return TossResponses.marketResultOf(
+                indicators
+                    .candles(callers.publicMarketCaller(), indicator.name, DAILY, count)
+                    .execute()
+            )
+            .candles
+            .map {
+                IndicatorDailyClose(
+                    indicator,
+                    OffsetDateTime.parse(it.timestamp).atZoneSameInstant(KST).toLocalDate(),
+                    TossResponses.required(it.closePrice, "${indicator.name} 일봉 종가"),
+                )
+            }
+    }
+
+    fun dailyClosesUnavailable(
+        indicator: MarketIndicator,
+        count: Int,
+        cause: Throwable,
+    ): List<IndicatorDailyClose> = TossResponses.marketFallback(cause)
+
     // 응답 통화가 시장 통화와 다르면 잘못된 금액이 되므로 조회 실패로 봄
     private fun toRankedStock(query: RankingQuery, item: TossRankingItem): RankedStock {
         val currency = query.market.currency
@@ -99,6 +130,11 @@ class TossMarketBoardAdapter(
             tradingAmount =
                 Money.of(TossResponses.required(item.tradingAmount, "랭킹 거래대금"), currency),
         )
+    }
+
+    companion object {
+        private const val DAILY = "1d"
+        private val KST: ZoneId = ZoneId.of("Asia/Seoul")
     }
 
     private fun durationCode(period: RankingPeriod): String =

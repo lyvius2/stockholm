@@ -160,3 +160,11 @@ data class TossIndicatorPrice(
     val timestamp: String? = null,
     val lastPrice: BigDecimal? = null,
 )
+
+data class TossIndicatorCandles(
+    val candles: List<TossIndicatorCandle> = emptyList(),
+    val nextBefore: String? = null,
+)
+
+/** 지표 봉에는 통화가 없음(포인트·수익률). */
+data class TossIndicatorCandle(val timestamp: String = "", val closePrice: BigDecimal? = null)

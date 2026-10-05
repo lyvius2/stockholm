@@ -48,6 +48,7 @@ resilience4j:
       ollama-verify: { base-config: credential-verify }
       dart-verify: { base-config: credential-verify }
       fred-verify: { base-config: credential-verify }
+      fred: { base-config: default }
       # 토스. 없는 종목(404 → InvalidValueException)은 상대 서버 장애가 아니므로 서킷에 세지 않음
       toss-auth: { base-config: default }
       toss-market-data: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.InvalidValueException] }
@@ -74,6 +75,7 @@ resilience4j:
       toss-stock: { base-config: toss, limit-for-period: 5 }
       toss-ranking: { base-config: toss, limit-for-period: 5 }
       toss-market-indicator: { base-config: toss, limit-for-period: 10 }
+      toss-market-indicator-chart: { base-config: toss, limit-for-period: 5 }
       toss-stock-all: { base-config: toss, limit-for-period: 1 }
       toss-order: { base-config: toss, limit-for-period: 10 }
       toss-order-history: { base-config: toss, limit-for-period: 5 }

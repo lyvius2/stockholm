@@ -1,5 +1,13 @@
 package banghak.stock.engine.adapter.`in`.ws
 
+import banghak.stock.core.domain.market.IndexCode
+import banghak.stock.core.domain.market.IndexEntry
+import banghak.stock.core.domain.market.IndexQuote
+import banghak.stock.core.domain.market.IndexSetChoice
+import banghak.stock.core.domain.market.IndexSetState
+import banghak.stock.core.domain.market.IndexSourceState
+import banghak.stock.core.domain.market.IndexTicker
+import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.money.Currency
 import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.trading.Candle
@@ -16,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SchemaLocation
 import com.networknt.schema.SpecVersion
+import java.math.BigDecimal
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
@@ -49,6 +58,8 @@ class LocalStreamHandlerTest {
             }
 
             override fun flush() {}
+
+            override fun broadcast(message: StreamMessage) {}
         }
     private val sessions = LocalStreamSessions(JsonMapper.builder().build())
     private val handler = LocalStreamHandler(stream, sessions, JsonMapper.builder().build())
@@ -127,6 +138,41 @@ class LocalStreamHandlerTest {
                     )
                 ),
                 StreamMessage.MarketFeedState(true),
+                StreamMessage.IndexTickerUpdate(
+                    IndexTicker(
+                        IndexSetChoice(Market.US, IndexSetState.OPEN),
+                        listOf(
+                            IndexEntry(
+                                IndexCode.DJIA,
+                                IndexQuote.of(
+                                    IndexCode.DJIA,
+                                    BigDecimal("42000"),
+                                    null,
+                                    at,
+                                    true,
+                                    null,
+                                    "FRED",
+                                ),
+                                IndexSourceState.FRESH,
+                            ),
+                            IndexEntry(IndexCode.NASDAQ, null, IndexSourceState.UNCONFIGURED),
+                            IndexEntry(
+                                IndexCode.SP500,
+                                IndexQuote.of(
+                                    IndexCode.SP500,
+                                    BigDecimal("600.00"),
+                                    BigDecimal("590.00"),
+                                    at,
+                                    false,
+                                    "SPY",
+                                    "TOSS_ETF",
+                                ),
+                                IndexSourceState.FRESH,
+                            ),
+                        ),
+                        at,
+                    )
+                ),
             ),
         )
 
@@ -135,7 +181,12 @@ class LocalStreamHandlerTest {
         val items = ObjectMapper().readTree(sent.value.payload)
         assertThat(items.isArray).isTrue()
         assertThat(items.map { it.path("type").asText() })
-            .containsExactly("quote", "orderBook", "liveCandle", "feedState")
+            .containsExactly("quote", "orderBook", "liveCandle", "feedState", "indexTicker")
+        val entries = items[4].path("indexTicker").path("entries")
+        assertThat(entries[2].path("quote").path("proxy").asText()).isEqualTo("SPY")
+        assertThat(entries[0].path("quote").path("change").isNull).isTrue()
+        assertThat(entries[1].path("state").asText()).isEqualTo("UNCONFIGURED")
+        assertThat(entries[1].path("quote").isNull).isTrue()
         assertThat(items[0].path("quote").path("last").path("amount").asText()).isEqualTo("120.50")
         assertThat(items[2].path("liveCandle").path("volume").asText()).isEqualTo("7")
         val schema = schema()

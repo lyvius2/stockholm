@@ -5,10 +5,17 @@ import banghak.stock.core.domain.account.UserSettingKey
 import banghak.stock.core.domain.error.MarketDataUnavailableException
 import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.UserId
+import banghak.stock.core.domain.market.IndexCode
+import banghak.stock.core.domain.market.IndexQuote
+import banghak.stock.core.domain.market.IndicatorDailyClose
+import banghak.stock.core.domain.market.IndicatorQuote
 import banghak.stock.core.domain.market.KrTradingDetail
 import banghak.stock.core.domain.market.ListingBoard
 import banghak.stock.core.domain.market.ListingStatus
+import banghak.stock.core.domain.market.MacroObservation
+import banghak.stock.core.domain.market.MacroSeries
 import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.market.MarketIndicator
 import banghak.stock.core.domain.market.SecurityType
 import banghak.stock.core.domain.market.StockFlags
 import banghak.stock.core.domain.market.StockProfile
@@ -20,14 +27,19 @@ import banghak.stock.core.domain.trading.CandleCoverage
 import banghak.stock.core.domain.trading.CandleInterval
 import banghak.stock.core.domain.trading.StreamMessage
 import banghak.stock.core.domain.trading.StreamViewerId
+import banghak.stock.core.domain.trading.StreamWatch
 import banghak.stock.core.port.CandleStorePort
+import banghak.stock.core.port.IndexQuoteStorePort
+import banghak.stock.core.port.MacroIndicatorPort
 import banghak.stock.core.port.MarketCalendarPort
 import banghak.stock.core.port.MarketCalendarStorePort
+import banghak.stock.core.port.MarketIndicatorPort
 import banghak.stock.core.port.StockCatalogPort
 import banghak.stock.core.port.StockFlagsCachePort
 import banghak.stock.core.port.StockMasterPort
 import banghak.stock.core.port.StreamPushPort
 import banghak.stock.core.port.UserSettingsPort
+import banghak.stock.core.usecase.MarketStreamUseCase
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -230,4 +242,58 @@ class MemoryMarketCalendarStore : MarketCalendarStorePort {
     }
 
     fun count(): Int = rows.size
+}
+
+class ScriptedMarketIndicators : MarketIndicatorPort {
+    val quotes = mutableMapOf<MarketIndicator, IndicatorQuote>()
+    val dailyCloses = mutableMapOf<MarketIndicator, List<IndicatorDailyClose>>()
+    var failure: RuntimeException? = null
+
+    override fun indicatorQuotes(indicators: List<MarketIndicator>): List<IndicatorQuote> {
+        failure?.let { throw it }
+        return indicators.mapNotNull { quotes[it] }
+    }
+
+    override fun dailyCloses(indicator: MarketIndicator, count: Int): List<IndicatorDailyClose> {
+        failure?.let { throw it }
+        return dailyCloses[indicator].orEmpty().take(count)
+    }
+}
+
+class ScriptedMacroIndicators : MacroIndicatorPort {
+    val observations = mutableMapOf<MacroSeries, List<MacroObservation>>()
+    var failure: RuntimeException? = null
+
+    override fun recentObservations(series: MacroSeries, count: Int): List<MacroObservation> {
+        failure?.let { throw it }
+        return observations[series].orEmpty().take(count)
+    }
+}
+
+class MemoryIndexQuoteStore : IndexQuoteStorePort {
+    val rows = mutableMapOf<IndexCode, IndexQuote>()
+
+    override fun loadAll(): List<IndexQuote> = rows.values.toList()
+
+    override fun saveAll(quotes: List<IndexQuote>) {
+        quotes.forEach { rows[it.code] = it }
+    }
+}
+
+/**
+ * 스트림 usecase 가짜.
+ * 방송한 메시지만 모음.
+ */
+class RecordingMarketStream : MarketStreamUseCase {
+    val broadcasts = mutableListOf<StreamMessage>()
+
+    override fun watch(watch: StreamWatch) {}
+
+    override fun leave(viewer: StreamViewerId) {}
+
+    override fun flush() {}
+
+    override fun broadcast(message: StreamMessage) {
+        broadcasts += message
+    }
 }

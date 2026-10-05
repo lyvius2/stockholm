@@ -4,6 +4,7 @@ import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
 import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
+import jakarta.persistence.Id
 import jakarta.persistence.Table
 import java.io.Serializable
 import java.math.BigDecimal
@@ -66,5 +67,18 @@ class MarketCalendarEntity(
     @EmbeddedId val key: MarketDateKey,
     @Column(name = "sessions_json", nullable = false) var sessionsJson: String,
     @Column(name = "is_holiday", nullable = false) var isHoliday: Boolean,
+    @Column(name = "fetched_at", nullable = false) var fetchedAt: Instant,
+)
+
+@Entity
+@Table(name = "market_index_quote")
+class MarketIndexQuoteEntity(
+    @Id @Column(name = "index_code") val indexCode: String,
+    @Column(nullable = false) var value: BigDecimal,
+    @Column(name = "change_amount") var changeAmount: BigDecimal?,
+    @Column(name = "change_ratio") var changeRatio: BigDecimal?,
+    @Column(name = "as_of") var asOf: Instant?,
+    @Column(nullable = false) var closed: Boolean,
+    @Column(nullable = false) var source: String,
     @Column(name = "fetched_at", nullable = false) var fetchedAt: Instant,
 )

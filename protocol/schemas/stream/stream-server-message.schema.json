@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://stockholm.banghak/protocol/stream/stream-server-message.schema.json",
   "title": "StreamServerMessage",
-  "description": "로컬 WebSocket(/ws)으로 데몬이 화면에 보내는 메시지. 시세는 종목별 최신값만 250ms 마다 묶어 보내고, feedState 는 바로 보냄. 금액은 문자열(decimal), 시각은 ISO-8601 UTC.",
+  "description": "로컬 WebSocket(/ws)으로 데몬이 화면에 보내는 메시지. 시세는 종목별 최신값만 250ms 마다 묶어 보내고, feedState·indexTicker 는 바로 보냄. 금액은 문자열(decimal), 시각은 ISO-8601 UTC.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -15,7 +15,8 @@
         "quote",
         "orderBook",
         "liveCandle",
-        "feedState"
+        "feedState",
+        "indexTicker"
       ]
     },
     "symbol": {
@@ -32,6 +33,9 @@
     },
     "feedState": {
       "$ref": "#/$defs/feedState"
+    },
+    "indexTicker": {
+      "$ref": "#/$defs/indexTicker"
     }
   },
   "$defs": {
@@ -149,6 +153,161 @@
           "items": {
             "$ref": "../common/_values.schema.json#/$defs/symbol"
           }
+        }
+      }
+    },
+    "indexQuote": {
+      "title": "StreamIndexQuote",
+      "type": "object",
+      "additionalProperties": false,
+      "description": "change·changeRatio 는 전일 종가 대비이며 모르면 null. proxy 는 지수 대신 쓴 ETF 티커(미국 장중). 값은 포인트라 통화 없음.",
+      "required": [
+        "code",
+        "name",
+        "value",
+        "change",
+        "changeRatio",
+        "asOf",
+        "isClosed",
+        "proxy",
+        "source"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "KOSPI",
+            "KOSDAQ",
+            "NIKKEI225",
+            "DJIA",
+            "NASDAQ",
+            "SP500"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        },
+        "change": {
+          "anyOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "changeRatio": {
+          "anyOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "asOf": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        "isClosed": {
+          "type": "boolean"
+        },
+        "proxy": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "indexTicker": {
+      "title": "StreamIndexTicker",
+      "type": "object",
+      "additionalProperties": false,
+      "description": "상단 바 지수 티커. market 은 보여 줄 세트(KR: KOSPI·KOSDAQ·NIKKEI 225 / US: DJIA·NASDAQ·S&P 500), state 는 OPEN(장중)·PRE(개장 30분 전)·CLOSE(종가). entries 는 세트 순서대로 지수마다 한 자리. isDelayed 면 하나라도 새로 받지 못해 마지막 값임.",
+      "required": [
+        "market",
+        "state",
+        "entries",
+        "asOf",
+        "isDelayed"
+      ],
+      "properties": {
+        "market": {
+          "$ref": "../common/_values.schema.json#/$defs/market"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "OPEN",
+            "PRE",
+            "CLOSE"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/indexEntry"
+          }
+        },
+        "asOf": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        "isDelayed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "indexEntry": {
+      "title": "StreamIndexEntry",
+      "type": "object",
+      "additionalProperties": false,
+      "description": "세트의 한 자리. state 가 FRESH 면 이번에 받은 값, DELAYED 면 받지 못해 마지막 값(quote 는 마지막 값이거나 한 번도 못 받았으면 null), UNCONFIGURED 면 출처 키(FRED)가 등록되지 않음(화면은 \"출처 미설정\").",
+      "required": [
+        "code",
+        "name",
+        "state",
+        "quote"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "KOSPI",
+            "KOSDAQ",
+            "NIKKEI225",
+            "DJIA",
+            "NASDAQ",
+            "SP500"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "FRESH",
+            "DELAYED",
+            "UNCONFIGURED"
+          ]
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/indexQuote"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     }

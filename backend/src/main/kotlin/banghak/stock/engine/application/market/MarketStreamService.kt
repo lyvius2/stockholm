@@ -90,6 +90,10 @@ class MarketStreamService(
             }
     }
 
+    override fun broadcast(message: StreamMessage) {
+        watchLock.withLock { watches.keys.toList() }.forEach { push.push(it, listOf(message)) }
+    }
+
     override fun flush() {
         val updates = linkedMapOf<Symbol, List<StreamMessage>>()
         for (symbol in changed) {

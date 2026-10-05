@@ -1,5 +1,6 @@
 package banghak.stock.core.usecase
 
+import banghak.stock.core.domain.trading.StreamMessage
 import banghak.stock.core.domain.trading.StreamViewerId
 import banghak.stock.core.domain.trading.StreamWatch
 
@@ -19,4 +20,7 @@ interface MarketStreamUseCase {
      * 250ms 마다 호출함(초당 4회).
      */
     fun flush()
+
+    /** 종목과 무관한 메시지(지수 티커 등)를 모든 연결에 바로 밈. */
+    fun broadcast(message: StreamMessage)
 }

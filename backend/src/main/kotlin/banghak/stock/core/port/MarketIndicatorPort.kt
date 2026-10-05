@@ -1,5 +1,6 @@
 package banghak.stock.core.port
 
+import banghak.stock.core.domain.market.IndicatorDailyClose
 import banghak.stock.core.domain.market.IndicatorQuote
 import banghak.stock.core.domain.market.MarketIndicator
 
@@ -11,4 +12,10 @@ import banghak.stock.core.domain.market.MarketIndicator
 interface MarketIndicatorPort {
     /** 값을 받지 못한 지표는 결과에서 빠짐. */
     fun indicatorQuotes(indicators: List<MarketIndicator>): List<IndicatorQuote>
+
+    /**
+     * 일봉 종가를 최신순으로 [count] 개까지.
+     * 오늘 봉(진행 중)이 맨 앞일 수 있음.
+     */
+    fun dailyCloses(indicator: MarketIndicator, count: Int): List<IndicatorDailyClose>
 }

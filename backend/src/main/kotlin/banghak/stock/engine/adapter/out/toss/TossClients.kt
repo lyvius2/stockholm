@@ -123,4 +123,16 @@ interface TossIndicatorClient {
         @Tag caller: TossCaller,
         @Query("symbols") symbols: String,
     ): Call<TossEnvelope<List<TossIndicatorPrice>>>
+
+    /**
+     * MARKET_INDICATOR_CHART 그룹(초당 5).
+     * 분봉은 지수만, 국채는 일봉만.
+     */
+    @GET("api/v1/market-indicators/{symbol}/candles")
+    fun candles(
+        @Tag caller: TossCaller,
+        @Path("symbol") symbol: String,
+        @Query("interval") interval: String,
+        @Query("count") count: Int,
+    ): Call<TossEnvelope<TossIndicatorCandles>>
 }

@@ -1,5 +1,7 @@
 package banghak.stock.engine.adapter.`in`.ws
 
+import banghak.stock.core.domain.market.IndexQuote
+import banghak.stock.core.domain.market.IndexTicker
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.trading.Candle
@@ -45,6 +47,33 @@ data class CandleDto(
     val volume: String,
 )
 
+data class IndexQuoteDto(
+    val code: String,
+    val name: String,
+    val value: String,
+    val change: String?,
+    val changeRatio: String?,
+    val asOf: Instant,
+    @get:JsonProperty("isClosed") val isClosed: Boolean,
+    val proxy: String?,
+    val source: String,
+)
+
+data class IndexEntryDto(
+    val code: String,
+    val name: String,
+    val state: String,
+    val quote: IndexQuoteDto?,
+)
+
+data class IndexTickerDto(
+    val market: String,
+    val state: String,
+    val entries: List<IndexEntryDto>,
+    val asOf: Instant,
+    @get:JsonProperty("isDelayed") val isDelayed: Boolean,
+)
+
 data class FeedStateDto(
     @get:JsonProperty("isLive") val isLive: Boolean,
     val unavailableSymbols: List<SymbolDto>,
@@ -58,6 +87,7 @@ data class StreamServerMessage(
     val orderBook: OrderBookDto? = null,
     val liveCandle: CandleDto? = null,
     val feedState: FeedStateDto? = null,
+    val indexTicker: IndexTickerDto? = null,
 ) {
     companion object {
         fun of(message: StreamMessage): StreamServerMessage =
@@ -65,6 +95,7 @@ data class StreamServerMessage(
                 is StreamMessage.QuoteUpdate -> quote(message.quote)
                 is StreamMessage.OrderBookUpdate -> orderBook(message.orderBook)
                 is StreamMessage.LiveCandleUpdate -> liveCandle(message.candle)
+                is StreamMessage.IndexTickerUpdate -> indexTicker(message.ticker)
                 is StreamMessage.MarketFeedState ->
                     StreamServerMessage(
                         "feedState",
@@ -104,6 +135,39 @@ data class StreamServerMessage(
                         MoneyDto.of(candle.close),
                         candle.volume.toString(),
                     ),
+            )
+
+        private fun indexTicker(ticker: IndexTicker) =
+            StreamServerMessage(
+                "indexTicker",
+                indexTicker =
+                    IndexTickerDto(
+                        ticker.choice.market.name,
+                        ticker.choice.state.name,
+                        ticker.entries.map { entry ->
+                            IndexEntryDto(
+                                entry.code.name,
+                                entry.code.displayName,
+                                entry.state.name,
+                                entry.quote?.let { quoteDto(it) },
+                            )
+                        },
+                        ticker.asOf,
+                        ticker.isDelayed,
+                    ),
+            )
+
+        private fun quoteDto(quote: IndexQuote) =
+            IndexQuoteDto(
+                quote.code.name,
+                quote.code.displayName,
+                quote.value.toPlainString(),
+                quote.change?.toPlainString(),
+                quote.changeRatio?.ratio?.toPlainString(),
+                quote.asOf,
+                quote.isClosed,
+                quote.proxy,
+                quote.source,
             )
 
         private fun levelOf(level: OrderBook.Level) =

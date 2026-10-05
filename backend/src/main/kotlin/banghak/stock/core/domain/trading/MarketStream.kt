@@ -1,6 +1,7 @@
 package banghak.stock.core.domain.trading
 
 import banghak.stock.core.domain.error.InvalidValueException
+import banghak.stock.core.domain.market.IndexTicker
 import banghak.stock.core.domain.market.Symbol
 
 /** 로컬 실시간 스트림을 보는 화면 연결 하나. */
@@ -21,6 +22,9 @@ sealed interface StreamMessage {
     data class OrderBookUpdate(val orderBook: OrderBook) : StreamMessage
 
     data class LiveCandleUpdate(val candle: Candle) : StreamMessage
+
+    /** 상단 바 지수 티커(5분마다, 모든 화면에). */
+    data class IndexTickerUpdate(val ticker: IndexTicker) : StreamMessage
 
     /**
      * [isLive] 가 false 면 증권사 시세 연결이 끊긴 것이라 화면은 지연을 표시함.
