@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { ApiUser } from '@renderer/generated/api-user'
+import { useStockStore } from '@renderer/data/store/stock'
+import { IndexTicker } from '@renderer/features/ticker/IndexTicker'
 
 interface TopBarProps {
   readonly user: ApiUser | null
@@ -9,13 +11,21 @@ interface TopBarProps {
 /** 두 줄 상단 바 골격. 1행: 브랜드 · 지수 티커 · 서랍 버튼 / 2행: 종목 · 패널 버튼 · 장 상태 · 사용자. */
 export function TopBar({ user, onLogout }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
+  const symbol = useStockStore((s) => s.current)
+  const summary = useStockStore((s) => s.summary)
+  const symbolLabel =
+    symbol === null ? '종목 선택' : `${summary?.name ?? symbol.code} · ${symbol.code}`
   return (
     <header className="topbar">
       <div className="topbar-row">
         <span className="brand">Stockholm</span>
-        <span className="ticker" aria-label="지수 티커">
-          지수 —
-        </span>
+        {user === null ? (
+          <span className="ticker" aria-label="지수 티커">
+            지수 —
+          </span>
+        ) : (
+          <IndexTicker />
+        )}
         <span className="spacer" />
         <button type="button">☰ 관심종목</button>
         <button type="button">🏛️ 연기금종목</button>
@@ -25,8 +35,8 @@ export function TopBar({ user, onLogout }: TopBarProps) {
         </button>
       </div>
       <div className="topbar-row">
-        <button type="button" className="symbol">
-          종목 선택
+        <button type="button" className="symbol" aria-label="종목 선택">
+          {symbolLabel}
         </button>
         <button type="button">💬 커뮤니티</button>
         <button type="button">💰 보유주식 평가금액</button>

@@ -99,6 +99,20 @@ describe('useStreamStore', () => {
   })
 })
 
+describe('useStreamStore.setWatched', () => {
+  beforeEach(() => useStreamStore.getState().reset())
+
+  it('보는 종목에서 빠진 종목의 마지막 값은 버리고, 남은 종목의 값은 유지함', () => {
+    useStreamStore.getState().setWatched([samsung, nvidia])
+    useStreamStore.getState().applyMessages([quote(samsung, '71000'), quote(nvidia, '120.50')])
+
+    useStreamStore.getState().setWatched([nvidia])
+
+    expect(useStreamStore.getState().quotes[symbolKey(samsung)]).toBeUndefined()
+    expect(useStreamStore.getState().quotes[symbolKey(nvidia)]?.last.amount).toBe('120.50')
+  })
+})
+
 describe('attachMarketStream', () => {
   beforeEach(() => useStreamStore.getState().reset())
 

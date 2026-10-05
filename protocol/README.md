@@ -43,6 +43,7 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | `GET /conditional-orders?scope&market&code&cursor` | — | `api-conditional-orders` |
 | `POST /conditional-orders`, `POST /conditional-orders/{id}/amend` | `api-conditional-order-request` | `api-conditional-order-placement` |
 | `POST /conditional-orders/{id}/cancel` | — | `api-conditional-cancel` |
+| `GET /stocks?query&limit` · `GET /stocks/{market}/{code}` | — | `api-stock-summary`(배열 · 단건, 없으면 404) |
 | `GET /assets` | — | `api-asset-snapshot` |
 | `GET /assets/consent` · `DELETE /assets/consent` | — | `api-asset-consent` · — |
 | `POST /assets/consent` | — | `api-asset-consent-start` |
@@ -64,4 +65,5 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | 2026-10-01 | `schemas/stream/` 추가(로컬 WebSocket 메시지) |
 | 2026-10-05 | TS 생성에 `--no-date-times`: `instant` 가 `Date` 가 아닌 `string` 으로 나옴(JSON 런타임과 일치) |
 | 2026-10-06 | `api-asset-snapshot`·`api-asset-consent`·`api-asset-consent-start` 추가(F16), 콜백 경로 표 |
+| 2026-10-06 | `api-stock-summary` 추가(종목 조회·검색) |
 | 2026-10-05 | `schemas/api/` 15개 추가(차트·급등락·지수·평가·시작 종목·주문·조건주문), `api-error` 에 주문 경로 상세 필드. 로컬 REST 경로 표 |

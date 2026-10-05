@@ -1,7 +1,11 @@
 package banghak.stock.engine.adapter.out.persistence
 
 import banghak.stock.core.domain.market.ListingBoard
+import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.market.SecurityType
 import banghak.stock.core.domain.market.StockProfile
+import banghak.stock.core.domain.market.StockQuery
+import banghak.stock.core.domain.market.StockSummary
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.port.StockMasterPort
 import banghak.stock.engine.adapter.out.persistence.converter.InstantTextConverter
@@ -10,6 +14,7 @@ import banghak.stock.shared.config.RuntimeProfiles
 import java.time.Instant
 import org.jooq.DSLContext
 import org.jooq.Field
+import org.jooq.Record
 import org.jooq.impl.DSL
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
@@ -50,6 +55,50 @@ class JooqStockMasterAdapter(
                 .where(MARKET.eq(symbol.market.name))
                 .and(CODE.eq(symbol.code))
                 .and(DELISTED.eq(0))
+        )
+
+    @Transactional(readOnly = true)
+    override fun find(symbol: Symbol): StockSummary? =
+        dsl.select(*SUMMARY_COLUMNS)
+            .from(STOCK_MASTER)
+            .where(MARKET.eq(symbol.market.name))
+            .and(CODE.eq(symbol.code))
+            .and(DELISTED.eq(0))
+            .fetchOne()
+            ?.let(::summaryOf)
+
+    // 앞부분 일치를 먼저, 그 안에서는 이름 순.
+    // 검색어의 % _ 는 글자 그대로 봄
+    @Transactional(readOnly = true)
+    override fun search(query: StockQuery): List<StockSummary> {
+        val text = DSL.escape(query.normalized, ESCAPE)
+        val prefix =
+            if (query.isChosung) CHOSUNG.like("$text%", ESCAPE)
+            else
+                NAME.like("$text%", ESCAPE)
+                    .or(CODE.like("${text.uppercase()}%", ESCAPE))
+                    .or(NAME_EN.likeIgnoreCase("$text%", ESCAPE))
+        val anywhere =
+            if (query.isChosung) CHOSUNG.like("%$text%", ESCAPE)
+            else NAME.like("%$text%", ESCAPE).or(NAME_EN.likeIgnoreCase("%$text%", ESCAPE))
+        return dsl.select(*SUMMARY_COLUMNS)
+            .from(STOCK_MASTER)
+            .where(DELISTED.eq(0))
+            .and(prefix.or(anywhere))
+            .orderBy(DSL.case_().`when`(prefix, 0).otherwise(1), NAME, MARKET, CODE)
+            .limit(query.limit)
+            .fetch()
+            .map(::summaryOf)
+    }
+
+    private fun summaryOf(row: Record): StockSummary =
+        StockSummary(
+            symbol = Symbol(Market.valueOf(row.get(MARKET)), row.get(CODE)),
+            name = row.get(NAME),
+            englishName = row.get(NAME_EN).orEmpty(),
+            board = ListingBoard.valueOf(row.get(LISTING_BOARD)),
+            securityType = SecurityType.valueOf(row.get(SECURITY_GROUP)),
+            isPreferred = row.get(IS_PREFERRED) == 1,
         )
 
     @Transactional(readOnly = true)
@@ -107,6 +156,14 @@ class JooqStockMasterAdapter(
         private val DELISTED: Field<Int> = DSL.field("delisted", Int::class.java)
         private val LISTING_BOARD: Field<String> = DSL.field("listing_board", String::class.java)
         private val UPDATED_AT: Field<String> = DSL.field("updated_at", String::class.java)
+        private val NAME: Field<String> = DSL.field("name", String::class.java)
+        private val NAME_EN: Field<String> = DSL.field("name_en", String::class.java)
+        private val CHOSUNG: Field<String> = DSL.field("chosung", String::class.java)
+        private val SECURITY_GROUP: Field<String> = DSL.field("security_group", String::class.java)
+        private val IS_PREFERRED: Field<Int> = DSL.field("is_preferred", Int::class.java)
+        private val SUMMARY_COLUMNS =
+            arrayOf(MARKET, CODE, NAME, NAME_EN, LISTING_BOARD, SECURITY_GROUP, IS_PREFERRED)
+        private const val ESCAPE = '!'
         private val COLUMNS: List<Field<*>> =
             listOf(
                 MARKET,

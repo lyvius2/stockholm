@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-stock-summary.schema.json",
+  "title": "ApiStockSummary",
+  "description": "GET /stocks/{market}/{code} 응답과 GET /stocks?query&limit 의 배열 항목. 상장 중인 종목만.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "symbol",
+    "name",
+    "englishName",
+    "board",
+    "securityType",
+    "isPreferred"
+  ],
+  "properties": {
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "name": {
+      "type": "string"
+    },
+    "englishName": {
+      "type": "string"
+    },
+    "board": {
+      "type": "string",
+      "enum": [
+        "KOSPI",
+        "KOSDAQ",
+        "KR_ETC",
+        "NYSE",
+        "NASDAQ",
+        "AMEX",
+        "US_ETC"
+      ]
+    },
+    "securityType": {
+      "type": "string"
+    },
+    "isPreferred": {
+      "type": "boolean"
+    }
+  }
+}

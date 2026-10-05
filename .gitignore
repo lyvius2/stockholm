@@ -12,8 +12,11 @@
 *.db-shm
 *.db-wal
 *.sqlite
-data/
-lucene-index/
+# 저장소 루트·backend 바로 아래의 로컬 데이터 폴더만. desktop/src/renderer/data 같은 소스 폴더는 아님
+/data/
+/backend/data/
+/lucene-index/
+/backend/lucene-index/
 
 # Gradle / Kotlin / Java
 .gradle/

@@ -414,3 +414,117 @@ select {
 .placeholder {
   color: var(--ink3);
 }
+
+/* 지수 티커(F23): 항목마다 값이 바뀌면 왼쪽에서 오른쪽으로 들어옴 */
+.ticker {
+  display: inline-flex;
+  gap: 14px;
+  align-items: center;
+}
+.ticker-item {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  overflow: hidden;
+}
+.ticker-name {
+  color: var(--ink3);
+}
+.ticker-sep {
+  color: var(--line);
+}
+.ticker-item[data-sign='up'] .ticker-value {
+  color: var(--up);
+}
+.ticker-item[data-sign='down'] .ticker-value {
+  color: var(--down);
+}
+.ticker-value.slide-in {
+  display: inline-block;
+  animation: slide-in-left 350ms ease-out;
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticker-value.slide-in {
+    animation: none;
+  }
+}
+.topbar .symbol {
+  font-weight: 600;
+}
+
+/* 2번 가격 영역 */
+.four-areas .area.price {
+  place-items: stretch;
+  color: var(--ink);
+}
+.price-area {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  height: 100%;
+}
+.price-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.price-label {
+  color: var(--ink2);
+  font-size: 12px;
+}
+.price-last {
+  font-size: 28px;
+  font-weight: 700;
+}
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.order-book {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.order-book td {
+  padding: 3px 6px;
+  text-align: right;
+}
+.order-book .ask td:first-child {
+  color: var(--down);
+}
+.order-book .bid td:first-child {
+  color: var(--up);
+}
+.order-book .qty {
+  color: var(--ink2);
+}
+.warn-chip {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+/* 토스트: 상태줄 위에 작게 */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  z-index: 60;
+}

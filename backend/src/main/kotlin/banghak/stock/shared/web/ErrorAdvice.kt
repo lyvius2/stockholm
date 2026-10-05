@@ -13,6 +13,7 @@ import banghak.stock.core.domain.error.GuardrailViolationException
 import banghak.stock.core.domain.error.IllegalSetupTransitionException
 import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.error.MarketDataUnavailableException
+import banghak.stock.core.domain.error.NotFoundException
 import banghak.stock.core.domain.error.OrderRejectedException
 import banghak.stock.core.domain.error.OrderResultUnknownException
 import banghak.stock.core.domain.error.RegistrationCodeInvalidException
@@ -70,6 +71,7 @@ class ErrorAdvice {
             is AuthenticationFailedException,
             is SessionInvalidException -> HttpStatus.UNAUTHORIZED
             is ForbiddenException -> HttpStatus.FORBIDDEN
+            is NotFoundException -> HttpStatus.NOT_FOUND
             is IllegalSetupTransitionException,
             is TooManyUsersException -> HttpStatus.CONFLICT
             is ConfirmationRequiredException,

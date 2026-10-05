@@ -19,6 +19,8 @@ import banghak.stock.core.domain.market.MarketIndicator
 import banghak.stock.core.domain.market.SecurityType
 import banghak.stock.core.domain.market.StockFlags
 import banghak.stock.core.domain.market.StockProfile
+import banghak.stock.core.domain.market.StockQuery
+import banghak.stock.core.domain.market.StockSummary
 import banghak.stock.core.domain.market.StockWarning
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.market.TradingDay
@@ -119,6 +121,22 @@ class MemoryStockMaster : StockMasterPort {
     override fun recordSync(at: Instant) {
         syncedAt = at
     }
+
+    override fun find(symbol: Symbol): StockSummary? =
+        saved[symbol]?.takeIf { !it.isDelisted }?.let(StockSummary::of)
+
+    override fun search(query: StockQuery): List<StockSummary> =
+        saved.values
+            .filter { !it.isDelisted }
+            .filter {
+                if (query.isChosung) it.chosung.startsWith(query.normalized)
+                else
+                    it.name.contains(query.normalized) ||
+                        it.symbol.code.startsWith(query.normalized)
+            }
+            .sortedBy { it.name }
+            .take(query.limit)
+            .map(StockSummary::of)
 
     val listed = mutableSetOf<Symbol>()
     var onIsListed: (() -> Unit)? = null

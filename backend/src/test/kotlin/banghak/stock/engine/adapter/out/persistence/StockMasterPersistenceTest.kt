@@ -5,6 +5,7 @@ import banghak.stock.core.domain.market.ListingBoard
 import banghak.stock.core.domain.market.ListingStatus
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.StockFlags
+import banghak.stock.core.domain.market.StockQuery
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.port.StockFlagsCachePort
 import banghak.stock.core.port.StockMasterPort
@@ -55,6 +56,36 @@ class StockMasterPersistenceTest : EngineDatabaseTest() {
         assertThat(row["nxt_supported"]).isEqualTo(1)
         assertThat(row["sector_name"]).isEqualTo("전기전자")
         assertThat(row["updated_at"]).isEqualTo("2026-09-29T00:01:00.000Z")
+    }
+
+    @Test
+    @DisplayName("종목명·코드·초성 앞부분으로 찾고 앞부분 일치가 먼저 오며, 상장폐지 종목은 결과에 없음")
+    fun searchByNameCodeChosung() {
+        master.saveAll(
+            listOf(
+                profile(samsung, ListingBoard.KOSPI).copy(name = "삼성전자"),
+                profile(hynix, ListingBoard.KOSPI).copy(name = "SK하이닉스"),
+                profile(kosdaq, ListingBoard.KOSDAQ).copy(name = "카카오"),
+                profile(Symbol(Market.KR, "005935"), ListingBoard.KOSPI).copy(name = "삼성전자우"),
+                profile(Symbol(Market.KR, "009150"), ListingBoard.KOSPI).copy(name = "삼성전기"),
+            ),
+            at,
+        )
+        write.update("update stock_master set delisted = 1 where code = '009150'")
+
+        assertThat(master.search(StockQuery("삼성전")).map { it.name })
+            .containsExactly("삼성전자", "삼성전자우")
+        assertThat(master.search(StockQuery("ㅅㅅㅈㅈ")).map { it.symbol.code })
+            .containsExactly("005930", "005935")
+        assertThat(master.search(StockQuery("0059")).map { it.symbol.code })
+            .containsExactly("005930", "005935")
+        assertThat(master.search(StockQuery("하이닉스")).map { it.name }).containsExactly("SK하이닉스")
+        assertThat(master.search(StockQuery("삼성", limit = 1))).hasSize(1)
+        assertThat(master.search(StockQuery("100%_"))).isEmpty()
+
+        assertThat(master.find(samsung)?.name).isEqualTo("삼성전자")
+        assertThat(master.find(Symbol(Market.KR, "009150"))).isNull()
+        assertThat(master.find(Symbol(Market.US, "NVDA"))).isNull()
     }
 
     @Test
