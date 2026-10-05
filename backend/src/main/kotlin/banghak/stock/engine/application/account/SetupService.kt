@@ -65,7 +65,10 @@ class SetupService(
     private fun verifierFor(kind: CredentialKind): CredentialVerifier =
         verifierByKind[kind] ?: FormatCredentialVerifier(kind)
 
-    /** 읽기만 함. 설치 행이 없으면 저장하지 않고 NOT_STARTED 로 봄(저장은 쓰기 메서드가 함). */
+    /**
+     * 읽기만 함.
+     * 설치 행이 없으면 저장하지 않고 NOT_STARTED 로 봄(저장은 쓰기 메서드가 함).
+     */
     @Transactional(readOnly = true)
     override fun progress(): SetupProgress {
         val installation = installations.load() ?: newInstallation()
@@ -224,7 +227,20 @@ class SetupService(
         return progress()
     }
 
+    // 검증·저장이 어디서 실패하든 입력값은 지움
     private fun verifyAndStore(
+        kind: CredentialKind,
+        owner: UserId?,
+        fields: Map<String, SecretValue>,
+        actor: UserId,
+    ): CredentialCheck =
+        try {
+            storeAfterVerify(kind, owner, fields, actor)
+        } finally {
+            fields.values.forEach { it.wipe() }
+        }
+
+    private fun storeAfterVerify(
         kind: CredentialKind,
         owner: UserId?,
         fields: Map<String, SecretValue>,
@@ -253,7 +269,6 @@ class SetupService(
             credentials.upsert(CredentialMeta(kind, owner, status, null, null, statusDetail))
         }
         audit.record(AuditEntry(now, actor, null, AuditAction.KEY_VERIFY, kind.name, status.name))
-        fields.values.forEach { it.wipe() }
         return check
     }
 

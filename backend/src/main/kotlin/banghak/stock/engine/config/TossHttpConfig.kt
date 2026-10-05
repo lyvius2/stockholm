@@ -1,6 +1,7 @@
 package banghak.stock.engine.config
 
 import banghak.stock.engine.adapter.out.toss.TossAccountClient
+import banghak.stock.engine.adapter.out.toss.TossAccountProbeClient
 import banghak.stock.engine.adapter.out.toss.TossAuthClient
 import banghak.stock.engine.adapter.out.toss.TossAuthInterceptor
 import banghak.stock.engine.adapter.out.toss.TossChartClient
@@ -38,6 +39,16 @@ class TossHttpConfig(
     @Bean
     fun tossAuthClient(): TossAuthClient =
         retrofit.create(endpoints.tossBaseUrl.toHttpUrl()).create(TossAuthClient::class.java)
+
+    /**
+     * 키 검증용.
+     * 아직 저장되지 않은 키의 토큰을 헤더로 직접 받으므로 인증 인터셉터가 없는 공용 클라이언트를 씀.
+     */
+    @Bean
+    fun tossAccountProbeClient(): TossAccountProbeClient =
+        retrofit
+            .create(endpoints.tossBaseUrl.toHttpUrl())
+            .create(TossAccountProbeClient::class.java)
 
     @Bean
     fun tossPriceClient(@Lazy tokens: TossTokenCache): TossPriceClient =

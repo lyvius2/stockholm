@@ -26,6 +26,11 @@ stockholm:
     deepseek-base-url: https://api.deepseek.com/
     dart-base-url: https://opendart.fss.or.kr/
     fred-base-url: https://api.stlouisfed.org/
+    massive-base-url: https://api.massive.com/
+    naver-base-url: https://openapi.naver.com/
+    odcloud-base-url: https://api.odcloud.kr/
+    slack-base-url: https://slack.com/
+    krx-base-url: https://data-dbg.krx.co.kr/
     toss-base-url: https://openapi.tossinvest.com/
     toss-web-socket-url: wss://openapi-ws.tossinvest.com/ws/v1
 
@@ -48,6 +53,12 @@ resilience4j:
       ollama-verify: { base-config: credential-verify }
       dart-verify: { base-config: credential-verify }
       fred-verify: { base-config: credential-verify }
+      toss-verify: { base-config: credential-verify }
+      massive-verify: { base-config: credential-verify }
+      naver-verify: { base-config: credential-verify }
+      odcloud-verify: { base-config: credential-verify }
+      slack-verify: { base-config: credential-verify }
+      krx-verify: { base-config: credential-verify }
       fred: { base-config: default }
       # 토스. 없는 종목(404 → InvalidValueException)은 상대 서버 장애가 아니므로 서킷에 세지 않음
       toss-auth: { base-config: default }

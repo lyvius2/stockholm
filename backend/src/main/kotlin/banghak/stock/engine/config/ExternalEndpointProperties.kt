@@ -14,6 +14,11 @@ data class ExternalEndpointProperties(
     val deepseekBaseUrl: String = "https://api.deepseek.com/",
     val dartBaseUrl: String = "https://opendart.fss.or.kr/",
     val fredBaseUrl: String = "https://api.stlouisfed.org/",
+    val massiveBaseUrl: String = "https://api.massive.com/",
+    val naverBaseUrl: String = "https://openapi.naver.com/",
+    val odcloudBaseUrl: String = "https://api.odcloud.kr/",
+    val slackBaseUrl: String = "https://slack.com/",
+    val krxBaseUrl: String = "https://data-dbg.krx.co.kr/",
     val tossBaseUrl: String = "https://openapi.tossinvest.com/",
     val tossWebSocketUrl: String = "wss://openapi-ws.tossinvest.com/ws/v1",
 )

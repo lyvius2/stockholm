@@ -6,12 +6,17 @@ import banghak.stock.core.domain.account.CredentialKind
 import banghak.stock.core.domain.account.SecretValue
 import banghak.stock.core.port.CredentialVerifier
 import banghak.stock.engine.adapter.out.credential.CredentialChecks
+import banghak.stock.engine.adapter.out.credential.RevealedSecrets.asString
 import banghak.stock.shared.config.RuntimeProfiles
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
-/** SP500 최근 1건으로 키를 확인함. FRED 는 잘못된 키에 400 을 돌려줌. 키가 쿼리에 실리므로 예외 메시지를 내지 않음. */
+/**
+ * SP500 최근 1건으로 키를 확인함.
+ * FRED 는 잘못된 키에 400 을 돌려줌.
+ * 키가 쿼리에 실리므로 예외 메시지를 내지 않음.
+ */
 @Component
 @Profile(RuntimeProfiles.ENGINE)
 class FredCredentialVerifier(private val client: FredObservationsClient) : CredentialVerifier {
@@ -23,7 +28,7 @@ class FredCredentialVerifier(private val client: FredObservationsClient) : Crede
             client
                 .observations(
                     SERIES,
-                    String(fields.getValue(CredentialFields.VALUE).reveal()),
+                    asString(fields.getValue(CredentialFields.VALUE)),
                     "json",
                     "desc",
                     1,

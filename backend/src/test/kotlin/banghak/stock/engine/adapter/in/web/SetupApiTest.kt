@@ -33,8 +33,9 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 
 /**
- * 로컬 토큰·SetupGate·마법사 API 를 HTTP 로 끝까지 돌림. 비밀 저장소는 메모리 fake 로 바꿔 실제 Keychain 을 건드리지 않음. 순서가 있는
- * 시나리오라 메서드 순서를 고정함.
+ * 로컬 토큰·SetupGate·마법사 API 를 HTTP 로 끝까지 돌림.
+ * 비밀 저장소는 메모리 fake 로 바꿔 실제 Keychain 을 건드리지 않음.
+ * 순서가 있는 시나리오라 메서드 순서를 고정함.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(RuntimeProfiles.ENGINE)
@@ -125,7 +126,8 @@ class SetupApiTest {
             .contains("\"result\":\"OK\"")
         assertThat(post("/setup/keys/OPENAI", """{"fields":{"VALUE":"sk-$marker"}}""").body())
             .contains("\"result\":\"OK\"")
-        assertThat(post("/setup/keys/KRX", """{"fields":{"VALUE":"x"}}""").body())
+        // 형식 검증기만 있는 종류로 거부 경로를 확인함(KRX 등은 WireMock 이 성공 응답을 줌)
+        assertThat(post("/setup/keys/SEC_CONTACT_EMAIL", """{"fields":{"VALUE":"x"}}""").body())
             .contains("\"result\":\"REJECTED\"")
         val state = get("/setup/state").body()
         assertThat(state).contains("\"canFinishSharedKeys\":true").doesNotContain(marker)
@@ -161,7 +163,7 @@ class SetupApiTest {
                 )
             )
             .isEqualTo("$marker-secret")
-        assertThat(secretStore.exists(SecretKey.shared("KRX"))).isFalse()
+        assertThat(secretStore.exists(SecretKey.shared("SEC_CONTACT_EMAIL"))).isFalse()
     }
 
     private fun get(path: String, withToken: Boolean = true): HttpResponse<String> =

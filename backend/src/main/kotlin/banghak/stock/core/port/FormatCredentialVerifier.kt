@@ -4,7 +4,11 @@ import banghak.stock.core.domain.account.CredentialCheck
 import banghak.stock.core.domain.account.CredentialKind
 import banghak.stock.core.domain.account.SecretValue
 
-/** 형식만 검사하는 임시 검증기. 실제 API 를 부르는 어댑터(2·3단계)가 생기면 그 종류는 이것을 대체함. 외부 호출이 없으므로 주문 엔드포인트를 부를 일도 없음. */
+/**
+ * 형식만 검사하는 검증기.
+ * 실제 API 를 부르는 어댑터가 없는 종류(SEC 이메일·금융결제원 앱·캐시 서버)의 기본값임.
+ * 외부 호출이 없으므로 주문 엔드포인트를 부를 일도 없음.
+ */
 class FormatCredentialVerifier(override val kind: CredentialKind) : CredentialVerifier {
     override fun verify(fields: Map<String, SecretValue>): CredentialCheck {
         val missing = kind.fields.filterNot { it in fields }

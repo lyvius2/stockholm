@@ -26,7 +26,10 @@ import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/** 키 교체·삭제·재검증. 값은 검증 요청이 끝나면 지우고 응답·로그에 싣지 않음. */
+/**
+ * 키 교체·삭제·재검증.
+ * 값은 검증 요청이 끝나면 지우고 응답·로그에 싣지 않음.
+ */
 @Service
 @Profile(RuntimeProfiles.ENGINE)
 @Transactional
@@ -115,7 +118,20 @@ class CredentialAdminService(
         return verifyAndStore(principal, CredentialKind.TOSS, principal.userId, fields)
     }
 
+    // 검증·저장이 어디서 실패하든 입력값은 지움
     private fun verifyAndStore(
+        actor: Principal,
+        kind: CredentialKind,
+        owner: UserId?,
+        fields: Map<String, SecretValue>,
+    ): CredentialCheck =
+        try {
+            storeAfterVerify(actor, kind, owner, fields)
+        } finally {
+            fields.values.forEach { it.wipe() }
+        }
+
+    private fun storeAfterVerify(
         actor: Principal,
         kind: CredentialKind,
         owner: UserId?,
@@ -163,7 +179,6 @@ class CredentialAdminService(
                 statusOf(check).name,
             )
         )
-        fields.values.forEach { it.wipe() }
         return check
     }
 

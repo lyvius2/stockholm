@@ -11,11 +11,13 @@ import banghak.stock.core.domain.account.SessionKind
 import banghak.stock.core.domain.account.SetupState
 import banghak.stock.core.domain.account.TossDecision
 import banghak.stock.core.domain.error.IllegalSetupTransitionException
+import banghak.stock.core.domain.error.SecretStoreFailureException
 import banghak.stock.core.domain.error.TotpRejectedException
 import banghak.stock.core.domain.error.WeakPasswordException
 import banghak.stock.core.domain.identity.DeviceId
 import banghak.stock.core.domain.identity.Ulid
 import banghak.stock.core.port.FormatCredentialVerifier
+import banghak.stock.core.port.SecretStorePort
 import banghak.stock.core.usecase.CreateAdminCommand
 import banghak.stock.shared.crypto.UlidGenerator
 import banghak.stock.support.MutableClock
@@ -37,7 +39,10 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
-/** 마법사 상태 기계를 fake 포트로 끝까지 돌림. 검증 실패 값은 저장되지 않고, 어떤 출력에도 값이 없음. */
+/**
+ * 마법사 상태 기계를 fake 포트로 끝까지 돌림.
+ * 검증 실패 값은 저장되지 않고, 어떤 출력에도 값이 없음.
+ */
 class SetupServiceTest {
     private val clock = MutableClock(Instant.parse("2026-09-27T09:00:00Z"))
     private val installations = MemoryInstallationPort()
@@ -145,6 +150,53 @@ class SetupServiceTest {
             }
             .isInstanceOf(WeakPasswordException::class.java)
         assertThat(users.count()).isZero()
+    }
+
+    @Test
+    @DisplayName("저장이 실패해도 입력한 키 값은 지워짐")
+    fun wipesInputEvenWhenStoreFails() {
+        adminCreated()
+        val failingStore =
+            object : SecretStorePort {
+                override fun put(key: SecretKey, value: SecretValue) =
+                    throw SecretStoreFailureException("Keychain 쓰기 실패")
+
+                override fun exists(key: SecretKey): Boolean = false
+
+                override fun delete(key: SecretKey) {}
+            }
+        val failing =
+            SetupService(
+                installations,
+                users,
+                credentials,
+                failingStore,
+                CredentialKind.entries.map(::FormatCredentialVerifier),
+                FakePasswordHasher(),
+                totp,
+                audit,
+                UlidGenerator(clock),
+                clock,
+                LoginService(
+                    users,
+                    sessions,
+                    localDevice(),
+                    MemoryRecoveryCodePort(),
+                    FakePasswordHasher(),
+                    totp,
+                    FakeTokenGenerator(),
+                    audit,
+                    clock,
+                ),
+            )
+        val input = SecretValue.of(marker)
+
+        assertThatThrownBy {
+                failing.registerSharedCredential(CredentialKind.DART, mapOf("VALUE" to input))
+            }
+            .isInstanceOf(SecretStoreFailureException::class.java)
+
+        assertThat(input.reveal()).containsOnly(Char.MIN_VALUE)
     }
 
     @Test

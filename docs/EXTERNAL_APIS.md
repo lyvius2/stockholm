@@ -365,3 +365,4 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 | 2026-09-27 | 토스 학습 테스트 실측 표 추가(한도 헤더·캔들 timestamp·장 달력 실측 시간·랭킹 코드 형식·WebSocket ack) |
 | 2026-09-29 | 토스 규격 정리본 TOSS_OPENAPI.md 로 연결 |
 | 2026-09-29 | KIND 행: 토스가 관리종목·투자주의를 주지 않음을 규격으로 확인 |
+| 2026-10-05 | 키 검증 호출 구현: Massive `v3/reference/tickers/AAPL`(Bearer), 네이버 뉴스 검색 1건(헤더 두 개, 문서 미확인), 공공데이터포털 uddi 전체(Swagger 확인), Slack `auth.test`(docs.slack.dev 확인), KRX `stk_bydd_trd` JSON POST(전송 방식 미확인) |
