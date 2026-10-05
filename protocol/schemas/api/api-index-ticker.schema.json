@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-index-ticker.schema.json",
+  "title": "ApiIndexTicker",
+  "description": "GET /market/index-ticker 응답. 스트림의 indexTicker 와 같은 모양.",
+  "$ref": "../stream/stream-server-message.schema.json#/$defs/indexTicker"
+}

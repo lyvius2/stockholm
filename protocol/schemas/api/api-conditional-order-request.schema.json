@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-conditional-order-request.schema.json",
+  "title": "ApiConditionalOrderRequest",
+  "description": "POST /conditional-orders 와 /conditional-orders/{id}/amend 본문. 지정가만. SINGLE 은 first 만, OCO 는 둘 다 매도(첫 감시가 > 둘째), OTO 는 첫 매수·둘째 매도.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "leg": {
+      "title": "ApiConditionLeg",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "side",
+        "triggerPrice",
+        "orderPrice"
+      ],
+      "properties": {
+        "side": {
+          "type": "string",
+          "enum": [
+            "BUY",
+            "SELL"
+          ]
+        },
+        "triggerPrice": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "orderPrice": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        }
+      }
+    }
+  },
+  "required": [
+    "clientOrderId",
+    "symbol",
+    "type",
+    "quantity",
+    "first",
+    "expireDate"
+  ],
+  "properties": {
+    "clientOrderId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,36}$",
+      "description": "화면이 버튼을 누를 때 한 번 만든 ULID. 재시도에도 같은 값"
+    },
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "SINGLE",
+        "OCO",
+        "OTO"
+      ]
+    },
+    "quantity": {
+      "$ref": "../common/_values.schema.json#/$defs/decimal"
+    },
+    "first": {
+      "$ref": "#/$defs/leg"
+    },
+    "second": {
+      "$ref": "#/$defs/leg"
+    },
+    "expireDate": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+    },
+    "confirmedRules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "확인 창에서 사람이 확인한 가드레일 노트의 규칙 이름"
+    }
+  }
+}

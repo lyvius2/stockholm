@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-order-amendment.schema.json",
+  "title": "ApiOrderAmendment",
+  "description": "POST /orders/{brokerOrderId}/amend 본문. 국내는 가격·수량, 미국은 가격만.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "clientOrderId"
+  ],
+  "properties": {
+    "clientOrderId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,36}$",
+      "description": "화면이 버튼을 누를 때 한 번 만든 ULID. 재시도에도 같은 값"
+    },
+    "newLimitPrice": {
+      "$ref": "../common/_values.schema.json#/$defs/money"
+    },
+    "newQuantity": {
+      "$ref": "../common/_values.schema.json#/$defs/decimal"
+    },
+    "confirmedRules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "확인 창에서 사람이 확인한 가드레일 노트의 규칙 이름"
+    }
+  }
+}

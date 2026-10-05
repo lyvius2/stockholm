@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-order-request.schema.json",
+  "title": "ApiOrderRequest",
+  "description": "POST /orders 본문(수동 주문). 지정가는 limitPrice+quantity, 미국 시장가 매수는 orderAmount, 미국 시장가 매도는 quantity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "clientOrderId",
+    "symbol",
+    "side",
+    "kind"
+  ],
+  "properties": {
+    "clientOrderId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,36}$",
+      "description": "화면이 버튼을 누를 때 한 번 만든 ULID. 재시도에도 같은 값"
+    },
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "side": {
+      "type": "string",
+      "enum": [
+        "BUY",
+        "SELL"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "LIMIT",
+        "MARKET"
+      ]
+    },
+    "timeInForce": {
+      "type": "string",
+      "enum": [
+        "DAY",
+        "CLS",
+        "OPG"
+      ]
+    },
+    "limitPrice": {
+      "$ref": "../common/_values.schema.json#/$defs/money"
+    },
+    "quantity": {
+      "$ref": "../common/_values.schema.json#/$defs/decimal"
+    },
+    "orderAmount": {
+      "$ref": "../common/_values.schema.json#/$defs/money"
+    },
+    "confirmedRules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "확인 창에서 사람이 확인한 가드레일 노트의 규칙 이름"
+    }
+  }
+}

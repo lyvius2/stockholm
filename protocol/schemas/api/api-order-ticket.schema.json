@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-order-ticket.schema.json",
+  "title": "ApiOrderTicket",
+  "description": "GET /orders/ticket 응답. 주문 모달의 주문 가능 정보. 상하한가·수수료율은 받지 못하면 null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "symbol",
+    "buyingPower",
+    "sellableQuantity",
+    "priceLimits",
+    "commissionRate"
+  ],
+  "properties": {
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "buyingPower": {
+      "$ref": "../common/_values.schema.json#/$defs/money"
+    },
+    "sellableQuantity": {
+      "$ref": "../common/_values.schema.json#/$defs/decimal"
+    },
+    "priceLimits": {
+      "oneOf": [
+        {
+          "title": "ApiPriceLimits",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "upper",
+            "lower",
+            "asOf"
+          ],
+          "properties": {
+            "upper": {
+              "oneOf": [
+                {
+                  "$ref": "../common/_values.schema.json#/$defs/money"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "lower": {
+              "oneOf": [
+                {
+                  "$ref": "../common/_values.schema.json#/$defs/money"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "asOf": {
+              "$ref": "../common/_values.schema.json#/$defs/instant"
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "commissionRate": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

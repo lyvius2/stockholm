@@ -146,7 +146,7 @@ backend/
 desktop/
 ├─ package.json  tsconfig*.json  vite.config.ts  electron-builder.yml  eslint.config.js  .prettierrc
 ├─ src/
-│  ├─ main/       index.ts(생명주기·트레이)  daemon.ts(jlink JRE+bootJar 기동, 127.0.0.1:2609 헬스 대기, 로컬 토큰)  theme.ts  notifications.ts  menu.ts  shortcuts.ts
+│  ├─ main/       index.ts(생명주기·IPC·트레이)  daemon.ts(jlink JRE+bootJar 기동, 127.0.0.1:2609 헬스 대기)  api.ts(REST 대리인, 로컬·세션 토큰 보관)  stream.ts(/ws 클라이언트, 재접속·선언 되풀이)  theme.ts  notifications.ts  menu.ts  shortcuts.ts
 │  ├─ preload/    index.ts(contextBridge 최소 API)
 │  ├─ renderer/
 │  │  ├─ app/     App.tsx  routes.tsx(setup | login | main)  Providers.tsx
@@ -154,7 +154,7 @@ desktop/
 │  │  ├─ layout/  TopBar/(Row1 Row2 IndexTicker)  Splitters/  Drawers/(좌우 배타)  Panels/(40:60)  Modals/(showOnlyModal)  StatusBar/  Toasts/
 │  │  ├─ features/ setup  login  chart  price  order  debate  watchlist  ranking  community  stockinfo  pension  portfolio  history
 │  │  │            account  llmroute  asset  ticker  search  notifications  settings   (각 components/ hooks/ index.ts)
-│  │  ├─ data/    client/(Client  LocalClient  RemoteClient)  api/  stream/  store/  settings/
+│  │  ├─ data/    client/(Client  LocalClient  RemoteClient)  api/  stream/(MarketStream  store  useMarketStream)  store/  settings/
 │  │  ├─ shared/  ui/  format/(decimal 문자열, KST·ET)  hooks/
 │  │  └─ generated/ (gitignored)
 │  └─ web/        원격 모드 진입점(7단계)
@@ -220,3 +220,5 @@ protocol/
 |---|---|
 | 2026-09-26 | Modulith 제거(NoCyclesTest), `error/` 패키지·`Ulid`·`StrategyId` 위치 반영 |
 | 2026-09-27 | persistence·keychain 실제 클래스 반영, 예외 이름 접미어 || 2026-09-27 | 7번 반영: `adapter/in`은 Kotlin 예약어라 패키지 `adapter.`in``(백틱). 로컬 토큰·SetupGate 필터는 `engine/adapter/in/web/filter`(shared/web이 아님). `adapter/out/credential`(형식 검증기)·`adapter/out/crypto`(Argon2) 추가 || 2026-09-27 | 8번 반영: `adapter/in/web/{filter/SessionAuth,filter/PrincipalArgumentResolver,session,me,admin}`, `adapter/out/crypto/SecureTokenGenerator`, `adapter/out/credential/StoredCredentialRechecker`, `adapter/out/keychain/LocalDeviceRegistrar`, test `support/MutableClock`·`AuthTestFixture` || 2026-09-27 | 9번 반영: desktop `main/api.ts`(토큰 대리인)·`daemon.ts`(자식 프로세스), renderer `data/{client,api,store}`, `features/{setup,login}`, `layout/{TopBar,MainShell,StatusBar}`, `tests/{support,main}`. protocol Kotlin 생성은 common·events 만 || 2026-09-27 | 10·11번 반영: `protocol/schemas/common/_values.schema.json`(공용 정의)·`events/lot-opened.schema.json`, test `shared/protocol/EventSchemaConformanceTest`·`engine/SecretLeakSweepTest`, `scripts/dist.sh` 가 jdeps 로 모듈 산출 || 2026-09-27 | 실제 키 검증기: `adapter/out/llm/{LlmClients,LlmCredentialVerifiers,CredentialChecks}`, `adapter/out/dart/{DartCompanyClient,DartCredentialVerifier}`, `adapter/out/fred/{FredObservationsClient,FredCredentialVerifier}`, `engine/config/{ExternalHttpConfig,ExternalEndpointProperties}`. `FormatCredentialVerifier` 는 `core/port` 로 이동(기본 검증기). test `support/ExternalApiStubs` |
+| 2026-10-05 | desktop `main/stream.ts`(`/ws` 클라이언트), renderer `data/stream/`(MarketStream·store·useMarketStream), test `tests/main/DaemonStream`·`tests/stream/StreamStore` |
+| 2026-10-05 | `engine/adapter/in/web/{common(ValueDtos·IndexTickerDtos), market, portfolio, order}` 와 `session/StartStockController`, test `support/web/ApiTestSupport`·`adapter/in/web/*ApiTest` |

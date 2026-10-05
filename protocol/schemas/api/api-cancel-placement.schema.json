@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-cancel-placement.schema.json",
+  "title": "ApiCancelPlacement",
+  "description": "POST /orders/{brokerOrderId}/cancel 응답. 원주문의 최종 상태는 실시간 주문 채널로 옴.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "state",
+    "cancelBrokerOrderId"
+  ],
+  "properties": {
+    "state": {
+      "type": "string",
+      "enum": [
+        "REQUESTED",
+        "PENDING"
+      ]
+    },
+    "cancelBrokerOrderId": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

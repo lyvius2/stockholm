@@ -212,6 +212,13 @@ select {
 .daemon-state[data-state='unreachable'] {
   color: var(--warn);
 }
+.stream-state[data-state='open'][data-feed-live='true'] {
+  color: var(--accent);
+}
+.stream-state[data-state='closed'],
+.stream-state[data-feed-live='false'] {
+  color: var(--warn);
+}
 
 /* 창 끌기: 상단 바가 없는 화면에서도 잡을 곳이 있어야 함. 입력·버튼은 no-drag */
 .splash,

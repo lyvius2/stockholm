@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-last-viewed-stock.schema.json",
+  "title": "ApiLastViewedStock",
+  "description": "PUT /session/last-viewed-stock 본문. 화면이 종목 전환을 2초 디바운스로 보냄.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "symbol"
+  ],
+  "properties": {
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    }
+  }
+}

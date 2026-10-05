@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-portfolio-valuation.schema.json",
+  "title": "ApiPortfolioValuation",
+  "description": "GET /portfolio/valuation 응답(F18). 본인 계좌만. 전체 원화 합계는 미국 보유가 있는데 환율을 못 받았으면 null, isDelayed 면 참고 값 일부가 지난 값임.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "marketValuation": {
+      "title": "ApiMarketValuation",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "market",
+        "marketValue",
+        "purchaseAmount",
+        "profitLoss",
+        "returnRate",
+        "todayChange",
+        "risers",
+        "fallers",
+        "holdings"
+      ],
+      "properties": {
+        "market": {
+          "$ref": "../common/_values.schema.json#/$defs/market"
+        },
+        "marketValue": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "purchaseAmount": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "profitLoss": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "returnRate": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "todayChange": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "risers": {
+          "type": "integer"
+        },
+        "fallers": {
+          "type": "integer"
+        },
+        "holdings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/holding"
+          }
+        }
+      }
+    },
+    "holding": {
+      "title": "ApiHoldingValuation",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "symbol",
+        "quantity",
+        "lastPrice",
+        "purchaseAmount",
+        "marketValue",
+        "profitLoss",
+        "previousClose",
+        "todayChange"
+      ],
+      "properties": {
+        "symbol": {
+          "$ref": "../common/_values.schema.json#/$defs/symbol"
+        },
+        "quantity": {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        },
+        "lastPrice": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "purchaseAmount": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "marketValue": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "profitLoss": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "previousClose": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "todayChange": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "byMarket",
+    "totalMarketValueKrw",
+    "totalProfitLossKrw",
+    "totalReturnRate",
+    "fxUsdKrw",
+    "cashBuyingPower",
+    "isDelayed",
+    "asOf"
+  ],
+  "properties": {
+    "byMarket": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/marketValuation"
+      }
+    },
+    "totalMarketValueKrw": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "totalProfitLossKrw": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "totalReturnRate": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "fxUsdKrw": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/exchangeRate"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "cashBuyingPower": {
+      "type": "object",
+      "description": "통화별 매수 가능 현금",
+      "additionalProperties": {
+        "$ref": "../common/_values.schema.json#/$defs/money"
+      }
+    },
+    "isDelayed": {
+      "type": "boolean"
+    },
+    "asOf": {
+      "$ref": "../common/_values.schema.json#/$defs/instant"
+    }
+  }
+}

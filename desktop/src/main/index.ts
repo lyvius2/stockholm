@@ -1,8 +1,9 @@
 import { join } from 'node:path'
 import { BrowserWindow, app, ipcMain, nativeTheme, shell } from 'electron'
-import type { ApiRequest } from '../preload/bridge'
+import type { ApiRequest, StreamSymbol } from '../preload/bridge'
 import { DaemonApi } from './api'
 import { DaemonProcess, probeDaemon } from './daemon'
+import { DaemonStream } from './stream'
 
 // 마법사·로그인은 폭 1100 으로 시작하고, 메인이 열리면 넓힘
 const WIZARD_SIZE = { width: 1100, height: 760 }
@@ -14,6 +15,20 @@ const DAEMON_START_TIMEOUT_MS = 60_000
 const dataDir = process.env['STOCKHOLM_DATA_DIR'] ?? join(app.getPath('appData'), 'Stockholm')
 const daemonApi = new DaemonApi(dataDir)
 const daemonProcess = new DaemonProcess(join(process.resourcesPath, 'daemon'), dataDir)
+// 실시간 스트림은 세션 토큰이 있는 main 이 맺고, 받은 것은 열린 창 전부에 밈
+const daemonStream = new DaemonStream(() => daemonApi.authHeaders(), {
+  messages: (messages) => broadcast('stream:messages', messages),
+  state: (state) => broadcast('stream:state', state),
+})
+// 로그아웃·만료·401 로 세션이 끝나면 스트림을 닫고 창에 알려 로그인 모달로 돌아가게 함
+daemonApi.onSessionEnded(() => {
+  daemonStream.close()
+  broadcast('session:ended', null)
+})
+
+function broadcast(channel: string, payload: unknown): void {
+  for (const window of BrowserWindow.getAllWindows()) window.webContents.send(channel, payload)
+}
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -56,6 +71,11 @@ function registerIpc(): void {
   ipcMain.handle('api:request', (_event, request: ApiRequest) => daemonApi.request(request))
   ipcMain.handle('session:has', () => daemonApi.hasSession())
   ipcMain.handle('session:clear', () => daemonApi.clearSession())
+  ipcMain.handle('stream:subscribe', (_event, symbols: StreamSymbol[]) =>
+    daemonStream.subscribe(symbols),
+  )
+  ipcMain.handle('stream:close', () => daemonStream.close())
+  ipcMain.handle('stream:state', () => daemonStream.state())
   ipcMain.handle('app:version', () => app.getVersion())
   ipcMain.handle('app:expand-for-main', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender)
@@ -81,7 +101,10 @@ void app.whenReady().then(async () => {
   })
 })
 
-app.on('before-quit', () => daemonProcess.stop())
+app.on('before-quit', () => {
+  daemonStream.close()
+  daemonProcess.stop()
+})
 
 // TODO(1단계 9번 후속): 창을 닫으면 메뉴바 트레이로 상주. 지금은 마지막 창을 닫으면 종료함
 app.on('window-all-closed', () => {

@@ -31,7 +31,8 @@ for schema in $(find "$SCHEMAS" -name '*.schema.json' | sort); do
       sed -i '' -e "s/^package banghak.stock.shared.protocol.$dir$/@file:Suppress(\"DEPRECATION\")\n\npackage banghak.stock.shared.protocol.$dir/" "$KOTLIN_OUT/$dir/$pascal.kt"
       ;;
   esac
+  # date-time 을 Date 로 만들면 런타임(JSON 문자열)과 어긋나므로 문자열 그대로 둠
   $QUICKTYPE --src-lang schema --src "$schema" --lang typescript --just-types --acronym-style original \
-    --top-level "$pascal" --out "$TS_OUT/$name.ts"
+    --no-date-times --top-level "$pascal" --out "$TS_OUT/$name.ts"
   echo "generated: $pascal"
 done

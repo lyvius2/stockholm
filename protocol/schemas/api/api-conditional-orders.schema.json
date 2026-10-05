@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-conditional-orders.schema.json",
+  "title": "ApiConditionalOrders",
+  "description": "GET /conditional-orders 응답 한 쪽(토스 앱에서 등록한 것도 포함). nextCursor 가 null 이면 끝.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "conditionalOrder": {
+      "title": "ApiConditionalOrder",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conditionalOrderId",
+        "type",
+        "status",
+        "symbol",
+        "quantity",
+        "kind",
+        "expireDate",
+        "first",
+        "second",
+        "createdAt"
+      ],
+      "properties": {
+        "conditionalOrderId": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "SINGLE",
+            "OCO",
+            "OTO"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "WATCHING",
+            "PAUSED",
+            "ORDERING",
+            "ORDERED",
+            "COMPLETED",
+            "EXPIRED"
+          ]
+        },
+        "symbol": {
+          "$ref": "../common/_values.schema.json#/$defs/symbol"
+        },
+        "quantity": {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "LIMIT",
+            "MARKET"
+          ]
+        },
+        "expireDate": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "first": {
+          "$ref": "#/$defs/legRecord"
+        },
+        "second": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/legRecord"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "createdAt": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        }
+      }
+    },
+    "legRecord": {
+      "title": "ApiConditionLegRecord",
+      "description": "토스 조회에는 매매 방향이 없음. 가격이 아닌 조건(앱 전용)은 감시가 null.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "isPriceTrigger",
+        "status",
+        "triggerPrice",
+        "orderPrice",
+        "triggeredOrderId"
+      ],
+      "properties": {
+        "isPriceTrigger": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "WATCHING",
+            "HOLDING",
+            "PAUSED",
+            "ORDERING",
+            "ORDERED",
+            "COMPLETED",
+            "EXPIRED",
+            "CANCELED"
+          ]
+        },
+        "triggerPrice": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "orderPrice": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "triggeredOrderId": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "required": [
+    "conditionalOrders",
+    "nextCursor"
+  ],
+  "properties": {
+    "conditionalOrders": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/conditionalOrder"
+      }
+    },
+    "nextCursor": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

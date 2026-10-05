@@ -1,13 +1,12 @@
 package banghak.stock.engine.adapter.`in`.ws
 
-import banghak.stock.core.domain.market.IndexQuote
-import banghak.stock.core.domain.market.IndexTicker
-import banghak.stock.core.domain.market.Symbol
-import banghak.stock.core.domain.money.Money
 import banghak.stock.core.domain.trading.Candle
 import banghak.stock.core.domain.trading.OrderBook
 import banghak.stock.core.domain.trading.Quote
 import banghak.stock.core.domain.trading.StreamMessage
+import banghak.stock.engine.adapter.`in`.web.common.IndexTickerDto
+import banghak.stock.engine.adapter.`in`.web.common.MoneyDto
+import banghak.stock.engine.adapter.`in`.web.common.SymbolDto
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
@@ -17,20 +16,6 @@ import java.time.Instant
  * 모양은 `protocol/schemas/stream` 의 JSON Schema 가 원본이며 화면 타입은 거기서 생성함.
  */
 data class StreamClientMessage(val type: String = "", val symbols: List<SymbolDto> = emptyList())
-
-data class SymbolDto(val market: String = "", val code: String = "") {
-    fun toSymbol(): Symbol = Symbol(banghak.stock.core.domain.market.Market.valueOf(market), code)
-
-    companion object {
-        fun of(symbol: Symbol) = SymbolDto(symbol.market.name, symbol.code)
-    }
-}
-
-data class MoneyDto(val amount: String, val currency: String) {
-    companion object {
-        fun of(money: Money) = MoneyDto(money.amount.toPlainString(), money.currency.name)
-    }
-}
 
 data class QuoteDto(val last: MoneyDto, val asOf: Instant)
 
@@ -45,33 +30,6 @@ data class CandleDto(
     val low: MoneyDto,
     val close: MoneyDto,
     val volume: String,
-)
-
-data class IndexQuoteDto(
-    val code: String,
-    val name: String,
-    val value: String,
-    val change: String?,
-    val changeRatio: String?,
-    val asOf: Instant,
-    @get:JsonProperty("isClosed") val isClosed: Boolean,
-    val proxy: String?,
-    val source: String,
-)
-
-data class IndexEntryDto(
-    val code: String,
-    val name: String,
-    val state: String,
-    val quote: IndexQuoteDto?,
-)
-
-data class IndexTickerDto(
-    val market: String,
-    val state: String,
-    val entries: List<IndexEntryDto>,
-    val asOf: Instant,
-    @get:JsonProperty("isDelayed") val isDelayed: Boolean,
 )
 
 data class FeedStateDto(
@@ -95,7 +53,11 @@ data class StreamServerMessage(
                 is StreamMessage.QuoteUpdate -> quote(message.quote)
                 is StreamMessage.OrderBookUpdate -> orderBook(message.orderBook)
                 is StreamMessage.LiveCandleUpdate -> liveCandle(message.candle)
-                is StreamMessage.IndexTickerUpdate -> indexTicker(message.ticker)
+                is StreamMessage.IndexTickerUpdate ->
+                    StreamServerMessage(
+                        "indexTicker",
+                        indexTicker = IndexTickerDto.of(message.ticker),
+                    )
                 is StreamMessage.MarketFeedState ->
                     StreamServerMessage(
                         "feedState",
@@ -135,39 +97,6 @@ data class StreamServerMessage(
                         MoneyDto.of(candle.close),
                         candle.volume.toString(),
                     ),
-            )
-
-        private fun indexTicker(ticker: IndexTicker) =
-            StreamServerMessage(
-                "indexTicker",
-                indexTicker =
-                    IndexTickerDto(
-                        ticker.choice.market.name,
-                        ticker.choice.state.name,
-                        ticker.entries.map { entry ->
-                            IndexEntryDto(
-                                entry.code.name,
-                                entry.code.displayName,
-                                entry.state.name,
-                                entry.quote?.let { quoteDto(it) },
-                            )
-                        },
-                        ticker.asOf,
-                        ticker.isDelayed,
-                    ),
-            )
-
-        private fun quoteDto(quote: IndexQuote) =
-            IndexQuoteDto(
-                quote.code.name,
-                quote.code.displayName,
-                quote.value.toPlainString(),
-                quote.change?.toPlainString(),
-                quote.changeRatio?.ratio?.toPlainString(),
-                quote.asOf,
-                quote.isClosed,
-                quote.proxy,
-                quote.source,
             )
 
         private fun levelOf(level: OrderBook.Level) =

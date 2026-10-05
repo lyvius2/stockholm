@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-mover-board.schema.json",
+  "title": "ApiMoverBoard",
+  "description": "GET /market/movers 응답. 급등·급락 각 5개까지. 정보 표시용이며 자동 주문의 트리거가 아님.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "mover": {
+      "title": "ApiMover",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rank",
+        "symbol",
+        "last",
+        "changeRate",
+        "tradingVolume",
+        "rankChange",
+        "flags"
+      ],
+      "properties": {
+        "rank": {
+          "type": "integer"
+        },
+        "symbol": {
+          "$ref": "../common/_values.schema.json#/$defs/symbol"
+        },
+        "last": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "changeRate": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/decimal"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tradingVolume": {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        },
+        "rankChange": {
+          "title": "ApiRankChange",
+          "description": "직전 판 대비. places 는 UP·DOWN 에만 있음",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "places"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "NEW",
+                "SAME",
+                "UP",
+                "DOWN"
+              ]
+            },
+            "places": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "flags": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/stockFlags"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "stockFlags": {
+      "title": "ApiStockFlags",
+      "description": "종목 경고 플래그. isTradingHalted·isAdministrative 는 출처가 없으면 null(모름).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "isInvestmentWarning",
+        "isInvestmentRisk",
+        "isOverheated",
+        "isLiquidationTrading",
+        "isViStatic",
+        "isViDynamic",
+        "hasUnknownWarning",
+        "isTradingHalted",
+        "isAdministrative",
+        "asOf"
+      ],
+      "properties": {
+        "isInvestmentWarning": {
+          "type": "boolean"
+        },
+        "isInvestmentRisk": {
+          "type": "boolean"
+        },
+        "isOverheated": {
+          "type": "boolean"
+        },
+        "isLiquidationTrading": {
+          "type": "boolean"
+        },
+        "isViStatic": {
+          "type": "boolean"
+        },
+        "isViDynamic": {
+          "type": "boolean"
+        },
+        "hasUnknownWarning": {
+          "type": "boolean"
+        },
+        "isTradingHalted": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "isAdministrative": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "asOf": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        }
+      }
+    }
+  },
+  "required": [
+    "market",
+    "gainers",
+    "losers",
+    "session",
+    "asOf",
+    "isDelayed"
+  ],
+  "properties": {
+    "market": {
+      "$ref": "../common/_values.schema.json#/$defs/market"
+    },
+    "gainers": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/mover"
+      }
+    },
+    "losers": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "$ref": "#/$defs/mover"
+      }
+    },
+    "session": {
+      "type": "string",
+      "enum": [
+        "DAY_MARKET",
+        "PRE",
+        "REGULAR",
+        "AFTER",
+        "CLOSED"
+      ]
+    },
+    "asOf": {
+      "$ref": "../common/_values.schema.json#/$defs/instant"
+    },
+    "isDelayed": {
+      "type": "boolean"
+    }
+  }
+}

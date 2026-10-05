@@ -4,6 +4,7 @@ import type { ApiUser } from '@renderer/generated/api-user'
 import { localClient } from '@renderer/data/client/LocalClient'
 import { sessionApi } from '@renderer/data/api/session'
 import { useSessionStore } from '@renderer/data/store/session'
+import { useMarketStream } from '@renderer/data/stream/useMarketStream'
 import { LoginModal } from '@renderer/features/login/LoginModal'
 import { StatusBar } from './StatusBar'
 import { TopBar } from './TopBar'
@@ -12,6 +13,18 @@ import { TopBar } from './TopBar'
 export function MainShell({ user }: { readonly user: ApiUser | null }) {
   const queryClient = useQueryClient()
   const signOut = useSessionStore((s) => s.signOut)
+  // 로그인해 있는 동안 데몬 실시간 스트림을 열어 둠(지수 티커는 종목 없이도 옴)
+  useMarketStream(user !== null)
+
+  // 세션이 만료되거나 401 로 끝나면 main 이 알림. 로그아웃과 같이 화면 상태를 비워 로그인 모달로 감
+  useEffect(
+    () =>
+      window.stockholm.session.onEnded(() => {
+        signOut()
+        queryClient.clear()
+      }),
+    [signOut, queryClient],
+  )
 
   // 마법사 폭(1100)에서 메인으로 넘어오면 창을 넓힘
   useEffect(() => {

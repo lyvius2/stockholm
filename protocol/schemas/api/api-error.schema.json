@@ -2,12 +2,43 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://stockholm.banghak/protocol/api/api-error.schema.json",
   "title": "ApiError",
-  "description": "도메인 예외의 응답 본문.",
+  "description": "도메인 예외의 응답 본문. 주문 경로의 예외는 화면이 그대로 보일 상세를 함께 실음.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["code", "message"],
+  "required": [
+    "code",
+    "message"
+  ],
   "properties": {
-    "code": { "type": "string" },
-    "message": { "type": "string" }
+    "code": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "GuardrailViolationException: 위반 규칙과 사유"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "ConfirmationRequiredException(428): 확인 창에 보일 노트"
+    },
+    "tickSize": {
+      "$ref": "../common/_values.schema.json#/$defs/decimal"
+    },
+    "nearestPrices": {
+      "type": "array",
+      "items": {
+        "$ref": "../common/_values.schema.json#/$defs/decimal"
+      },
+      "description": "OrderRejectedException: 호가 단위 불일치 시 토스가 준 제안"
+    }
   }
 }

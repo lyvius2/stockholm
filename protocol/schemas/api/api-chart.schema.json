@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-chart.schema.json",
+  "title": "ApiChart",
+  "description": "GET /market/chart 응답. 봉은 시각 오름차순, 평균 배열은 봉과 같은 길이(앞쪽 모자란 구간은 null). nextBefore 를 다음 조회의 before 로 넘기면 더 과거를 받음.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "chartBar": {
+      "title": "ApiChartBar",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "openTime",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume"
+      ],
+      "properties": {
+        "openTime": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        "open": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "high": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "low": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "close": {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        "volume": {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        }
+      }
+    }
+  },
+  "required": [
+    "symbol",
+    "resolution",
+    "bars",
+    "closeAverages",
+    "volumeAverage",
+    "nextBefore",
+    "isDelayed"
+  ],
+  "properties": {
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "resolution": {
+      "type": "string",
+      "enum": [
+        "MINUTE_1",
+        "MINUTE_3",
+        "MINUTE_5",
+        "MINUTE_10",
+        "MINUTE_30",
+        "MINUTE_60",
+        "DAY",
+        "WEEK",
+        "MONTH",
+        "YEAR"
+      ]
+    },
+    "bars": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/chartBar"
+      }
+    },
+    "closeAverages": {
+      "type": "object",
+      "description": "키는 이동평균 기간(5·20·60·120)",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "volumeAverage": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "../common/_values.schema.json#/$defs/decimal"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "nextBefore": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "isDelayed": {
+      "type": "boolean"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-start-stock.schema.json",
+  "title": "ApiStartStock",
+  "description": "GET /session/start-stock 응답(F19). 로그인 직후 네 영역에 띄울 종목.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "symbol",
+    "reason"
+  ],
+  "properties": {
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "LAST_VIEWED",
+        "LARGEST_POSITION",
+        "DEFAULT"
+      ]
+    }
+  }
+}

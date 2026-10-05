@@ -11,7 +11,18 @@ export function installBridge(route: Route, daemonReachable = true): StockholmBr
     },
     theme: { current: vi.fn(async () => 'light' as const) },
     api: { request: vi.fn(async (request: ApiRequest) => route(request)) },
-    session: { hasSession: vi.fn(async () => false), clear: vi.fn(async () => undefined) },
+    session: {
+      hasSession: vi.fn(async () => false),
+      clear: vi.fn(async () => undefined),
+      onEnded: vi.fn(() => () => undefined),
+    },
+    stream: {
+      subscribe: vi.fn(async () => undefined),
+      close: vi.fn(async () => undefined),
+      state: vi.fn(async () => 'closed' as const),
+      onMessages: vi.fn(() => () => undefined),
+      onState: vi.fn(() => () => undefined),
+    },
     app: { version: vi.fn(async () => '0.1.0-test'), expandForMain: vi.fn(async () => undefined) },
   }
   Object.defineProperty(window, 'stockholm', { configurable: true, value: bridge })

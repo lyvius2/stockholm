@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-order-placement.schema.json",
+  "title": "ApiOrderPlacement",
+  "description": "주문·정정 응답. PENDING 은 결과 확인 중이라 화면이 잠그고, NEEDS_REVIEW 는 사람이 토스에서 확인함.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "clientOrderId",
+    "state",
+    "brokerOrderId"
+  ],
+  "properties": {
+    "clientOrderId": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "ACCEPTED",
+        "PENDING",
+        "NEEDS_REVIEW"
+      ]
+    },
+    "brokerOrderId": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

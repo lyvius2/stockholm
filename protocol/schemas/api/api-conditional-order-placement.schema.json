@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-conditional-order-placement.schema.json",
+  "title": "ApiConditionalOrderPlacement",
+  "description": "조건주문 등록·수정 응답.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "clientOrderId",
+    "state",
+    "conditionalOrderId"
+  ],
+  "properties": {
+    "clientOrderId": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "REGISTERED",
+        "PENDING",
+        "NEEDS_REVIEW"
+      ]
+    },
+    "conditionalOrderId": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}
