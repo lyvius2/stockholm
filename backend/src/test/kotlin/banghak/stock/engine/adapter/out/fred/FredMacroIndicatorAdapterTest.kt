@@ -9,6 +9,7 @@ import banghak.stock.core.domain.market.MacroObservation
 import banghak.stock.core.domain.market.MacroSeries
 import banghak.stock.engine.config.ExternalEndpointProperties
 import banghak.stock.engine.config.ExternalHttpConfig
+import banghak.stock.engine.config.KftcProperties
 import banghak.stock.shared.config.HttpProperties
 import banghak.stock.shared.config.OkHttpConfig
 import banghak.stock.shared.config.RetrofitFactory
@@ -45,6 +46,7 @@ class FredMacroIndicatorAdapterTest {
             ExternalHttpConfig(
                 RetrofitFactory(OkHttpConfig().okHttpClient(HttpProperties())),
                 ExternalEndpointProperties(fredBaseUrl = "http://127.0.0.1:${server.port()}/"),
+                KftcProperties(),
             )
         adapter = FredMacroIndicatorAdapter(config.fredObservationsClient(), secrets)
     }
@@ -62,6 +64,7 @@ class FredMacroIndicatorAdapterTest {
                         ExternalEndpointProperties(
                             fredBaseUrl = "http://127.0.0.1:${server.port()}/"
                         ),
+                        KftcProperties(),
                     )
                     .fredObservationsClient(),
                 object : banghak.stock.engine.adapter.out.keychain.SecretReader {

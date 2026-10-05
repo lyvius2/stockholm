@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-asset-consent-start.schema.json",
+  "title": "ApiAssetConsentStart",
+  "description": "POST /assets/consent 응답. 화면은 authorizeUrl 을 기본 브라우저로 염(앱 안 웹뷰 없음).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "authorizeUrl"
+  ],
+  "properties": {
+    "authorizeUrl": {
+      "type": "string"
+    }
+  }
+}

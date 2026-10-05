@@ -95,5 +95,6 @@ object ExternalApiStubs {
         registry.add("stockholm.external.toss-web-socket-url") {
             "ws://127.0.0.1:${server.port()}/ws/v1"
         }
+        registry.add("stockholm.kftc.base-url", base)
     }
 }

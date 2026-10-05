@@ -366,3 +366,5 @@ https://www.data.go.kr (주식시세정보 15094808, KRX상장종목정보 15094
 | 2026-09-29 | 토스 규격 정리본 TOSS_OPENAPI.md 로 연결 |
 | 2026-09-29 | KIND 행: 토스가 관리종목·투자주의를 주지 않음을 규격으로 확인 |
 | 2026-10-05 | 키 검증 호출 구현: Massive `v3/reference/tickers/AAPL`(Bearer), 네이버 뉴스 검색 1건(헤더 두 개, 문서 미확인), 공공데이터포털 uddi 전체(Swagger 확인), Slack `auth.test`(docs.slack.dev 확인), KRX `stk_bydd_trd` JSON POST(전송 방식 미확인) |
+| 2026-10-06 | 1.2 금융결제원: 오픈뱅킹 v2.0(`oauth/2.0/authorize·token`, `v2.0/user/me`, `v2.0/account/balance/fin_num`)로 어댑터 구현. 호스트·redirect 규칙·필드는 학습 테스트(`KftcLearningTest`)로 확인 전 [확인 필요] |
+| 2026-10-06 | 1.2: 잔액조회 공식 명세 확인(`GET /v2.0/account/balance/fin_num`, `bank_tran_id`·`fintech_use_num`·`tran_dtime`, 응답 `rsp_code`(A0000)·`balance_amt`·`available_amt`·`account_type`(1 수시입출금·2 예적금·6 수익증권)). 오픈뱅킹은 증권사 참가·카드·보험·대출 조회 API 도 있어 F16 범위는 이용 권한 확인 뒤 결정 |

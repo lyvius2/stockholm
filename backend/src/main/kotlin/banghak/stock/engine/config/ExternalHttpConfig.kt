@@ -2,6 +2,8 @@ package banghak.stock.engine.config
 
 import banghak.stock.engine.adapter.out.dart.DartCompanyClient
 import banghak.stock.engine.adapter.out.fred.FredObservationsClient
+import banghak.stock.engine.adapter.out.kftc.KftcAccountClient
+import banghak.stock.engine.adapter.out.kftc.KftcOAuthClient
 import banghak.stock.engine.adapter.out.krx.KrxDailyTradeClient
 import banghak.stock.engine.adapter.out.llm.AnthropicModelsClient
 import banghak.stock.engine.adapter.out.llm.DeepSeekModelsClient
@@ -25,10 +27,11 @@ import org.springframework.context.annotation.Profile
  */
 @Configuration
 @Profile(RuntimeProfiles.ENGINE)
-@EnableConfigurationProperties(ExternalEndpointProperties::class)
+@EnableConfigurationProperties(ExternalEndpointProperties::class, KftcProperties::class)
 class ExternalHttpConfig(
     private val retrofit: RetrofitFactory,
     private val endpoints: ExternalEndpointProperties,
+    private val kftc: KftcProperties,
 ) {
     @Bean fun openAiModelsClient(): OpenAiModelsClient = create(endpoints.openaiBaseUrl)
 
@@ -55,6 +58,10 @@ class ExternalHttpConfig(
     @Bean fun slackAuthClient(): SlackAuthClient = create(endpoints.slackBaseUrl)
 
     @Bean fun krxDailyTradeClient(): KrxDailyTradeClient = create(endpoints.krxBaseUrl)
+
+    @Bean fun kftcOAuthClient(): KftcOAuthClient = create(kftc.baseUrl)
+
+    @Bean fun kftcAccountClient(): KftcAccountClient = create(kftc.baseUrl)
 
     private inline fun <reified T> create(baseUrl: String): T =
         retrofit.create(baseUrl.toHttpUrl()).create(T::class.java)

@@ -13,15 +13,17 @@ import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
 
 /**
- * `Authorization: Bearer <토큰>` 을 세션으로 바꿔 요청 속성에 둠. 세션 없이 되는 경로(헬스·setup·로그인·사용자 목록·가입)를 뺀 나머지는 401.
+ * `Authorization: Bearer <토큰>` 을 세션으로 바꿔 요청 속성에 둠.
+ * 세션 없이 되는 경로(헬스·setup·로그인·사용자 목록·가입)를 뺀 나머지는 401.
  */
 @Component
 @Profile(RuntimeProfiles.ENGINE)
 @Order(Ordered.HIGHEST_PRECEDENCE + 2)
 class SessionAuth(private val login: LoginUseCase) : OncePerRequestFilter() {
-    override fun shouldNotFilter(request: HttpServletRequest): Boolean = PUBLIC_PREFIXES.any {
-        request.requestURI.startsWith(it)
-    }
+    // 동의 콜백은 정확히 그 경로만 열고, 하위 경로는 열지 않음
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean =
+        request.requestURI == LocalTokenFilter.CONSENT_CALLBACK_PATH ||
+            PUBLIC_PREFIXES.any { request.requestURI.startsWith(it) }
 
     override fun doFilterInternal(
         request: HttpServletRequest,

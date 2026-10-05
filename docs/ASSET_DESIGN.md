@@ -71,3 +71,9 @@ public interface IdentityPort { IdentityProof verify(UserId u, IdentityRequest r
 1. 금융결제원 API 종류(오픈뱅킹 계좌통합조회 vs 마이데이터)와 "모든 자산"의 실제 범위(은행 외 증권·카드·보험 포함 여부), 테스트베드/운영 키.
 2. 토큰 유효기간·갱신 방식, 조회 한도.
 3. 외화 계좌 환산 환율 출처(토스 환율 API).
+
+## Changes
+
+| 날짜 | 변경 |
+|---|---|
+| 2026-10-06 | 5·4장 구현: `AssetService`(state 1회용 10분, 캐시 1분, stale), `KftcAssetAdapter`(오픈뱅킹 v2.0, 토큰은 Keychain `KFTC_TOKEN`), `/assets/*`·콜백. 7장 열린 항목은 그대로 — 오픈뱅킹은 은행 계좌만이라 "모든 자산" 범위는 사용자 결정 필요 |

@@ -11,10 +11,12 @@ import com.networknt.schema.JsonSchema
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SchemaLocation
 import com.networknt.schema.SpecVersion
+import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Duration
 import org.assertj.core.api.Assertions.assertThat
 import org.springframework.core.MethodParameter
+import org.springframework.http.converter.StringHttpMessageConverter
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -52,7 +54,10 @@ object ApiTestSupport {
         MockMvcBuilders.standaloneSetup(*controllers)
             .setCustomArgumentResolvers(FixedPrincipalResolver(principal))
             .setControllerAdvice(ErrorAdvice())
-            .setMessageConverters(JacksonJsonHttpMessageConverter(mapper))
+            .setMessageConverters(
+                JacksonJsonHttpMessageConverter(mapper),
+                StringHttpMessageConverter(StandardCharsets.UTF_8),
+            )
             .build()
 
     fun toJson(body: Any): String = mapper.writeValueAsString(body)

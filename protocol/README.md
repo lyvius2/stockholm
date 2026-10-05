@@ -24,7 +24,7 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 
 ## 로컬 REST 경로와 스키마
 
-모든 경로는 로컬 토큰 + 세션이 필요하고(`/setup/*`·`/session/login`·`/session/users`·`/session/register`·헬스 제외), 오류 본문은 `api-error`.
+모든 경로는 로컬 토큰 + 세션이 필요하고(`/setup/*`·`/session/login`·`/session/users`·`/session/register`·헬스·`/assets/consent/callback` 제외), 오류 본문은 `api-error`.
 
 | 경로 | 요청 | 응답 |
 |---|---|---|
@@ -43,6 +43,10 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | `GET /conditional-orders?scope&market&code&cursor` | — | `api-conditional-orders` |
 | `POST /conditional-orders`, `POST /conditional-orders/{id}/amend` | `api-conditional-order-request` | `api-conditional-order-placement` |
 | `POST /conditional-orders/{id}/cancel` | — | `api-conditional-cancel` |
+| `GET /assets` | — | `api-asset-snapshot` |
+| `GET /assets/consent` · `DELETE /assets/consent` | — | `api-asset-consent` · — |
+| `POST /assets/consent` | — | `api-asset-consent-start` |
+| `GET /assets/consent/callback?code&state` | 브라우저(세션 없음, state 로 확인) | HTML |
 
 오류 상태: 잘못된 값 400 · 세션 401 · 가드레일 위반 422(`violations`) · 확인 필요 428(`notes`) · 증권사 거부 422(`tickSize`·`nearestPrices`) · 증권사·시세 못 받음 503.
 
@@ -59,4 +63,5 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | 2026-09-27 | `schemas/api/*` 7개 추가(setup-state·credential-kind·credential-check·user·login·totp-enrollment·error). Kotlin 생성 범위를 common·events로 한정, TS 이름은 `--acronym-style original` |
 | 2026-10-01 | `schemas/stream/` 추가(로컬 WebSocket 메시지) |
 | 2026-10-05 | TS 생성에 `--no-date-times`: `instant` 가 `Date` 가 아닌 `string` 으로 나옴(JSON 런타임과 일치) |
+| 2026-10-06 | `api-asset-snapshot`·`api-asset-consent`·`api-asset-consent-start` 추가(F16), 콜백 경로 표 |
 | 2026-10-05 | `schemas/api/` 15개 추가(차트·급등락·지수·평가·시작 종목·주문·조건주문), `api-error` 에 주문 경로 상세 필드. 로컬 REST 경로 표 |

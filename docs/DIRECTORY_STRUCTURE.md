@@ -223,3 +223,4 @@ protocol/
 | 2026-10-05 | desktop `main/stream.ts`(`/ws` 클라이언트), renderer `data/stream/`(MarketStream·store·useMarketStream), test `tests/main/DaemonStream`·`tests/stream/StreamStore` |
 | 2026-10-05 | `engine/adapter/in/web/{common(ValueDtos·IndexTickerDtos), market, portfolio, order}` 와 `session/StartStockController`, test `support/web/ApiTestSupport`·`adapter/in/web/*ApiTest` |
 | 2026-10-05 | `engine/adapter/out/{toss/TossCredentialVerifier, massive, naver, odcloud, slack, krx}` 검증기(클라이언트 인터페이스 같은 파일), test `support/VerifierStub` |
+| 2026-10-06 | F16: `core/domain/asset`, `core/port/AssetPort`, `engine/application/account/AssetService`, `engine/adapter/out/kftc/{KftcClients,KftcAssetAdapter}`, `engine/config/KftcProperties`, `engine/adapter/in/web/asset/AssetController`, test `learning/KftcLearningTest` |

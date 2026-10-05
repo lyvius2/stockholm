@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-asset-snapshot.schema.json",
+  "title": "ApiAssetSnapshot",
+  "description": "GET /assets 응답(F16). 본인 계좌만, 계좌는 끝 4자리 표기. isStale 이면 이번 조회가 실패해 직전 결과임. 저장·동기화하지 않음.",
+  "type": "object",
+  "additionalProperties": false,
+  "$defs": {
+    "asset": {
+      "title": "ApiExternalAsset",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "institution",
+        "maskedAccount",
+        "kind",
+        "balance",
+        "asOf"
+      ],
+      "properties": {
+        "institution": {
+          "type": "string"
+        },
+        "maskedAccount": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "DEPOSIT",
+            "SAVINGS",
+            "SECURITIES",
+            "FUND",
+            "CARD",
+            "INSURANCE",
+            "LOAN",
+            "OTHER"
+          ]
+        },
+        "balance": {
+          "oneOf": [
+            {
+              "$ref": "../common/_values.schema.json#/$defs/money"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "asOf": {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        }
+      }
+    }
+  },
+  "required": [
+    "assets",
+    "fetchedAt",
+    "isStale"
+  ],
+  "properties": {
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/asset"
+      }
+    },
+    "fetchedAt": {
+      "$ref": "../common/_values.schema.json#/$defs/instant"
+    },
+    "isStale": {
+      "type": "boolean"
+    }
+  }
+}

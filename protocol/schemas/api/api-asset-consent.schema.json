@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-asset-consent.schema.json",
+  "title": "ApiAssetConsent",
+  "description": "GET /assets/consent 응답. 금융결제원 동의 상태. 토큰 값은 없음.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "expiresAt",
+    "consentedAt"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "ACTIVE",
+        "EXPIRED"
+      ]
+    },
+    "expiresAt": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "consentedAt": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

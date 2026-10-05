@@ -19,6 +19,13 @@ stockholm:
       text: TEXT
       blob: BLOB
 
+  # 금융결제원 오픈뱅킹. 키는 Keychain(앱 자격은 공유, 사용자 토큰은 개인). 이용기관코드는 비밀이 아님
+  kftc:
+    base-url: https://testapi.openbanking.or.kr/
+    redirect-uri: http://127.0.0.1:2609/assets/consent/callback
+    client-use-code: ""
+    scope: login inquiry
+
   # 외부 API 기본 주소(키는 Keychain). 테스트는 WireMock 주소로 바꿈
   external:
     openai-base-url: https://api.openai.com/
@@ -59,6 +66,7 @@ resilience4j:
       odcloud-verify: { base-config: credential-verify }
       slack-verify: { base-config: credential-verify }
       krx-verify: { base-config: credential-verify }
+      kftc: { base-config: default, ignore-exceptions: [banghak.stock.core.domain.error.ConsentRequiredException] }
       fred: { base-config: default }
       # 토스. 없는 종목(404 → InvalidValueException)은 상대 서버 장애가 아니므로 서킷에 세지 않음
       toss-auth: { base-config: default }

@@ -1,9 +1,11 @@
 package banghak.stock.shared.web
 
+import banghak.stock.core.domain.error.AssetUnavailableException
 import banghak.stock.core.domain.error.AuthenticationFailedException
 import banghak.stock.core.domain.error.BrokerAccessDeniedException
 import banghak.stock.core.domain.error.BrokerUnavailableException
 import banghak.stock.core.domain.error.ConfirmationRequiredException
+import banghak.stock.core.domain.error.ConsentRequiredException
 import banghak.stock.core.domain.error.CurrencyMismatchException
 import banghak.stock.core.domain.error.DomainException
 import banghak.stock.core.domain.error.ForbiddenException
@@ -70,11 +72,13 @@ class ErrorAdvice {
             is ForbiddenException -> HttpStatus.FORBIDDEN
             is IllegalSetupTransitionException,
             is TooManyUsersException -> HttpStatus.CONFLICT
-            is ConfirmationRequiredException -> HttpStatus.PRECONDITION_REQUIRED
+            is ConfirmationRequiredException,
+            is ConsentRequiredException -> HttpStatus.PRECONDITION_REQUIRED
             is SecretStoreFailureException,
             is BrokerUnavailableException,
             is BrokerAccessDeniedException,
             is MarketDataUnavailableException,
+            is AssetUnavailableException,
             is OrderResultUnknownException -> HttpStatus.SERVICE_UNAVAILABLE
             else -> HttpStatus.UNPROCESSABLE_CONTENT
         }
