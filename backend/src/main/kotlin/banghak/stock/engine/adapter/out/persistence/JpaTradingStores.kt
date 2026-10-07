@@ -17,6 +17,7 @@ import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.FillSummary
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.OrderKind
+import banghak.stock.core.domain.trading.OrderListing
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderProgress
 import banghak.stock.core.domain.trading.OrderSide
@@ -158,6 +159,39 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
         )
 
     // 대기열에 넣은 요약이 없던 행(처음 보는 주문)은 아직 아무것도 넣지 않은 것임
+    @Transactional(readOnly = true)
+    override fun findOpen(userId: UserId): List<OrderListing> =
+        repository.findByUserIdAndStatuses(userId.value, OPEN_STATUSES).map(::listingOf)
+
+    @Transactional(readOnly = true)
+    override fun findClosedSince(userId: UserId, since: Instant): List<OrderListing> =
+        repository
+            .findByUserIdAndStatusesSince(userId.value, CLOSED_STATUSES, since)
+            .map(::listingOf)
+
+    // 화면 목록은 의도·트리거를 복원하지 않고 행의 사실만 옮김(외부 주문도 같은 모양)
+    private fun listingOf(row: BrokerOrderEntity): OrderListing =
+        OrderListing(
+            brokerOrderId = row.brokerOrderId,
+            replacesBrokerOrderId = row.replacesBrokerOrderId,
+            symbol = Symbol(Market.valueOf(row.market), row.code),
+            side = OrderSide.valueOf(row.side),
+            kind = OrderKind.valueOf(row.kind),
+            timeInForce = TimeInForce.valueOf(row.timeInForce),
+            limitPrice = money(row.limitPriceAmount, row.limitPriceCurrency),
+            quantity = row.quantity?.let(Quantity::of),
+            orderAmount = money(row.orderAmountAmount, row.orderAmountCurrency),
+            status = statusOf(row.status),
+            filledQuantity = Quantity.of(row.filledQuantity),
+            averageFilledPrice = money(row.avgPriceAmount, row.avgPriceCurrency),
+            filledAmount = money(row.filledAmountAmount, row.filledAmountCurrency),
+            origin = OrderOrigin.valueOf(row.origin),
+            isPlacedByStockholm = row.triggerType != TriggerCodec.EXTERNAL,
+            orderedAt = row.orderedAt,
+            updatedAt = row.updatedAt,
+            closedAt = row.canceledAt ?: row.filledAt,
+        )
+
     private fun recordedOf(row: BrokerOrderEntity): RecordedOrder {
         val currency = Market.valueOf(row.market).currency
         val money = { amount: BigDecimal? -> Money.of(amount ?: BigDecimal.ZERO, currency) }
@@ -251,6 +285,9 @@ class JpaBrokerOrderStore(private val repository: BrokerOrderRepository) : Broke
 
     companion object {
         private val OPEN_STATUSES = OrderStatus.entries.filter { it.isOpen }.map { it.name }
+        // 모름(UNKNOWN)은 닫힌 것도 열린 것도 아니라 둘 다에서 뺌
+        private val CLOSED_STATUSES =
+            OrderStatus.entries.filter { !it.isOpen && it != OrderStatus.UNKNOWN }.map { it.name }
     }
 }
 

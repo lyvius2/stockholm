@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-order-listing.schema.json",
+  "title": "ApiOrderListing",
+  "description": "GET /orders/open · GET /orders/today 의 배열 항목(F14 세 탭). 로컬 기록의 사실만이며 토스 앱에서 낸 주문은 isPlacedByStockholm=false. remaining 은 잔량, canAmend·canCancel 은 정정·취소 버튼을 열 수 있는지(정정은 지정가만). 오늘 목록은 closedAt(없으면 수집 시각) 기준.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "brokerOrderId",
+    "replacesBrokerOrderId",
+    "symbol",
+    "side",
+    "kind",
+    "timeInForce",
+    "limitPrice",
+    "quantity",
+    "orderAmount",
+    "status",
+    "filledQuantity",
+    "remaining",
+    "averageFilledPrice",
+    "filledAmount",
+    "origin",
+    "isPlacedByStockholm",
+    "orderedAt",
+    "updatedAt",
+    "canAmend",
+    "canCancel",
+    "closedAt"
+  ],
+  "properties": {
+    "brokerOrderId": {
+      "type": "string"
+    },
+    "replacesBrokerOrderId": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "side": {
+      "type": "string",
+      "enum": [
+        "BUY",
+        "SELL"
+      ]
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "LIMIT",
+        "MARKET"
+      ]
+    },
+    "timeInForce": {
+      "type": "string",
+      "enum": [
+        "DAY",
+        "CLS",
+        "OPG"
+      ]
+    },
+    "limitPrice": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "quantity": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/decimal"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "orderAmount": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "PARTIALLY_FILLED",
+        "PENDING_CANCEL",
+        "PENDING_AMEND",
+        "FILLED",
+        "CANCELLED",
+        "REJECTED",
+        "CANCEL_REJECTED",
+        "AMEND_REJECTED",
+        "REPLACED",
+        "UNKNOWN"
+      ]
+    },
+    "filledQuantity": {
+      "$ref": "../common/_values.schema.json#/$defs/decimal"
+    },
+    "remaining": {
+      "$ref": "../common/_values.schema.json#/$defs/decimal"
+    },
+    "averageFilledPrice": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "filledAmount": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/money"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "MANUAL",
+        "AI_RECOMMENDED",
+        "AUTO_BUY",
+        "AUTO_SELL"
+      ]
+    },
+    "isPlacedByStockholm": {
+      "type": "boolean"
+    },
+    "orderedAt": {
+      "$ref": "../common/_values.schema.json#/$defs/instant"
+    },
+    "updatedAt": {
+      "$ref": "../common/_values.schema.json#/$defs/instant"
+    },
+    "canAmend": {
+      "type": "boolean",
+      "description": "정정 버튼을 열 수 있는지(열려 있고 처리 중 아니며 지정가)"
+    },
+    "canCancel": {
+      "type": "boolean",
+      "description": "취소 버튼을 열 수 있는지(열려 있고 처리 중 아님)"
+    },
+    "closedAt": {
+      "oneOf": [
+        {
+          "$ref": "../common/_values.schema.json#/$defs/instant"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "체결·취소로 닫힌 시각(증권사 기준). 없으면 null"
+    }
+  }
+}

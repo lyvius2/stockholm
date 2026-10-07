@@ -6,6 +6,7 @@ import banghak.stock.core.domain.trading.ManualTrigger
 import banghak.stock.core.domain.trading.OrderAmendment
 import banghak.stock.core.domain.trading.OrderIntent
 import banghak.stock.core.domain.trading.OrderKind
+import banghak.stock.core.domain.trading.OrderListing
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderSide
 import banghak.stock.core.domain.trading.OrderTicket
@@ -18,6 +19,7 @@ import banghak.stock.engine.adapter.`in`.web.common.SymbolDto
 import banghak.stock.engine.adapter.`in`.web.common.enumOf
 import banghak.stock.engine.adapter.`in`.web.common.quantityOf
 import banghak.stock.engine.adapter.`in`.web.common.toPlainString
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 
 /**
@@ -141,3 +143,58 @@ data class CancelResponse(val state: String, val cancelBrokerOrderId: String?) {
 }
 
 fun clientOrderIdOf(text: String): ClientOrderId = ClientOrderId(text)
+
+/**
+ * 미체결·오늘 체결 탭의 한 줄.
+ * 잔량과 정정·취소 가능 여부를 데몬이 계산해 줌.
+ */
+data class OrderListingResponse(
+    val brokerOrderId: String,
+    val replacesBrokerOrderId: String?,
+    val symbol: SymbolDto,
+    val side: String,
+    val kind: String,
+    val timeInForce: String,
+    val limitPrice: MoneyDto?,
+    val quantity: String?,
+    val orderAmount: MoneyDto?,
+    val status: String,
+    val filledQuantity: String,
+    val remaining: String,
+    val averageFilledPrice: MoneyDto?,
+    val filledAmount: MoneyDto?,
+    val origin: String,
+    @get:JsonProperty("isPlacedByStockholm") val isPlacedByStockholm: Boolean,
+    @get:JsonProperty("canAmend") val canAmend: Boolean,
+    @get:JsonProperty("canCancel") val canCancel: Boolean,
+    val orderedAt: Instant,
+    val updatedAt: Instant,
+    val closedAt: Instant?,
+) {
+    companion object {
+        fun of(listing: OrderListing) =
+            OrderListingResponse(
+                brokerOrderId = listing.brokerOrderId,
+                replacesBrokerOrderId = listing.replacesBrokerOrderId,
+                symbol = SymbolDto.of(listing.symbol),
+                side = listing.side.name,
+                kind = listing.kind.name,
+                timeInForce = listing.timeInForce.name,
+                limitPrice = listing.limitPrice?.let(MoneyDto::of),
+                quantity = listing.quantity?.toString(),
+                orderAmount = listing.orderAmount?.let(MoneyDto::of),
+                status = listing.status.name,
+                filledQuantity = listing.filledQuantity.toString(),
+                remaining = listing.remaining.toString(),
+                averageFilledPrice = listing.averageFilledPrice?.let(MoneyDto::of),
+                filledAmount = listing.filledAmount?.let(MoneyDto::of),
+                origin = listing.origin.name,
+                isPlacedByStockholm = listing.isPlacedByStockholm,
+                canAmend = listing.canAmend,
+                canCancel = listing.canCancel,
+                orderedAt = listing.orderedAt,
+                updatedAt = listing.updatedAt,
+                closedAt = listing.closedAt,
+            )
+    }
+}

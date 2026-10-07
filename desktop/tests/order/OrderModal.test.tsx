@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ApiRequest } from '../../src/preload/bridge'
+import { useOrderUiStore } from '@renderer/data/store/orderUi'
 import { useStreamStore } from '@renderer/data/stream/store'
 import { OrderModal } from '@renderer/features/order/OrderModal'
 import { installBridge, ok, status } from '../support/bridge'
@@ -29,6 +30,7 @@ describe('OrderModal', () => {
 
   beforeEach(() => {
     placed.length = 0
+    useOrderUiStore.getState().reset()
     useStreamStore.getState().reset()
     useStreamStore.getState().setWatched([samsung])
     reply = () => ok({ clientOrderId: 'x', state: 'ACCEPTED', brokerOrderId: 'B-1' })
@@ -149,6 +151,42 @@ describe('OrderModal', () => {
 
     await waitFor(() => expect(placed).toHaveLength(2))
     expect((placed[1]?.body as Body).clientOrderId).toBe((placed[0]?.body as Body).clientOrderId)
+    expect((await screen.findByRole('status')).textContent).toContain('B-9')
+  })
+
+  it('결과 모름 뒤 다시 확인했을 때 데몬이 확인을 요구하면(428) 확인 창이 뜨고 같은 키로 세 번째를 보냄', async () => {
+    let calls = 0
+    installBridge((request) => {
+      if (request.method === 'POST' && request.path === '/orders') {
+        placed.push(request)
+        calls += 1
+        if (calls === 1) return Promise.reject(new Error('IPC 끊김'))
+        if (calls === 2)
+          return status(428, {
+            code: 'ConfirmationRequiredException',
+            message: '확인',
+            notes: ['HighValue: 1억원 이상 주문'],
+          })
+        return ok({ clientOrderId: 'x', state: 'ACCEPTED', brokerOrderId: 'B-9' })
+      }
+      return status(404)
+    })
+    renderModal()
+    fireEvent.change(screen.getByLabelText('수량 (주)'), { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: '현재가 즉시 매수' }))
+    await screen.findByRole('alert')
+
+    fireEvent.click(screen.getByRole('button', { name: '같은 주문으로 결과 확인' }))
+
+    await screen.findByRole('alertdialog', { name: '주문 확인' })
+    expect(screen.queryByRole('button', { name: '같은 주문으로 결과 확인' })).toBeNull()
+    expect(screen.getByText('HighValue: 1억원 이상 주문')).toBeDefined()
+    fireEvent.click(screen.getByRole('button', { name: '확인하고 주문' }))
+
+    await waitFor(() => expect(placed).toHaveLength(3))
+    const keys = placed.map((r) => (r.body as Body).clientOrderId)
+    expect(new Set(keys).size).toBe(1)
+    expect((placed[2]?.body as Body).confirmedRules).toEqual(['HighValue'])
     expect((await screen.findByRole('status')).textContent).toContain('B-9')
   })
 

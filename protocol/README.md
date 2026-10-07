@@ -39,6 +39,7 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | `GET /portfolio/valuation` | — | `api-portfolio-valuation` |
 | `GET /orders/ticket?market&code` | — | `api-order-ticket` |
 | `POST /orders` | `api-order-request` | `api-order-placement` |
+| `GET /orders/open` · `GET /orders/today` | — | `api-order-listing`(배열) |
 | `POST /orders/{brokerOrderId}/amend` | `api-order-amendment` | `api-order-placement` |
 | `POST /orders/{brokerOrderId}/cancel` | — | `api-cancel-placement` |
 | `GET /conditional-orders?scope&market&code&cursor` | — | `api-conditional-orders` |
@@ -68,4 +69,6 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | 2026-10-06 | `api-asset-snapshot`·`api-asset-consent`·`api-asset-consent-start` 추가(F16), 콜백 경로 표 |
 | 2026-10-06 | `api-stock-summary` 추가(종목 조회·검색) |
 | 2026-10-06 | `api-quote`·`api-order-book` 추가(스트림 끊김 시 폴링) |
+| 2026-10-07 | `api-order-listing` 추가(미체결·오늘 체결 탭) |
+| 2026-10-07 | `api-order-listing`: `canChange` → `canAmend`(지정가만)·`canCancel`, `closedAt` 추가(오늘 분류 기준) |
 | 2026-10-05 | `schemas/api/` 15개 추가(차트·급등락·지수·평가·시작 종목·주문·조건주문), `api-error` 에 주문 경로 상세 필드. 로컬 REST 경로 표 |

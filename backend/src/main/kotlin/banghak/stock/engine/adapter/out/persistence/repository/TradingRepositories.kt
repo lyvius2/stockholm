@@ -39,6 +39,27 @@ interface BrokerOrderRepository : JpaRepository<BrokerOrderEntity, String> {
         @Param("userId") userId: String,
         @Param("statuses") statuses: Collection<String>,
     ): List<String>
+
+    @Query(
+        "select o from BrokerOrderEntity o where o.userId = :userId and o.status in :statuses " +
+            "order by o.orderedAt desc"
+    )
+    fun findByUserIdAndStatuses(
+        @Param("userId") userId: String,
+        @Param("statuses") statuses: Collection<String>,
+    ): List<BrokerOrderEntity>
+
+    // 오늘 분류는 증권사의 체결·취소 시각으로 하고, 없는 주문(거부·정정됨)만 수집 시각으로 함
+    @Query(
+        "select o from BrokerOrderEntity o where o.userId = :userId and o.status in :statuses " +
+            "and coalesce(o.canceledAt, o.filledAt, o.updatedAt) >= :since " +
+            "order by coalesce(o.canceledAt, o.filledAt, o.updatedAt) desc"
+    )
+    fun findByUserIdAndStatusesSince(
+        @Param("userId") userId: String,
+        @Param("statuses") statuses: Collection<String>,
+        @Param("since") since: Instant,
+    ): List<BrokerOrderEntity>
 }
 
 interface LotRepository : JpaRepository<LotEntity, String> {

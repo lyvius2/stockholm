@@ -10,8 +10,10 @@ import banghak.stock.core.domain.money.Percent
 import banghak.stock.core.domain.trading.ClientOrderId
 import banghak.stock.core.domain.trading.ManualTrigger
 import banghak.stock.core.domain.trading.OrderKind
+import banghak.stock.core.domain.trading.OrderListing
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderSide
+import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.OrderTicket
 import banghak.stock.core.domain.trading.PriceLimits
 import banghak.stock.core.domain.trading.Quantity
@@ -24,6 +26,7 @@ import banghak.stock.core.usecase.AmendOrderUseCase
 import banghak.stock.core.usecase.CancelOrderRequest
 import banghak.stock.core.usecase.CancelOrderUseCase
 import banghak.stock.core.usecase.CancelPlacement
+import banghak.stock.core.usecase.ListOrdersUseCase
 import banghak.stock.core.usecase.LookupOrderTicketUseCase
 import banghak.stock.core.usecase.ManualOrderRequest
 import banghak.stock.core.usecase.OrderPlacement
@@ -88,6 +91,51 @@ class OrderApiTest {
                 return CancelPlacement.Requested("B-2")
             }
         }
+    private val listing =
+        OrderListing(
+            brokerOrderId = "B-1",
+            replacesBrokerOrderId = null,
+            symbol = TradingFixtures.samsung,
+            side = OrderSide.BUY,
+            kind = OrderKind.LIMIT,
+            timeInForce = TimeInForce.DAY,
+            limitPrice = krw("74200"),
+            quantity = Quantity.of(10),
+            orderAmount = null,
+            status = OrderStatus.PARTIALLY_FILLED,
+            filledQuantity = Quantity.of(4),
+            averageFilledPrice = krw("74200"),
+            filledAmount = krw("296800"),
+            origin = OrderOrigin.MANUAL,
+            isPlacedByStockholm = true,
+            orderedAt = now,
+            updatedAt = now,
+            closedAt = null,
+        )
+    private val listOrders =
+        object : ListOrdersUseCase {
+            override fun openOrders(userId: UserId) =
+                listOf(
+                    listing,
+                    listing.copy(
+                        brokerOrderId = "B-M",
+                        kind = OrderKind.MARKET,
+                        limitPrice = null,
+                        quantity = null,
+                        orderAmount = usd("100.00"),
+                        symbol = TradingFixtures.nvidia,
+                    ),
+                )
+
+            override fun todayClosedOrders(userId: UserId) =
+                listOf(
+                    listing.copy(
+                        brokerOrderId = "B-0",
+                        status = OrderStatus.FILLED,
+                        filledQuantity = Quantity.of(10),
+                    )
+                )
+        }
     private val mvc =
         ApiTestSupport.mockMvc(
             OrderController(
@@ -95,9 +143,39 @@ class OrderApiTest {
                 placeOrder,
                 amendOrder,
                 cancelOrder,
+                listOrders,
                 Clock.fixed(now, ZoneOffset.UTC),
             )
         )
+
+    @Test
+    @DisplayName("미체결·오늘 체결 목록은 잔량과 정정 가능 여부를 실어 주고 스키마에 맞음")
+    fun openAndTodayListings() {
+        val open =
+            mvc.perform(get("/orders/open"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$[0].remaining").value("6"))
+                .andExpect(jsonPath("$[0].canAmend").value(true))
+                .andExpect(jsonPath("$[0].canCancel").value(true))
+                .andExpect(jsonPath("$[0].status").value("PARTIALLY_FILLED"))
+                .andExpect(jsonPath("$[1].canAmend").value(false))
+                .andExpect(jsonPath("$[1].canCancel").value(true))
+                .andReturn()
+                .response
+                .contentAsString
+        assertConforms(open.removePrefix("[").removeSuffix("]"), "api-order-listing")
+
+        val today =
+            mvc.perform(get("/orders/today"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$[0].brokerOrderId").value("B-0"))
+                .andExpect(jsonPath("$[0].canAmend").value(false))
+                .andExpect(jsonPath("$[0].canCancel").value(false))
+                .andReturn()
+                .response
+                .contentAsString
+        assertConforms(today.removePrefix("[").removeSuffix("]"), "api-order-listing")
+    }
 
     @Test
     @DisplayName("주문 가능 정보는 매수 가능 금액·판매 가능 수량·상하한가·수수료율을 돌려줌")

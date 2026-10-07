@@ -5,6 +5,7 @@ import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.trading.BrokerOrder
 import banghak.stock.core.domain.trading.BrokerOrderRecord
 import banghak.stock.core.domain.trading.FillSummary
+import banghak.stock.core.domain.trading.OrderListing
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.RecordedOrder
 import java.time.Instant
@@ -43,4 +44,13 @@ interface BrokerOrderStorePort {
 
     /** 로컬에 아직 열린 상태로 남아 있는 주문 번호. */
     fun openBrokerOrderIds(userId: UserId): Set<String>
+
+    /**
+     * 열린 주문 목록(화면용).
+     * 토스 앱에서 낸 주문도 포함.
+     */
+    fun findOpen(userId: UserId): List<OrderListing>
+
+    /** [since] 이후에 갱신된 닫힌 주문 목록(화면용). */
+    fun findClosedSince(userId: UserId, since: Instant): List<OrderListing>
 }

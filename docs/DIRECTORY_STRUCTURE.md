@@ -226,3 +226,5 @@ protocol/
 | 2026-10-06 | F16: `core/domain/asset`, `core/port/AssetPort`, `engine/application/account/AssetService`, `engine/adapter/out/kftc/{KftcClients,KftcAssetAdapter}`, `engine/config/KftcProperties`, `engine/adapter/in/web/asset/AssetController`, test `learning/KftcLearningTest` |
 | 2026-10-06 | 종목 조회·검색: `core/domain/market/StockSearch`, `engine/application/market/StockLookupService`, `adapter/in/web/market/StockController`. desktop `data/api/{market,trading,portfolio,assets}`, `data/store/stock`, `data/stock/useCurrentStock`, `features/{ticker,price}`, `shared/{format/decimal, ui/Toast}` |
 | 2026-10-06 | 화면 ②-가: `core/usecase/QuoteUseCase`·`engine/application/market/QuoteService`, desktop `features/{search/SearchPopover, order/{OrderArea,OrderModal}, price/usePollingFallback}`, `shared/id/ulid` |
+| 2026-10-07 | 화면 ②-나: `core/domain/trading/OrderListing`, `core/usecase/OrderListingUseCase`, `engine/application/trading/OrderListingService`, desktop `features/order/{OrderTabs,AmendModal}` |
+| 2026-10-07 | 화면 ②-나 리뷰 반영: desktop `data/store/orderUi`(열린 모달 하나 + 보내는 중·결과 모름 변경), `features/order/ActiveOrderModal`(store 의 모달 하나를 그림, 취소 확인 창 포함) |

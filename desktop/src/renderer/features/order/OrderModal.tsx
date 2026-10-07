@@ -7,15 +7,23 @@ import { ApiError } from '@renderer/data/client/Client'
 import { localClient } from '@renderer/data/client/LocalClient'
 import type { StreamSymbol } from '@renderer/data/stream/MarketStream'
 import { useLiveQuote } from '@renderer/data/stream/useLivePrices'
+import {
+  pendingKey,
+  useOrderUiStore,
+  type OrderSide,
+  type PendingPlace,
+} from '@renderer/data/store/orderUi'
 import { formatDecimal, formatMoney } from '@renderer/shared/format/decimal'
 import { newUlid } from '@renderer/shared/id/ulid'
 
-export type OrderSide = 'BUY' | 'SELL'
+export type { OrderSide }
 
 interface OrderModalProps {
   readonly symbol: StreamSymbol
   readonly side: OrderSide
   readonly ticket: ApiOrderTicket | null
+  /** 응답을 못 받았던 요청을 이어서 확인할 때. 같은 멱등 키만 씀. */
+  readonly resume?: PendingPlace | undefined
   readonly onClose: () => void
   readonly onPlaced: (placement: ApiOrderPlacement) => void
 }
@@ -47,26 +55,23 @@ const STATE_LABEL: Record<ApiOrderPlacement['state'], string> = {
  * 바깥은 흐리지 않고 테두리만 매수 빨강·매도 파랑으로 빛남.
  * "지정가" 는 입력 가격·수량으로 확인 창을 거치고, "현재가 즉시" 는 확인 없이 그 순간의 현재가 지정가로 냄.
  * 즉시 주문도 가드레일을 우회하지 못함: 데몬이 확인을 요구하면(428) 확인 창이 뜨고 같은 멱등 키로 다시 냄.
- * 종목·방향은 여는 순간 고정됨(부모가 key 로 다시 만듦).
+ * 보내는 중·결과 모름 요청은 모달 밖 store 에 남아 모달이 닫혀도 같은 키로만 확인함.
  */
-export function OrderModal({ symbol, side, ticket, onClose, onPlaced }: OrderModalProps) {
+export function OrderModal({ symbol, side, ticket, resume, onClose, onPlaced }: OrderModalProps) {
   const live = useLiveQuote(symbol)
   const currency = symbol.market === 'KR' ? 'KRW' : 'USD'
   const [price, setPrice] = useState('')
-  const [quantity, setQuantity] = useState('')
+  const [quantity, setQuantity] = useState(resume?.request.quantity ?? '')
   const [timeInForce, setTimeInForce] = useState<TimeInForce>('DAY')
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<{ text: string; isLocking: boolean } | null>(null)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [result, setResult] = useState<ApiOrderPlacement | null>(null)
-  /**
-   * 보냈는데 응답을 받지 못한 요청.
-   * 데몬이 접수했을 수 있으므로 새 주문을 막고 같은 멱등 키로만 다시 확인함.
-   */
-  const [unresolved, setUnresolved] = useState<ApiOrderRequest | null>(null)
+  // 보냈는데 응답을 받지 못한 요청. 새 주문을 막고 같은 멱등 키로만 다시 확인함
+  const [unresolved, setUnresolved] = useState<ApiOrderRequest | null>(resume?.request ?? null)
   // 멱등 키는 제출마다 한 번 만들고, 확인 창을 거쳐 다시 보낼 때도 같은 값을 씀
-  const submissionKey = useRef<string | null>(null)
+  const submissionKey = useRef<string | null>(resume?.request.clientOrderId ?? null)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -77,9 +82,7 @@ export function OrderModal({ symbol, side, ticket, onClose, onPlaced }: OrderMod
   }, [onClose])
 
   const currentPrice = live.quote?.last.amount ?? null
-  // 결과를 모르는 요청이 있거나 결과가 나왔으면 입력도 잠금
   const isInputLocked = busy || result !== null || unresolved !== null
-  // 가드레일 거부는 제출만 잠그고 입력은 열어 둠(고치면 풀림)
   const isSubmitLocked = isInputLocked || error?.isLocking === true
 
   function buildRequest(limitPrice: string, confirmedRules: string[] = []): ApiOrderRequest {
@@ -105,11 +108,15 @@ export function OrderModal({ symbol, side, ticket, onClose, onPlaced }: OrderMod
   }
 
   async function place(request: ApiOrderRequest) {
+    const store = useOrderUiStore.getState()
+    const key = pendingKey('place', request.clientOrderId)
+    store.begin({ kind: 'place', key, request, state: 'sending' })
     setBusy(true)
     setError(null)
     setSuggestions([])
     try {
       const placement = await tradingApi(localClient).place(request)
+      useOrderUiStore.getState().resolve(key)
       submissionKey.current = null
       setUnresolved(null)
       setConfirmation(null)
@@ -118,6 +125,7 @@ export function OrderModal({ symbol, side, ticket, onClose, onPlaced }: OrderMod
     } catch (e) {
       if (!(e instanceof ApiError)) {
         // 데몬이 받았는지 모름. 같은 키로 다시 보내면 데몬이 첫 결과를 돌려줌(새 주문이 생기지 않음)
+        useOrderUiStore.getState().markUnresolved(key)
         setUnresolved(request)
         setConfirmation(null)
         setError({
@@ -126,6 +134,9 @@ export function OrderModal({ symbol, side, ticket, onClose, onPlaced }: OrderMod
         })
         return
       }
+      // 데몬이 답했으면 주문은 나가지 않은 것이라 결과 모름 상태를 풂
+      useOrderUiStore.getState().resolve(key)
+      setUnresolved(null)
       if (e.status === 428 && e.code === 'ConfirmationRequiredException') {
         setConfirmation({ request, notes: e.details.notes ?? [] })
       } else if (e.code === 'GuardrailViolationException') {

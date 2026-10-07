@@ -96,6 +96,112 @@ class TradingStoresPersistenceTest : EngineDatabaseTest() {
     }
 
     @Test
+    @DisplayName("화면 목록은 열린 주문과 기준 시각 이후 닫힌 주문을 사용자 범위로 읽고 외부 주문도 포함함")
+    fun listsOpenAndClosedForScreen() {
+        val insert =
+            "insert into broker_order (broker_order_id, user_id, market, code, side, kind, time_in_force, status, quantity, filled_quantity, origin, trigger_type, ordered_at, updated_at, fetched_at, filled_at, canceled_at) " +
+                "values (?, ?, 'KR', '005930', 'BUY', ?, 'DAY', ?, '10', ?, 'MANUAL', 'EXTERNAL', ?, ?, ?, ?, ?)"
+        val row =
+            {
+                id: String,
+                owner: UserId,
+                kind: String,
+                status: String,
+                filled: String,
+                orderedAt: String,
+                updatedAt: String,
+                filledAt: String?,
+                canceledAt: String? ->
+                write.update(
+                    insert,
+                    id,
+                    owner.value,
+                    kind,
+                    status,
+                    filled,
+                    orderedAt,
+                    updatedAt,
+                    NOW_TEXT,
+                    filledAt,
+                    canceledAt,
+                )
+            }
+        row(
+            "OPEN-1",
+            user,
+            "LIMIT",
+            "PARTIALLY_FILLED",
+            "4",
+            "2026-09-30T02:00:00.000Z",
+            "2026-09-30T02:00:00.000Z",
+            null,
+            null,
+        )
+        row(
+            "OPEN-MARKET",
+            user,
+            "MARKET",
+            "PENDING",
+            "0",
+            "2026-09-30T02:30:00.000Z",
+            "2026-09-30T02:30:00.000Z",
+            null,
+            null,
+        )
+        row(
+            "CLOSED-TODAY",
+            user,
+            "LIMIT",
+            "FILLED",
+            "10",
+            "2026-09-30T01:00:00.000Z",
+            "2026-09-30T03:00:00.000Z",
+            "2026-09-30T03:00:00.000Z",
+            null,
+        )
+        // 어제 취소된 주문을 오늘 재동기로 수집함(updated_at 은 오늘) — 오늘 목록에 들어오면 안 됨
+        row(
+            "CLOSED-OLD",
+            user,
+            "LIMIT",
+            "CANCELLED",
+            "0",
+            "2026-09-29T01:00:00.000Z",
+            "2026-09-30T04:00:00.000Z",
+            null,
+            "2026-09-29T03:00:00.000Z",
+        )
+        row(
+            "OTHER-OPEN",
+            other,
+            "LIMIT",
+            "PENDING",
+            "0",
+            "2026-09-30T02:00:00.000Z",
+            "2026-09-30T02:00:00.000Z",
+            null,
+            null,
+        )
+
+        val open = orders.findOpen(user)
+        val closed = orders.findClosedSince(user, Instant.parse("2026-09-30T00:00:00Z"))
+
+        assertThat(open.map { it.brokerOrderId }).containsExactly("OPEN-MARKET", "OPEN-1")
+        val limit = open.single { it.brokerOrderId == "OPEN-1" }
+        assertThat(limit.remaining).isEqualTo(Quantity.of(6))
+        assertThat(limit.isPlacedByStockholm).isFalse()
+        assertThat(limit.canAmend).isTrue()
+        assertThat(limit.canCancel).isTrue()
+        val market = open.single { it.brokerOrderId == "OPEN-MARKET" }
+        assertThat(market.canAmend).isFalse()
+        assertThat(market.canCancel).isTrue()
+        assertThat(closed.map { it.brokerOrderId }).containsExactly("CLOSED-TODAY")
+        assertThat(closed.single().closedAt).isEqualTo(Instant.parse("2026-09-30T03:00:00Z"))
+        assertThat(closed.single().canAmend).isFalse()
+        assertThat(closed.single().canCancel).isFalse()
+    }
+
+    @Test
     @DisplayName("증권사 기록은 처음 보는 주문을 외부 주문으로 넣고, 우리 주문은 의도·출처를 두고 상태·체결·금액만 바꿈")
     fun appliesBrokerRecords() {
         orders.recordAccepted(order("B-1"), isHighValueConfirmed = false)
@@ -184,6 +290,7 @@ class TradingStoresPersistenceTest : EngineDatabaseTest() {
 
     companion object {
         private const val NOW = "'2026-09-30T00:00:00.000Z'"
+        private const val NOW_TEXT = "2026-09-30T00:00:00.000Z"
         private const val LOT_OPEN = "01K6A00000000000000000000A"
         private const val LOT_CLOSED = "01K6A00000000000000000000B"
         private const val LOT_OTHER = "01K6A00000000000000000000C"

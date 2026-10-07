@@ -5,6 +5,7 @@ import banghak.stock.core.usecase.AmendOrderRequest
 import banghak.stock.core.usecase.AmendOrderUseCase
 import banghak.stock.core.usecase.CancelOrderRequest
 import banghak.stock.core.usecase.CancelOrderUseCase
+import banghak.stock.core.usecase.ListOrdersUseCase
 import banghak.stock.core.usecase.LookupOrderTicketUseCase
 import banghak.stock.core.usecase.ManualOrderRequest
 import banghak.stock.core.usecase.PlaceManualOrderUseCase
@@ -32,8 +33,17 @@ class OrderController(
     private val placeOrder: PlaceManualOrderUseCase,
     private val amendOrder: AmendOrderUseCase,
     private val cancelOrder: CancelOrderUseCase,
+    private val listOrders: ListOrdersUseCase,
     private val clock: Clock,
 ) {
+    @GetMapping("/open")
+    fun openOrders(principal: Principal): List<OrderListingResponse> =
+        listOrders.openOrders(principal.userId).map(OrderListingResponse::of)
+
+    @GetMapping("/today")
+    fun todayClosedOrders(principal: Principal): List<OrderListingResponse> =
+        listOrders.todayClosedOrders(principal.userId).map(OrderListingResponse::of)
+
     @GetMapping("/ticket")
     fun ticket(
         principal: Principal,

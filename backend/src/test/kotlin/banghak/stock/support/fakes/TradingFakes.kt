@@ -33,9 +33,11 @@ import banghak.stock.core.domain.trading.FillSummary
 import banghak.stock.core.domain.trading.OrderAmendRequest
 import banghak.stock.core.domain.trading.OrderBook
 import banghak.stock.core.domain.trading.OrderIntent
+import banghak.stock.core.domain.trading.OrderListing
 import banghak.stock.core.domain.trading.OrderOrigin
 import banghak.stock.core.domain.trading.OrderProgress
 import banghak.stock.core.domain.trading.OrderReceipt
+import banghak.stock.core.domain.trading.OrderStatus
 import banghak.stock.core.domain.trading.OrderSubmission
 import banghak.stock.core.domain.trading.PriceLimits
 import banghak.stock.core.domain.trading.Quantity
@@ -288,6 +290,18 @@ class MemoryBrokerOrderStore : BrokerOrderStorePort {
             userId to OrderProgress(record.status, record.filledQuantity)
         applied += record
     }
+
+    /** 화면 목록은 `listings` 에 넣어 둔 것을 그대로 돌려줌. */
+    val listings = mutableListOf<OrderListing>()
+
+    override fun findOpen(userId: UserId): List<OrderListing> = listings.filter { it.status.isOpen }
+
+    override fun findClosedSince(userId: UserId, since: Instant): List<OrderListing> =
+        listings.filter {
+            !it.status.isOpen &&
+                it.status != OrderStatus.UNKNOWN &&
+                !it.closedOrUpdatedAt.isBefore(since)
+        }
 
     override fun openBrokerOrderIds(userId: UserId): Set<String> =
         progress.filterValues { (owner, state) -> owner == userId && state.status.isOpen }.keys

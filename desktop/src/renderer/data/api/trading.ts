@@ -4,6 +4,7 @@ import type { ApiConditionalOrderPlacement } from '@renderer/generated/api-condi
 import type { ApiConditionalOrderRequest } from '@renderer/generated/api-conditional-order-request'
 import type { ApiConditionalOrders } from '@renderer/generated/api-conditional-orders'
 import type { ApiOrderAmendment } from '@renderer/generated/api-order-amendment'
+import type { ApiOrderListing } from '@renderer/generated/api-order-listing'
 import type { ApiOrderPlacement } from '@renderer/generated/api-order-placement'
 import type { ApiOrderRequest } from '@renderer/generated/api-order-request'
 import type { ApiOrderTicket } from '@renderer/generated/api-order-ticket'
@@ -32,6 +33,8 @@ export function tradingApi(client: Client) {
         `/orders/${encodeURIComponent(brokerOrderId)}/amend`,
         request,
       ),
+    openOrders: () => client.request<ApiOrderListing[]>('GET', '/orders/open'),
+    todayOrders: () => client.request<ApiOrderListing[]>('GET', '/orders/today'),
     cancel: (brokerOrderId: string) =>
       client.request<ApiCancelPlacement>(
         'POST',

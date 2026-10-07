@@ -1,40 +1,61 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { tradingApi } from '@renderer/data/api/trading'
 import { localClient } from '@renderer/data/client/LocalClient'
 import { useStockStore } from '@renderer/data/store/stock'
+import {
+  useIsSending,
+  useOrderUiStore,
+  useUnresolvedPlaces,
+  type OrderSide,
+  type PendingPlace,
+} from '@renderer/data/store/orderUi'
 import type { StreamSymbol } from '@renderer/data/stream/MarketStream'
 import { symbolKey } from '@renderer/data/stream/store'
 import { useLiveQuote } from '@renderer/data/stream/useLivePrices'
 import { formatDecimal, formatMoney } from '@renderer/shared/format/decimal'
-import { OrderModal, type OrderSide } from './OrderModal'
+import { ActiveOrderModal, TICKET_REFRESH_MS } from './ActiveOrderModal'
+import { ORDER_QUERY_KEYS, OrderTabs } from './OrderTabs'
 
-/** 주문 가능 정보는 주문 직후·30초마다 다시 받음(증권사 ACCOUNT 그룹 초당 1회). */
-const TICKET_REFRESH_MS = 30_000
+const SIDE_LABEL: Record<OrderSide, string> = { BUY: '매수', SELL: '매도' }
 
 /**
- * 3번 영역 왼쪽: 현재가·매수 가능 금액·보유 요약과 매수/매도 버튼.
- * 주문 입력은 모달에서 함. 오른쪽 세 탭 표는 다음 조각.
+ * 3번 영역: 왼쪽은 현재가·매수 가능 금액·보유 요약과 매수/매도 버튼, 오른쪽은 세 탭 표.
+ * 주문·정정·취소 모달은 한 번에 하나만 열리며 store 의 열린 모달을 ActiveOrderModal 이 그림.
+ * 종목이 바뀌면 열려 있던 모달은 닫히지만, 보내는 중·결과 모름 요청은 store 에 남음.
  */
 export function OrderArea() {
   const symbol = useStockStore((s) => s.current)
-  if (symbol === null) return <p className="placeholder">종목을 고르면 주문할 수 있습니다</p>
-  // 종목이 바뀌면 통째로 다시 만들어 열려 있던 모달·확인 창이 남지 않게 함
-  return <OrderOf key={symbolKey(symbol)} symbol={symbol} />
+  useEffect(() => {
+    useOrderUiStore.getState().close()
+  }, [symbol])
+
+  return (
+    <div className="order-area">
+      {symbol === null ? (
+        <p className="placeholder">종목을 고르면 주문할 수 있습니다</p>
+      ) : (
+        <OrderOf key={symbolKey(symbol)} symbol={symbol} />
+      )}
+      <OrderTabs />
+      <ActiveOrderModal />
+    </div>
+  )
 }
 
 function OrderOf({ symbol }: { readonly symbol: StreamSymbol }) {
   const { quote, isDelayed } = useLiveQuote(symbol)
-  const [side, setSide] = useState<OrderSide | null>(null)
+  const open = useOrderUiStore((s) => s.open)
+  const isSending = useIsSending()
   const ticket = useQuery({
-    queryKey: ['orders', 'ticket', symbol.market, symbol.code],
+    queryKey: ORDER_QUERY_KEYS.ticket(symbol),
     queryFn: () => tradingApi(localClient).ticket(symbol),
     refetchInterval: TICKET_REFRESH_MS,
     retry: false,
   })
   const currency = symbol.market === 'KR' ? 'KRW' : 'USD'
   return (
-    <div className="order-area">
+    <div className="order-left">
       <dl className="order-summary">
         <dt>현재가</dt>
         <dd className="num">
@@ -65,24 +86,60 @@ function OrderOf({ symbol }: { readonly symbol: StreamSymbol }) {
         )}
       </dl>
       {ticket.isError && <p className="warn">주문 가능 정보를 받지 못했습니다</p>}
+      <UnresolvedPlacesBanner />
       <div className="order-buttons">
-        <button type="button" className="buy" onClick={() => setSide('BUY')}>
+        <button
+          type="button"
+          className="buy"
+          disabled={isSending}
+          onClick={() => open({ kind: 'order', symbol, side: 'BUY' })}
+        >
           매수
         </button>
-        <button type="button" className="sell" onClick={() => setSide('SELL')}>
+        <button
+          type="button"
+          className="sell"
+          disabled={isSending}
+          onClick={() => open({ kind: 'order', symbol, side: 'SELL' })}
+        >
           매도
         </button>
       </div>
-      {side !== null && (
-        <OrderModal
-          key={side}
-          symbol={symbol}
-          side={side}
-          ticket={ticket.data ?? null}
-          onClose={() => setSide(null)}
-          onPlaced={() => void ticket.refetch()}
-        />
-      )}
     </div>
   )
+}
+
+/** 응답을 못 받은 주문 안내. 모달을 닫았어도 같은 멱등 키로만 결과를 확인하게 함. */
+function UnresolvedPlacesBanner() {
+  const unresolved = useUnresolvedPlaces()
+  const open = useOrderUiStore((s) => s.open)
+  if (unresolved.length === 0) return null
+  return (
+    <>
+      {unresolved.map((pending) => (
+        <div key={pending.key} className="unresolved-banner" role="status">
+          <span>{describe(pending)} — 결과를 모릅니다</span>
+          <span className="spacer" />
+          <button
+            type="button"
+            onClick={() =>
+              open({
+                kind: 'order',
+                symbol: pending.request.symbol,
+                side: pending.request.side,
+                resume: pending,
+              })
+            }
+          >
+            결과 확인
+          </button>
+        </div>
+      ))}
+    </>
+  )
+}
+
+function describe(pending: PendingPlace): string {
+  const { symbol, side, quantity } = pending.request
+  return `${symbol.code} ${SIDE_LABEL[side]} ${formatDecimal(quantity ?? '')}주`
 }
