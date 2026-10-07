@@ -48,7 +48,16 @@ export function useIndexTicker() {
   return useStreamStore((state) => state.indexTicker)
 }
 
-/** 증권사 시세가 끊겼거나 데몬 연결이 없으면 true. 화면은 "지연" 을 표시함. */
-export function useIsFeedDelayed(): boolean {
-  return useStreamStore((state) => state.connection !== 'open' || state.feed?.isLive === false)
+/**
+ * 증권사 시세가 끊겼거나 데몬 연결이 없거나, [symbol] 을 주면 그 종목의 구독이 거절·한도 밖이면 true.
+ * 화면은 "지연" 을 표시하고 REST 폴링으로 내려감.
+ */
+export function useIsFeedDelayed(symbol?: StreamSymbol): boolean {
+  return useStreamStore((state) => {
+    if (state.connection !== 'open' || state.feed?.isLive === false) return true
+    if (symbol === undefined) return false
+    return (state.feed?.unavailableSymbols ?? []).some(
+      (s) => s.market === symbol.market && s.code === symbol.code,
+    )
+  })
 }

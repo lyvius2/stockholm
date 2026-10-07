@@ -14,17 +14,21 @@ import banghak.stock.core.domain.market.Mover
 import banghak.stock.core.domain.market.MoverBoard
 import banghak.stock.core.domain.market.RankChange
 import banghak.stock.core.domain.market.StockFlags
+import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.money.Percent
 import banghak.stock.core.domain.trading.Chart
 import banghak.stock.core.domain.trading.ChartBar
 import banghak.stock.core.domain.trading.ChartResolution
+import banghak.stock.core.domain.trading.OrderBook
 import banghak.stock.core.domain.trading.Quantity
+import banghak.stock.core.domain.trading.Quote
 import banghak.stock.core.domain.trading.TradingFixtures
 import banghak.stock.core.domain.trading.TradingFixtures.krw
 import banghak.stock.core.usecase.ChartQuery
 import banghak.stock.core.usecase.LoadChartUseCase
 import banghak.stock.core.usecase.LookupIndexTickerUseCase
 import banghak.stock.core.usecase.LookupMoversUseCase
+import banghak.stock.core.usecase.LookupQuoteUseCase
 import banghak.stock.engine.adapter.`in`.web.market.MarketController
 import banghak.stock.support.web.ApiTestSupport
 import banghak.stock.support.web.ApiTestSupport.assertConforms
@@ -57,7 +61,42 @@ class MarketApiTest {
         object : LookupIndexTickerUseCase {
             override fun current(): IndexTicker = ticker
         }
-    private val mvc = ApiTestSupport.mockMvc(MarketController(charts, movers, indexTicker))
+    private val quotes =
+        object : LookupQuoteUseCase {
+            override fun quote(symbol: Symbol) = Quote(symbol, krw("74300"), asOf)
+
+            override fun orderBook(symbol: Symbol) =
+                OrderBook(
+                    symbol,
+                    listOf(OrderBook.Level(krw("74400"), Quantity.of(10))),
+                    listOf(OrderBook.Level(krw("74300"), Quantity.of(5))),
+                    asOf,
+                )
+        }
+    private val mvc = ApiTestSupport.mockMvc(MarketController(charts, movers, indexTicker, quotes))
+
+    @Test
+    @DisplayName("현재가·호가 단건은 종목을 붙여 돌려주고 스키마에 맞음")
+    fun quoteAndOrderBook() {
+        val quote =
+            mvc.perform(get("/market/quote").param("market", "KR").param("code", "005930"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.last.amount").value("74300"))
+                .andReturn()
+                .response
+                .contentAsString
+        assertConforms(quote, "api-quote")
+
+        val book =
+            mvc.perform(get("/market/order-book").param("market", "KR").param("code", "005930"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.asks[0].quantity").value("10"))
+                .andExpect(jsonPath("$.bids[0].price.amount").value("74300"))
+                .andReturn()
+                .response
+                .contentAsString
+        assertConforms(book, "api-order-book")
+    }
 
     @Test
     @DisplayName("차트는 종목·봉 단위·조회 위치·봉 수를 그대로 묻고 봉·평균·다음 위치를 돌려줌")

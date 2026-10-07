@@ -6,10 +6,11 @@ import { IndexTicker } from '@renderer/features/ticker/IndexTicker'
 interface TopBarProps {
   readonly user: ApiUser | null
   readonly onLogout: () => void
+  readonly onSearch: () => void
 }
 
 /** 두 줄 상단 바 골격. 1행: 브랜드 · 지수 티커 · 서랍 버튼 / 2행: 종목 · 패널 버튼 · 장 상태 · 사용자. */
-export function TopBar({ user, onLogout }: TopBarProps) {
+export function TopBar({ user, onLogout, onSearch }: TopBarProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const symbol = useStockStore((s) => s.current)
   const summary = useStockStore((s) => s.summary)
@@ -35,7 +36,7 @@ export function TopBar({ user, onLogout }: TopBarProps) {
         </button>
       </div>
       <div className="topbar-row">
-        <button type="button" className="symbol" aria-label="종목 선택">
+        <button type="button" className="symbol" aria-label="종목 선택" onClick={onSearch}>
           {symbolLabel}
         </button>
         <button type="button">💬 커뮤니티</button>

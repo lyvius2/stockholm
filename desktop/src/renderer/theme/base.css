@@ -528,3 +528,160 @@ select {
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
   z-index: 60;
 }
+
+/* 종목 검색 팝오버(⌘K): 바깥을 흐리지 않고 클릭만 받음 */
+.popover-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.search-popover {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 520px;
+  max-height: 60vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px var(--accent-soft),
+    0 16px 40px rgb(0 0 0 / 0.25);
+  padding: 10px;
+  gap: 8px;
+}
+.search-popover input {
+  font-size: 15px;
+}
+.search-popover ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: auto;
+}
+.search-popover li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.search-popover li.active {
+  background: var(--accent-soft);
+}
+.search-popover .stock-code {
+  color: var(--ink2);
+}
+
+/* 3번 영역 왼쪽: 요약 + 매수/매도 */
+.four-areas .area.order {
+  place-items: stretch;
+  color: var(--ink);
+}
+.order-area {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.order-summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+.order-summary dt {
+  color: var(--ink2);
+  font-size: 12px;
+}
+.order-summary dd {
+  margin: 0;
+  text-align: right;
+}
+.order-buttons {
+  display: flex;
+  gap: 8px;
+}
+button.buy {
+  background: var(--up);
+  color: #fff;
+  border-color: var(--up);
+}
+button.sell {
+  background: var(--down);
+  color: #fff;
+  border-color: var(--down);
+}
+button.outline {
+  background: transparent;
+}
+
+/* 주문 모달(F1): 바깥 흐림 없음, 테두리만 매수 빨강·매도 파랑으로 빛남 */
+.order-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 440px;
+  padding: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  gap: 12px;
+  z-index: 50;
+}
+.order-modal[data-side='BUY'] {
+  box-shadow:
+    0 0 0 2px var(--up),
+    0 0 24px color-mix(in srgb, var(--up) 55%, transparent);
+}
+.order-modal[data-side='SELL'] {
+  box-shadow:
+    0 0 0 2px var(--down),
+    0 0 24px color-mix(in srgb, var(--down) 55%, transparent);
+}
+.order-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.order-modal[data-side='BUY'] .order-modal-title strong {
+  color: var(--up);
+}
+.order-modal[data-side='SELL'] .order-modal-title strong {
+  color: var(--down);
+}
+.order-form {
+  display: grid;
+  gap: 8px;
+}
+.suggestions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.confirm-box {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: var(--panel2);
+  display: grid;
+  gap: 8px;
+}
+.confirm-notes {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--warn);
+}
+.order-result {
+  color: var(--accent);
+}
+.small {
+  color: var(--ink3);
+  font-size: 12px;
+}

@@ -65,8 +65,10 @@ export const useStreamStore = create<StreamStoreState>((set) => ({
       const liveCandles = { ...state.liveCandles }
       let feed = state.feed
       let indexTicker = state.indexTicker
+      const watched = new Set(state.watched.map(symbolKey))
       for (const message of messages) {
         const key = message.symbol === undefined ? null : symbolKey(message.symbol)
+        if (key !== null && !watched.has(key)) continue
         if (message.type === 'quote' && key !== null && message.quote !== undefined)
           quotes[key] = message.quote
         else if (message.type === 'orderBook' && key !== null && message.orderBook !== undefined)

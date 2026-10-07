@@ -1,6 +1,8 @@
 import type { ApiChart, Resolution } from '@renderer/generated/api-chart'
 import type { ApiIndexTicker } from '@renderer/generated/api-index-ticker'
 import type { ApiMoverBoard, Market } from '@renderer/generated/api-mover-board'
+import type { ApiOrderBook } from '@renderer/generated/api-order-book'
+import type { ApiQuote } from '@renderer/generated/api-quote'
 import type { ApiStockSummary } from '@renderer/generated/api-stock-summary'
 import type { Client } from '../client/Client'
 import type { StreamSymbol } from '../stream/MarketStream'
@@ -23,6 +25,16 @@ export function marketApi(client: Client) {
     movers: (market: Market) =>
       client.request<ApiMoverBoard>('GET', `/market/movers?${query({ market })}`),
     indexTicker: () => client.request<ApiIndexTicker>('GET', '/market/index-ticker'),
+    quote: (symbol: StreamSymbol) =>
+      client.request<ApiQuote>(
+        'GET',
+        `/market/quote?${query({ market: symbol.market, code: symbol.code })}`,
+      ),
+    orderBook: (symbol: StreamSymbol) =>
+      client.request<ApiOrderBook>(
+        'GET',
+        `/market/order-book?${query({ market: symbol.market, code: symbol.code })}`,
+      ),
     searchStocks: (text: string, limit?: number) =>
       client.request<ApiStockSummary[]>('GET', `/stocks?${query({ query: text, limit })}`),
     findStock: (symbol: StreamSymbol) =>

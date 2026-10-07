@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-quote.schema.json",
+  "title": "ApiQuote",
+  "description": "GET /market/quote?market&code 응답. 스트림이 끊겼을 때 화면이 1초 간격으로 폴링함.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "symbol",
+    "last",
+    "asOf"
+  ],
+  "properties": {
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "last": {
+      "$ref": "../common/_values.schema.json#/$defs/money"
+    },
+    "asOf": {
+      "$ref": "../common/_values.schema.json#/$defs/instant"
+    }
+  }
+}

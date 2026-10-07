@@ -34,6 +34,7 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | `PUT /session/last-viewed-stock` | `api-last-viewed-stock` | — |
 | `GET /market/chart?market&code&resolution&before&count` | — | `api-chart` |
 | `GET /market/movers?market` | — | `api-mover-board` |
+| `GET /market/quote?market&code` · `GET /market/order-book?market&code` | — | `api-quote` · `api-order-book`(스트림 끊김 시 폴링) |
 | `GET /market/index-ticker` | — | `api-index-ticker`(스트림 `indexTicker` 와 같은 모양) |
 | `GET /portfolio/valuation` | — | `api-portfolio-valuation` |
 | `GET /orders/ticket?market&code` | — | `api-order-ticket` |
@@ -66,4 +67,5 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | 2026-10-05 | TS 생성에 `--no-date-times`: `instant` 가 `Date` 가 아닌 `string` 으로 나옴(JSON 런타임과 일치) |
 | 2026-10-06 | `api-asset-snapshot`·`api-asset-consent`·`api-asset-consent-start` 추가(F16), 콜백 경로 표 |
 | 2026-10-06 | `api-stock-summary` 추가(종목 조회·검색) |
+| 2026-10-06 | `api-quote`·`api-order-book` 추가(스트림 끊김 시 폴링) |
 | 2026-10-05 | `schemas/api/` 15개 추가(차트·급등락·지수·평가·시작 종목·주문·조건주문), `api-error` 에 주문 경로 상세 필드. 로컬 REST 경로 표 |

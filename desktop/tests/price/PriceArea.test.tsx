@@ -9,6 +9,7 @@ describe('PriceArea', () => {
   beforeEach(() => {
     useStockStore.getState().reset()
     useStreamStore.getState().reset()
+    useStreamStore.getState().setWatched([samsung])
   })
 
   it('종목이 없으면 안내만, 종목이 있으면 스트림의 현재가와 호가 3단을 보이고 끊기면 지연 칩', () => {

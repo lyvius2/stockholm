@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-order-book.schema.json",
+  "title": "ApiOrderBook",
+  "description": "GET /market/order-book?market&code 응답. 매도는 낮은 가격부터, 매수는 높은 가격부터. 스트림이 끊겼을 때 2초 간격으로 폴링함.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "symbol",
+    "asks",
+    "bids",
+    "asOf"
+  ],
+  "properties": {
+    "symbol": {
+      "$ref": "../common/_values.schema.json#/$defs/symbol"
+    },
+    "asks": {
+      "type": "array",
+      "items": {
+        "$ref": "../stream/stream-server-message.schema.json#/$defs/level"
+      }
+    },
+    "bids": {
+      "type": "array",
+      "items": {
+        "$ref": "../stream/stream-server-message.schema.json#/$defs/level"
+      }
+    },
+    "asOf": {
+      "$ref": "../common/_values.schema.json#/$defs/instant"
+    }
+  }
+}

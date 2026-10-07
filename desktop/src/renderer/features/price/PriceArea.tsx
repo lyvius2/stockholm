@@ -1,6 +1,6 @@
 import type { StreamOrderBookLevel } from '@renderer/generated/stream-server-message'
 import { useStockStore } from '@renderer/data/store/stock'
-import { useIsFeedDelayed, useOrderBook, useQuote } from '@renderer/data/stream/useMarketStream'
+import { useLiveOrderBook, useLiveQuote } from '@renderer/data/stream/useLivePrices'
 import { formatDecimal, formatMoney } from '@renderer/shared/format/decimal'
 import type { StreamSymbol } from '@renderer/data/stream/MarketStream'
 
@@ -19,9 +19,9 @@ export function PriceArea() {
 }
 
 function PriceOf({ symbol }: { readonly symbol: StreamSymbol }) {
-  const quote = useQuote(symbol)
-  const book = useOrderBook(symbol)
-  const isDelayed = useIsFeedDelayed()
+  // 스트림이 끊기면 PollingFallbackAgent 가 채운 REST 값이 보이고 "지연" 칩이 붙음(D21)
+  const { quote, isDelayed } = useLiveQuote(symbol)
+  const book = useLiveOrderBook(symbol)
   const asks = (book?.asks ?? []).slice(0, VISIBLE_LEVELS).reverse()
   const bids = (book?.bids ?? []).slice(0, VISIBLE_LEVELS)
   return (

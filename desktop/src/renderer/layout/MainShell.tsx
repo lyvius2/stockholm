@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { ApiUser } from '@renderer/generated/api-user'
 import { localClient } from '@renderer/data/client/LocalClient'
 import { sessionApi } from '@renderer/data/api/session'
@@ -8,6 +8,9 @@ import { useMarketStream } from '@renderer/data/stream/useMarketStream'
 import { useCurrentStock } from '@renderer/data/stock/useCurrentStock'
 import { useStockStore, type StartReason } from '@renderer/data/store/stock'
 import { PriceArea } from '@renderer/features/price/PriceArea'
+import { PollingFallbackAgent } from '@renderer/features/price/PollingFallbackAgent'
+import { OrderArea } from '@renderer/features/order/OrderArea'
+import { SearchPopover } from '@renderer/features/search/SearchPopover'
 import { Toast } from '@renderer/shared/ui/Toast'
 import { LoginModal } from '@renderer/features/login/LoginModal'
 import { StatusBar } from './StatusBar'
@@ -30,6 +33,21 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
   const startReason = useStockStore((s) => s.startReason)
   const consumeStartReason = useStockStore((s) => s.consumeStartReason)
   const startToast = useCallback(() => consumeStartReason(), [consumeStartReason])
+  const [isSearchOpen, setSearchOpen] = useState(false)
+  const closeSearch = useCallback(() => setSearchOpen(false), [])
+
+  // ⌘K(맥)·Ctrl+K 로 종목 검색
+  useEffect(() => {
+    if (user === null) return undefined
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [user])
 
   // 세션이 만료되거나 401 로 끝나면 main 이 알림. 로그아웃과 같이 화면 상태를 비워 로그인 모달로 감
   useEffect(
@@ -60,7 +78,7 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
   return (
     <>
       <div className="shell" aria-hidden={user === null}>
-        <TopBar user={user} onLogout={() => void logout()} />
+        <TopBar user={user} onLogout={() => void logout()} onSearch={() => setSearchOpen(true)} />
         <main className="workspace four-areas">
           <section className="area chart" aria-label="차트">
             {user !== null && <p className="placeholder">차트</p>}
@@ -69,7 +87,7 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
             {user !== null && <PriceArea />}
           </section>
           <section className="area order" aria-label="매수·매도">
-            {user !== null && <p className="placeholder">매수 · 매도</p>}
+            {user !== null && <OrderArea />}
           </section>
           <section className="area debate" aria-label="토론">
             {user !== null && <p className="placeholder">토론</p>}
@@ -77,7 +95,9 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
         </main>
         <StatusBar />
       </div>
+      {user !== null && <PollingFallbackAgent />}
       {user === null && <LoginModal />}
+      {user !== null && isSearchOpen && <SearchPopover onClose={closeSearch} />}
       {user !== null && startReason !== null && START_TOASTS[startReason] !== undefined && (
         <Toast message={START_TOASTS[startReason] ?? ''} onDone={startToast} />
       )}

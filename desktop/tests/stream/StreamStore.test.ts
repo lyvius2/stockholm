@@ -86,6 +86,7 @@ describe('useStreamStore', () => {
       },
     }
 
+    useStreamStore.getState().setWatched([samsung, nvidia])
     useStreamStore
       .getState()
       .applyMessages([quote(samsung, '71000'), quote(nvidia, '120.50'), feedState, indexTicker])
@@ -110,6 +111,30 @@ describe('useStreamStore.setWatched', () => {
 
     expect(useStreamStore.getState().quotes[symbolKey(samsung)]).toBeUndefined()
     expect(useStreamStore.getState().quotes[symbolKey(nvidia)]?.last.amount).toBe('120.50')
+  })
+})
+
+describe('구독 해제 뒤의 메시지', () => {
+  beforeEach(() => useStreamStore.getState().reset())
+
+  it('늦게 온 옛 종목 시세를 버리고 다시 선택해도 새 메시지까지 비워 둠', () => {
+    const store = useStreamStore.getState()
+    store.setWatched([samsung])
+    store.applyMessages([quote(samsung, '71000')])
+    store.setWatched([nvidia])
+    store.applyMessages([
+      quote(samsung, '72000'),
+      {
+        type: 'orderBook',
+        symbol: samsung,
+        orderBook: { asks: [], bids: [], asOf: '2026-10-06T01:00:00Z' },
+      },
+    ])
+    store.setWatched([samsung])
+    expect(useStreamStore.getState().quotes[symbolKey(samsung)]).toBeUndefined()
+    expect(useStreamStore.getState().orderBooks[symbolKey(samsung)]).toBeUndefined()
+    store.applyMessages([quote(samsung, '73000')])
+    expect(useStreamStore.getState().quotes[symbolKey(samsung)]?.last.amount).toBe('73000')
   })
 })
 

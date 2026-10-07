@@ -225,3 +225,4 @@ protocol/
 | 2026-10-05 | `engine/adapter/out/{toss/TossCredentialVerifier, massive, naver, odcloud, slack, krx}` 검증기(클라이언트 인터페이스 같은 파일), test `support/VerifierStub` |
 | 2026-10-06 | F16: `core/domain/asset`, `core/port/AssetPort`, `engine/application/account/AssetService`, `engine/adapter/out/kftc/{KftcClients,KftcAssetAdapter}`, `engine/config/KftcProperties`, `engine/adapter/in/web/asset/AssetController`, test `learning/KftcLearningTest` |
 | 2026-10-06 | 종목 조회·검색: `core/domain/market/StockSearch`, `engine/application/market/StockLookupService`, `adapter/in/web/market/StockController`. desktop `data/api/{market,trading,portfolio,assets}`, `data/store/stock`, `data/stock/useCurrentStock`, `features/{ticker,price}`, `shared/{format/decimal, ui/Toast}` |
+| 2026-10-06 | 화면 ②-가: `core/usecase/QuoteUseCase`·`engine/application/market/QuoteService`, desktop `features/{search/SearchPopover, order/{OrderArea,OrderModal}, price/usePollingFallback}`, `shared/id/ulid` |

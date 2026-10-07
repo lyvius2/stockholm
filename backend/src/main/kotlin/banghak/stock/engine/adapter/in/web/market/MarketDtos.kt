@@ -8,9 +8,12 @@ import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.domain.trading.Chart
 import banghak.stock.core.domain.trading.ChartBar
 import banghak.stock.core.domain.trading.ChartResolution
+import banghak.stock.core.domain.trading.OrderBook
+import banghak.stock.core.domain.trading.Quote
 import banghak.stock.engine.adapter.`in`.web.common.MoneyDto
 import banghak.stock.engine.adapter.`in`.web.common.SymbolDto
 import banghak.stock.engine.adapter.`in`.web.common.toPlainString
+import banghak.stock.engine.adapter.`in`.ws.LevelDto
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.Instant
 
@@ -18,6 +21,38 @@ import java.time.Instant
  * 차트 응답.
  * 봉은 시각 오름차순이고 평균은 봉과 같은 길이의 배열(앞쪽 모자란 구간은 null).
  */
+/**
+ * 현재가 단건.
+ * 스트림의 quote 와 같은 값에 종목을 붙임.
+ */
+data class QuoteResponse(val symbol: SymbolDto, val last: MoneyDto, val asOf: Instant) {
+    companion object {
+        fun of(quote: Quote) =
+            QuoteResponse(SymbolDto.of(quote.symbol), MoneyDto.of(quote.last), quote.asOf)
+    }
+}
+
+/**
+ * 호가 단건.
+ * 매도는 낮은 가격부터, 매수는 높은 가격부터.
+ */
+data class OrderBookResponse(
+    val symbol: SymbolDto,
+    val asks: List<LevelDto>,
+    val bids: List<LevelDto>,
+    val asOf: Instant,
+) {
+    companion object {
+        fun of(book: OrderBook) =
+            OrderBookResponse(
+                SymbolDto.of(book.symbol),
+                book.asks.map { LevelDto(MoneyDto.of(it.price), it.quantity.toString()) },
+                book.bids.map { LevelDto(MoneyDto.of(it.price), it.quantity.toString()) },
+                book.asOf,
+            )
+    }
+}
+
 data class ChartResponse(
     val symbol: SymbolDto,
     val resolution: String,

@@ -43,21 +43,34 @@ describe('useCurrentStock', () => {
     })
   })
 
+  afterEach(() => vi.useRealTimers())
+
   const savedSymbols = () =>
     requests
       .filter((r) => r.path === '/session/last-viewed-stock')
       .map((r) => (r.body as { symbol: typeof samsung }).symbol)
 
   it('로그인하면 시작 종목을 받아 현재 종목·요약·실시간 구독을 채우고, 디바운스 뒤 직전 종목을 저장함', async () => {
+    vi.useFakeTimers()
     const view = render(<Host isActive />)
 
-    await waitFor(() => expect(useStockStore.getState().current).toEqual(samsung))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(useStockStore.getState().current).toEqual(samsung)
     expect(useStockStore.getState().startReason).toBe('LAST_VIEWED')
-    await waitFor(() => expect(useStockStore.getState().summary?.name).toBe('삼성전자'))
+    expect(useStockStore.getState().summary?.name).toBe('삼성전자')
     expect(useStreamStore.getState().watched).toEqual([samsung])
     expect(savedSymbols()).toEqual([])
 
-    await waitFor(() => expect(savedSymbols()).toEqual([samsung]))
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DEBOUNCE_MS - 1)
+    })
+    expect(savedSymbols()).toEqual([])
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(savedSymbols()).toEqual([samsung])
 
     view.unmount()
     expect(useStockStore.getState().current).toBeNull()

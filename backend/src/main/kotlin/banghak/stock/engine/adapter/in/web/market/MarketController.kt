@@ -6,6 +6,7 @@ import banghak.stock.core.usecase.ChartQuery
 import banghak.stock.core.usecase.LoadChartUseCase
 import banghak.stock.core.usecase.LookupIndexTickerUseCase
 import banghak.stock.core.usecase.LookupMoversUseCase
+import banghak.stock.core.usecase.LookupQuoteUseCase
 import banghak.stock.engine.adapter.`in`.web.common.IndexTickerDto
 import banghak.stock.engine.adapter.`in`.web.common.SymbolDto
 import banghak.stock.engine.adapter.`in`.web.common.enumOf
@@ -28,7 +29,18 @@ class MarketController(
     private val charts: LoadChartUseCase,
     private val movers: LookupMoversUseCase,
     private val indexTicker: LookupIndexTickerUseCase,
+    private val quotes: LookupQuoteUseCase,
 ) {
+    /** 스트림이 끊겼을 때 화면이 1초 간격으로 묻는 현재가. */
+    @GetMapping("/quote")
+    fun quote(@RequestParam market: String, @RequestParam code: String): QuoteResponse =
+        QuoteResponse.of(quotes.quote(SymbolDto(market, code).toSymbol()))
+
+    /** 스트림이 끊겼을 때 화면이 2초 간격으로 묻는 호가. */
+    @GetMapping("/order-book")
+    fun orderBook(@RequestParam market: String, @RequestParam code: String): OrderBookResponse =
+        OrderBookResponse.of(quotes.orderBook(SymbolDto(market, code).toSymbol()))
+
     @GetMapping("/chart")
     fun chart(
         @RequestParam market: String,
