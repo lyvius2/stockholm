@@ -4,6 +4,7 @@ import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.identity.UserId
 import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.Symbol
+import banghak.stock.core.domain.trading.ChartResolution
 import java.time.Instant
 
 /**
@@ -18,6 +19,8 @@ enum class UserSettingKey {
      * 기본값 국내.
      */
     DEFAULT_MARKET,
+    /** 차트 보기(F3): 자세한 차트 토글과 모드별 마지막 기간 탭. */
+    CHART_VIEW,
 }
 
 /**
@@ -55,6 +58,29 @@ object UserSettingCodec {
     fun defaultMarket(market: Market): String = """{"market":"${market.name}"}"""
 
     fun parseDefaultMarket(json: String): Market = Market.valueOf(field(json, "market"))
+
+    fun chartView(view: ChartView): String =
+        """{"isDetailed":${view.isDetailed},"simpleRange":"${view.simpleRange.name}","detailedResolution":"${view.detailedResolution.name}"}"""
+
+    fun parseChartView(json: String): ChartView =
+        ChartView(
+            isDetailed = booleanField(json, "isDetailed"),
+            simpleRange = enumField<SimpleChartRange>(json, "simpleRange"),
+            detailedResolution = enumField<ChartResolution>(json, "detailedResolution"),
+        )
+
+    private inline fun <reified E : Enum<E>> enumField(json: String, name: String): E {
+        val text = field(json, name)
+        return enumValues<E>().firstOrNull { it.name == text }
+            ?: throw InvalidValueException("설정 값의 $name 이 모르는 값임: $text")
+    }
+
+    private fun booleanField(json: String, name: String): Boolean =
+        when (Regex("\"$name\"\\s*:\\s*(true|false)").find(json)?.groupValues?.get(1)) {
+            "true" -> true
+            "false" -> false
+            else -> throw InvalidValueException("설정 값에 $name 이 없음")
+        }
 
     private fun field(json: String, name: String): String =
         Regex("\"$name\"\\s*:\\s*\"([^\"]*)\"").find(json)?.groupValues?.get(1)

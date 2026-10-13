@@ -29,6 +29,11 @@ export interface StreamStoreState {
   readonly quotes: LatestBySymbol<StreamQuote>
   readonly orderBooks: LatestBySymbol<StreamOrderBook>
   readonly liveCandles: LatestBySymbol<StreamLiveCandle>
+  /**
+   * 종목별로 받은 진행 1분봉을 분(openTime)마다 마지막 값으로 쌓아 둠.
+   * 차트가 조회 뒤에 생긴 분들을 전부 합치는 데 씀(최신 한 분만 두면 직전 분의 고가·거래량을 잃음).
+   */
+  readonly liveMinutes: LatestBySymbol<Readonly<Record<string, StreamLiveCandle>>>
   /** 이 화면이 보는 종목 전체. 바뀌면 데몬에 다시 선언됨. */
   readonly watched: readonly StreamSymbol[]
   applyMessages(messages: readonly StreamServerMessage[]): void
@@ -44,7 +49,22 @@ const EMPTY = {
   quotes: {},
   orderBooks: {},
   liveCandles: {},
+  liveMinutes: {},
   watched: [],
+}
+
+/** 종목 하나에 쌓아 두는 분의 상한. 하루 정규장(390분)을 넘기면 오래된 분부터 버림 */
+export const LIVE_MINUTES_CAP = 600
+
+function withMinute(
+  minutes: Readonly<Record<string, StreamLiveCandle>> | undefined,
+  candle: StreamLiveCandle,
+): Readonly<Record<string, StreamLiveCandle>> {
+  const next: Record<string, StreamLiveCandle> = { ...(minutes ?? {}), [candle.openTime]: candle }
+  const keys = Object.keys(next)
+  if (keys.length <= LIVE_MINUTES_CAP) return next
+  for (const key of keys.sort().slice(0, keys.length - LIVE_MINUTES_CAP)) delete next[key]
+  return next
 }
 
 function pick<T>(latest: LatestBySymbol<T>, keep: Set<string>): LatestBySymbol<T> {
@@ -63,6 +83,7 @@ export const useStreamStore = create<StreamStoreState>((set) => ({
       const quotes = { ...state.quotes }
       const orderBooks = { ...state.orderBooks }
       const liveCandles = { ...state.liveCandles }
+      const liveMinutes = { ...state.liveMinutes }
       let feed = state.feed
       let indexTicker = state.indexTicker
       const watched = new Set(state.watched.map(symbolKey))
@@ -73,14 +94,19 @@ export const useStreamStore = create<StreamStoreState>((set) => ({
           quotes[key] = message.quote
         else if (message.type === 'orderBook' && key !== null && message.orderBook !== undefined)
           orderBooks[key] = message.orderBook
-        else if (message.type === 'liveCandle' && key !== null && message.liveCandle !== undefined)
+        else if (
+          message.type === 'liveCandle' &&
+          key !== null &&
+          message.liveCandle !== undefined
+        ) {
           liveCandles[key] = message.liveCandle
-        else if (message.type === 'feedState' && message.feedState !== undefined)
+          liveMinutes[key] = withMinute(liveMinutes[key], message.liveCandle)
+        } else if (message.type === 'feedState' && message.feedState !== undefined)
           feed = message.feedState
         else if (message.type === 'indexTicker' && message.indexTicker !== undefined)
           indexTicker = message.indexTicker
       }
-      return { quotes, orderBooks, liveCandles, feed, indexTicker }
+      return { quotes, orderBooks, liveCandles, liveMinutes, feed, indexTicker }
     }),
   setConnection: (connection) => set({ connection }),
   // 더는 보지 않는 종목의 마지막 값은 버림.
@@ -93,6 +119,7 @@ export const useStreamStore = create<StreamStoreState>((set) => ({
         quotes: pick(state.quotes, keep),
         orderBooks: pick(state.orderBooks, keep),
         liveCandles: pick(state.liveCandles, keep),
+        liveMinutes: pick(state.liveMinutes, keep),
       }
     }),
   reset: () => set(EMPTY),

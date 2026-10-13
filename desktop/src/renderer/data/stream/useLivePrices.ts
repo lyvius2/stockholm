@@ -1,4 +1,8 @@
-import type { StreamOrderBook, StreamQuote } from '@renderer/generated/stream-server-message'
+import type {
+  StreamLiveCandle,
+  StreamOrderBook,
+  StreamQuote,
+} from '@renderer/generated/stream-server-message'
 import type { StreamSymbol } from './MarketStream'
 import { usePollStore } from './pollStore'
 import { symbolKey, useStreamStore } from './store'
@@ -34,4 +38,17 @@ export function useLiveOrderBook(symbol: StreamSymbol): StreamOrderBook | undefi
   const isDelayed = useIsFeedDelayed(symbol)
   if (!isDelayed || polled === null) return streamed
   return { asks: polled.asks, bids: polled.bids, asOf: polled.asOf }
+}
+
+const NO_MINUTES: Readonly<Record<string, StreamLiveCandle>> = {}
+
+/**
+ * 받아 둔 진행 1분봉들(분 → 마지막 값).
+ * 체결이 빠질 수 있는 근사값이며 스트림이 지연이면 비어 있음(옛 봉을 지금 것처럼 그리지 않음).
+ */
+export function useLiveMinutes(symbol: StreamSymbol): Readonly<Record<string, StreamLiveCandle>> {
+  const key = symbolKey(symbol)
+  const minutes = useStreamStore((state) => state.liveMinutes[key])
+  const isDelayed = useIsFeedDelayed(symbol)
+  return isDelayed ? NO_MINUTES : (minutes ?? NO_MINUTES)
 }

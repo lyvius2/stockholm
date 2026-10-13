@@ -767,3 +767,63 @@ button.outline {
 .unresolved-banner .spacer {
   flex: 1;
 }
+
+/* 1번 차트 영역(F3): 헤더 한 줄 + 차트. 차트 색은 토큰을 읽어 라이브러리에 넣음 */
+.four-areas .chart {
+  place-items: stretch;
+}
+.chart-area {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 6px;
+  padding: 8px 12px 4px;
+  height: 100%;
+  min-height: 0;
+}
+.chart-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.chart-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.chart-head .tab-bar button,
+.chart-head select {
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+.chart-head select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.live-chip {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ma-legend {
+  color: var(--ink2);
+  white-space: nowrap;
+}
+.ma-legend b {
+  margin-left: 6px;
+}
+.price-chart {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.chart-empty {
+  align-self: center;
+  text-align: center;
+}

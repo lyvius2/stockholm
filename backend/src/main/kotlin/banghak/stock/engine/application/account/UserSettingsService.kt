@@ -1,5 +1,6 @@
 package banghak.stock.engine.application.account
 
+import banghak.stock.core.domain.account.ChartView
 import banghak.stock.core.domain.account.LastViewedStock
 import banghak.stock.core.domain.account.UserSetting
 import banghak.stock.core.domain.account.UserSettingCodec
@@ -11,6 +12,7 @@ import banghak.stock.core.domain.market.Market
 import banghak.stock.core.domain.market.Symbol
 import banghak.stock.core.port.EventStore
 import banghak.stock.core.port.UserSettingsPort
+import banghak.stock.core.usecase.ChartViewSettingUseCase
 import banghak.stock.core.usecase.LookupUserSettingsUseCase
 import banghak.stock.core.usecase.RecordLastViewedStockUseCase
 import banghak.stock.shared.config.RuntimeProfiles
@@ -27,7 +29,7 @@ class UserSettingsService(
     private val settings: UserSettingsPort,
     private val events: EventStore,
     private val clock: Clock,
-) : RecordLastViewedStockUseCase, LookupUserSettingsUseCase {
+) : RecordLastViewedStockUseCase, LookupUserSettingsUseCase, ChartViewSettingUseCase {
     @Transactional
     override fun record(userId: UserId, deviceId: DeviceId, symbol: Symbol, viewedAt: Instant) =
         change(
@@ -48,6 +50,16 @@ class UserSettingsService(
         settings.find(userId, UserSettingKey.DEFAULT_MARKET)?.let {
             UserSettingCodec.parseDefaultMarket(it.value)
         } ?: Market.KR
+
+    @Transactional(readOnly = true)
+    override fun chartView(userId: UserId): ChartView =
+        settings.find(userId, UserSettingKey.CHART_VIEW)?.let {
+            UserSettingCodec.parseChartView(it.value)
+        } ?: ChartView.DEFAULT
+
+    @Transactional
+    override fun saveChartView(userId: UserId, deviceId: DeviceId, view: ChartView) =
+        change(userId, deviceId, UserSettingKey.CHART_VIEW, UserSettingCodec.chartView(view))
 
     private fun change(userId: UserId, deviceId: DeviceId, key: UserSettingKey, value: String) {
         val now = clock.instant()

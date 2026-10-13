@@ -6,7 +6,9 @@ import { sessionApi } from '@renderer/data/api/session'
 import { useSessionStore } from '@renderer/data/store/session'
 import { useMarketStream } from '@renderer/data/stream/useMarketStream'
 import { useCurrentStock } from '@renderer/data/stock/useCurrentStock'
+import { useChartViewStore } from '@renderer/data/store/chartView'
 import { useStockStore, type StartReason } from '@renderer/data/store/stock'
+import { ChartArea } from '@renderer/features/chart/ChartArea'
 import { PriceArea } from '@renderer/features/price/PriceArea'
 import { PollingFallbackAgent } from '@renderer/features/price/PollingFallbackAgent'
 import { OrderArea } from '@renderer/features/order/OrderArea'
@@ -30,6 +32,12 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
   useMarketStream(user !== null)
   // 시작 종목 → 현재 종목 → 실시간 구독·직전 종목 저장
   useCurrentStock(user !== null)
+  // 차트 보기 설정은 로그인마다 그 사용자 것을 읽고, 나가면 비움
+  useEffect(() => {
+    if (user === null) return undefined
+    void useChartViewStore.getState().load()
+    return () => useChartViewStore.getState().reset()
+  }, [user])
   const startReason = useStockStore((s) => s.startReason)
   const consumeStartReason = useStockStore((s) => s.consumeStartReason)
   const startToast = useCallback(() => consumeStartReason(), [consumeStartReason])
@@ -81,7 +89,7 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
         <TopBar user={user} onLogout={() => void logout()} onSearch={() => setSearchOpen(true)} />
         <main className="workspace four-areas">
           <section className="area chart" aria-label="차트">
-            {user !== null && <p className="placeholder">차트</p>}
+            {user !== null && <ChartArea />}
           </section>
           <section className="area price" aria-label="가격">
             {user !== null && <PriceArea />}

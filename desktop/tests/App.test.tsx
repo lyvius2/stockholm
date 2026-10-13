@@ -94,7 +94,7 @@ describe('App 진입 분기', () => {
     expect(dialog).toBeDefined()
     expect(await screen.findByRole('radio', { name: '월터' })).toBeDefined()
     expect(document.querySelector('.login-backdrop')).not.toBeNull()
-    expect(screen.queryByText('차트')).toBeNull()
+    expect(screen.queryByText('종목을 고르면 차트가 보입니다')).toBeNull()
   })
 
   it('로그인한 사용자가 있으면 네 영역과 상단 바를 보이고 모달은 없음', async () => {
@@ -109,7 +109,7 @@ describe('App 진입 분기', () => {
       lockedUntil: null,
     })
     renderApp(<App />)
-    expect(await screen.findByText('차트')).toBeDefined()
+    expect(await screen.findByText('종목을 고르면 차트가 보입니다')).toBeDefined()
     expect(screen.getByText('토론')).toBeDefined()
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByRole('button', { name: '👤 월터' })).toBeDefined()

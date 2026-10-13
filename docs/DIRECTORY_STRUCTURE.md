@@ -228,3 +228,4 @@ protocol/
 | 2026-10-06 | 화면 ②-가: `core/usecase/QuoteUseCase`·`engine/application/market/QuoteService`, desktop `features/{search/SearchPopover, order/{OrderArea,OrderModal}, price/usePollingFallback}`, `shared/id/ulid` |
 | 2026-10-07 | 화면 ②-나: `core/domain/trading/OrderListing`, `core/usecase/OrderListingUseCase`, `engine/application/trading/OrderListingService`, desktop `features/order/{OrderTabs,AmendModal}` |
 | 2026-10-07 | 화면 ②-나 리뷰 반영: desktop `data/store/orderUi`(열린 모달 하나 + 보내는 중·결과 모름 변경), `features/order/ActiveOrderModal`(store 의 모달 하나를 그림, 취소 확인 창 포함) |
+| 2026-10-13 | 화면 ③ 차트: `core/domain/account/ChartView`, `core/usecase/ChartViewUseCase`, `adapter/in/web/session/ChartViewController`. desktop `data/api/settings`, `data/store/chartView`, `features/chart/{ChartArea,PriceChart,chartData,useChartData}`, test `tests/support/fakeLightweightCharts` |

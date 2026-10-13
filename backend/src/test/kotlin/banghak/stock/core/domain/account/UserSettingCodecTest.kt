@@ -2,6 +2,7 @@ package banghak.stock.core.domain.account
 
 import banghak.stock.core.domain.error.InvalidValueException
 import banghak.stock.core.domain.market.Market
+import banghak.stock.core.domain.trading.ChartResolution
 import banghak.stock.core.domain.trading.TradingFixtures
 import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
@@ -22,6 +23,32 @@ class UserSettingCodecTest {
         assertThat(UserSettingCodec.parseLastViewedStock(json)).isEqualTo(viewed)
         assertThat(UserSettingCodec.parseDefaultMarket(UserSettingCodec.defaultMarket(Market.US)))
             .isEqualTo(Market.US)
+    }
+
+    @Test
+    @DisplayName("차트 보기는 토글·기간 탭·봉 단위를 JSON 으로 적고 같은 값으로 읽음")
+    fun roundTripsChartView() {
+        val view = ChartView(true, SimpleChartRange.MONTH_3, ChartResolution.MINUTE_10)
+
+        val json = UserSettingCodec.chartView(view)
+
+        assertThat(json)
+            .isEqualTo(
+                """{"isDetailed":true,"simpleRange":"MONTH_3","detailedResolution":"MINUTE_10"}"""
+            )
+        assertThat(UserSettingCodec.parseChartView(json)).isEqualTo(view)
+        assertThatThrownBy {
+                UserSettingCodec.parseChartView(
+                    """{"simpleRange":"MONTH_3","detailedResolution":"DAY"}"""
+                )
+            }
+            .isInstanceOf(InvalidValueException::class.java)
+        assertThatThrownBy {
+                UserSettingCodec.parseChartView(
+                    """{"isDetailed":false,"simpleRange":"FOREVER","detailedResolution":"DAY"}"""
+                )
+            }
+            .isInstanceOf(InvalidValueException::class.java)
     }
 
     @Test

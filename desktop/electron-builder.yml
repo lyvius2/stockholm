@@ -11,6 +11,10 @@ extraResources:
   - from: resources/daemon
     to: daemon
     filter: ['**/*']
+  # 서드파티 라이선스·NOTICE(Apache-2.0 4(d) 재배포 조건). lightweight-charts 는 NOTICE 귀속 문구가 필수
+  - from: resources/licenses
+    to: licenses
+    filter: ['**/*']
 mac:
   target:
     - target: dmg

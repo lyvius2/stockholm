@@ -14,6 +14,9 @@
   --down: #2b6fd6;
   --warn: #c47a12;
   --warn-soft: #fbeedb;
+  /* 이동평균선 색(설계서 고정): 5 초록 · 20 상승색 · 60 경고색 · 120 보라 */
+  --ma5: #1fa463;
+  --ma120: #8e44ad;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --sans: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
   --sb: color-mix(in srgb, var(--ink3) 45%, transparent);
@@ -36,6 +39,8 @@
     --down: #5c9cff;
     --warn: #e9a23b;
     --warn-soft: #3a2a10;
+    --ma5: #3ccf85;
+    --ma120: #b36fd1;
   }
 }
 
@@ -54,4 +59,6 @@
   --down: #5c9cff;
   --warn: #e9a23b;
   --warn-soft: #3a2a10;
+  --ma5: #3ccf85;
+  --ma120: #b36fd1;
 }

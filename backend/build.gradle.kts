@@ -112,6 +112,8 @@ abstract class DevTask : DefaultTask() {
     @get:Internal abstract val desktopDir: DirectoryProperty
     @get:Internal abstract val runtimeClasspath: ConfigurableFileCollection
     @get:Internal abstract val mainClass: Property<String>
+    // javaexec 의 기본 JVM 은 Gradle 데몬의 것(셸의 java)이라 툴체인 JDK 25 를 명시함
+    @get:Internal abstract val javaLauncher: Property<JavaLauncher>
 
     @TaskAction
     fun run() {
@@ -130,6 +132,7 @@ abstract class DevTask : DefaultTask() {
         electron.isDaemon = true
         electron.start()
         execOperations.javaexec {
+            executable = javaLauncher.get().executablePath.asFile.absolutePath
             classpath = runtimeClasspath
             mainClass.set(this@DevTask.mainClass)
             args("--spring.profiles.active=engine")
@@ -188,6 +191,7 @@ tasks.register<DevTask>("dev") {
     desktopDir.set(layout.projectDirectory.dir("../desktop"))
     runtimeClasspath.from(sourceSets.main.get().runtimeClasspath)
     mainClass.set("banghak.stock.StockholmApplicationKt")
+    javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
 }
 
 spotless {

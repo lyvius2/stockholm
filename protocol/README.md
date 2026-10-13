@@ -32,6 +32,7 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | `POST /session/login`, `GET /session/users`, `GET /me` | — | `api-login`·`api-user` |
 | `GET /session/start-stock` | — | `api-start-stock` |
 | `PUT /session/last-viewed-stock` | `api-last-viewed-stock` | — |
+| `GET /session/chart-view` · `PUT /session/chart-view` | — · `api-chart-view` | `api-chart-view` |
 | `GET /market/chart?market&code&resolution&before&count` | — | `api-chart` |
 | `GET /market/movers?market` | — | `api-mover-board` |
 | `GET /market/quote?market&code` · `GET /market/order-book?market&code` | — | `api-quote` · `api-order-book`(스트림 끊김 시 폴링) |
@@ -71,4 +72,5 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | 2026-10-06 | `api-quote`·`api-order-book` 추가(스트림 끊김 시 폴링) |
 | 2026-10-07 | `api-order-listing` 추가(미체결·오늘 체결 탭) |
 | 2026-10-07 | `api-order-listing`: `canChange` → `canAmend`(지정가만)·`canCancel`, `closedAt` 추가(오늘 분류 기준) |
+| 2026-10-13 | `api-chart-view` 추가(자세한 차트 토글·모드별 기간 탭, 사용자 설정) |
 | 2026-10-05 | `schemas/api/` 15개 추가(차트·급등락·지수·평가·시작 종목·주문·조건주문), `api-error` 에 주문 경로 상세 필드. 로컬 REST 경로 표 |
