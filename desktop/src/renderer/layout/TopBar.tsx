@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ApiUser } from '@renderer/generated/api-user'
+import { useDrawersStore } from '@renderer/data/store/drawers'
 import { useStockStore } from '@renderer/data/store/stock'
 import { IndexTicker } from '@renderer/features/ticker/IndexTicker'
 
@@ -16,6 +17,10 @@ export function TopBar({ user, onLogout, onSearch }: TopBarProps) {
   const summary = useStockStore((s) => s.summary)
   const symbolLabel =
     symbol === null ? '종목 선택' : `${summary?.name ?? symbol.code} · ${symbol.code}`
+  const openDrawers = useDrawersStore((s) => s.open)
+  const toggleDrawer = useDrawersStore((s) => s.toggle)
+  const isWatchlistOpen = openDrawers.includes('watchlist')
+  const isMoversOpen = openDrawers.includes('movers')
   return (
     <header className="topbar">
       <div className="topbar-row">
@@ -28,9 +33,25 @@ export function TopBar({ user, onLogout, onSearch }: TopBarProps) {
           <IndexTicker />
         )}
         <span className="spacer" />
-        <button type="button">☰ 관심종목</button>
+        <button
+          type="button"
+          aria-pressed={isWatchlistOpen}
+          className={isWatchlistOpen ? 'active' : undefined}
+          disabled={user === null}
+          onClick={() => toggleDrawer('watchlist')}
+        >
+          ☰ 관심종목
+        </button>
         <button type="button">🏛️ 연기금종목</button>
-        <button type="button">⚡ 실시간 급등락</button>
+        <button
+          type="button"
+          aria-pressed={isMoversOpen}
+          className={isMoversOpen ? 'active' : undefined}
+          disabled={user === null}
+          onClick={() => toggleDrawer('movers')}
+        >
+          ⚡ 실시간 급등락
+        </button>
         <button type="button" className="danger">
           전체 정지
         </button>

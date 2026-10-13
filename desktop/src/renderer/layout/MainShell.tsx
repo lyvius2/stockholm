@@ -7,11 +7,14 @@ import { useSessionStore } from '@renderer/data/store/session'
 import { useMarketStream } from '@renderer/data/stream/useMarketStream'
 import { useCurrentStock } from '@renderer/data/stock/useCurrentStock'
 import { useChartViewStore } from '@renderer/data/store/chartView'
+import { useDrawersStore, useIsDrawerOpen, useOpenWidth } from '@renderer/data/store/drawers'
 import { useStockStore, type StartReason } from '@renderer/data/store/stock'
 import { ChartArea } from '@renderer/features/chart/ChartArea'
 import { PriceArea } from '@renderer/features/price/PriceArea'
 import { PollingFallbackAgent } from '@renderer/features/price/PollingFallbackAgent'
 import { OrderArea } from '@renderer/features/order/OrderArea'
+import { MoversDrawer } from '@renderer/features/ranking/MoversDrawer'
+import { WatchlistDrawer } from '@renderer/features/watchlist/WatchlistDrawer'
 import { SearchPopover } from '@renderer/features/search/SearchPopover'
 import { Toast } from '@renderer/shared/ui/Toast'
 import { LoginModal } from '@renderer/features/login/LoginModal'
@@ -44,18 +47,40 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
   const [isSearchOpen, setSearchOpen] = useState(false)
   const closeSearch = useCallback(() => setSearchOpen(false), [])
 
-  // ⌘K(맥)·Ctrl+K 로 종목 검색
+  // ⌘K 종목 검색 · ⌘L 관심종목 · ⌘J 급등락 · Esc 는 열린 서랍을 뒤에서부터 닫음(모달·팝오버가 없을 때만)
   useEffect(() => {
     if (user === null) return undefined
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setSearchOpen(true)
+      const key = e.key.toLowerCase()
+      if (e.metaKey || e.ctrlKey) {
+        if (key === 'k') {
+          e.preventDefault()
+          setSearchOpen(true)
+        } else if (key === 'l') {
+          e.preventDefault()
+          useDrawersStore.getState().toggle('watchlist')
+        } else if (key === 'j') {
+          e.preventDefault()
+          useDrawersStore.getState().toggle('movers')
+        }
+        return
       }
+      if (
+        e.key === 'Escape' &&
+        document.querySelector('[role="dialog"], [role="alertdialog"]') === null
+      )
+        useDrawersStore.getState().closeTopmost()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [user])
+  // 로그아웃하면 서랍도 닫음
+  useEffect(() => {
+    if (user === null) useDrawersStore.getState().reset()
+  }, [user])
+  const isWatchlistOpen = useIsDrawerOpen('watchlist')
+  const isMoversOpen = useIsDrawerOpen('movers')
+  const rightWidth = useOpenWidth('right')
 
   // 세션이 만료되거나 401 로 끝나면 main 이 알림. 로그아웃과 같이 화면 상태를 비워 로그인 모달로 감
   useEffect(
@@ -87,19 +112,24 @@ export function MainShell({ user }: { readonly user: ApiUser | null }) {
     <>
       <div className="shell" aria-hidden={user === null}>
         <TopBar user={user} onLogout={() => void logout()} onSearch={() => setSearchOpen(true)} />
-        <main className="workspace four-areas">
-          <section className="area chart" aria-label="차트">
-            {user !== null && <ChartArea />}
-          </section>
-          <section className="area price" aria-label="가격">
-            {user !== null && <PriceArea />}
-          </section>
-          <section className="area order" aria-label="매수·매도">
-            {user !== null && <OrderArea />}
-          </section>
-          <section className="area debate" aria-label="토론">
-            {user !== null && <p className="placeholder">토론</p>}
-          </section>
+        <main className="workspace">
+          {user !== null && isWatchlistOpen && <WatchlistDrawer />}
+          {/* 서랍은 네 영역을 덮지 않고 밀어냄: 오른쪽 서랍만큼 네 영역을 왼쪽으로 보내 그 끝이 창 밖으로 나감 */}
+          <div className="four-areas" style={{ marginLeft: `-${rightWidth}%` }}>
+            <section className="area chart" aria-label="차트">
+              {user !== null && <ChartArea />}
+            </section>
+            <section className="area price" aria-label="가격">
+              {user !== null && <PriceArea />}
+            </section>
+            <section className="area order" aria-label="매수·매도">
+              {user !== null && <OrderArea />}
+            </section>
+            <section className="area debate" aria-label="토론">
+              {user !== null && <p className="placeholder">토론</p>}
+            </section>
+          </div>
+          {user !== null && isMoversOpen && <MoversDrawer />}
         </main>
         <StatusBar />
       </div>

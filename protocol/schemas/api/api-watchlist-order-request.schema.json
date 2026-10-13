@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-watchlist-order-request.schema.json",
+  "title": "ApiWatchlistOrderRequest",
+  "description": "PUT /watchlist/groups/{groupId}/order 본문. 새 순서 전체. 빠진 종목은 뒤에 그대로 남음.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["symbols"],
+  "properties": {
+    "symbols": { "type": "array", "items": { "$ref": "../common/_values.schema.json#/$defs/symbol" } }
+  }
+}

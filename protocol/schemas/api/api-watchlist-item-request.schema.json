@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-watchlist-item-request.schema.json",
+  "title": "ApiWatchlistItemRequest",
+  "description": "POST /watchlist/items 본문. groupId 가 없으면 첫 그룹에 담고, 그룹이 없으면 기본 그룹을 만듦.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["symbol"],
+  "properties": {
+    "groupId": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+    "symbol": { "$ref": "../common/_values.schema.json#/$defs/symbol" }
+  }
+}

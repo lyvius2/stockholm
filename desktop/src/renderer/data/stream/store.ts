@@ -34,12 +34,37 @@ export interface StreamStoreState {
    * 차트가 조회 뒤에 생긴 분들을 전부 합치는 데 씀(최신 한 분만 두면 직전 분의 고가·거래량을 잃음).
    */
   readonly liveMinutes: LatestBySymbol<Readonly<Record<string, StreamLiveCandle>>>
-  /** 이 화면이 보는 종목 전체. 바뀌면 데몬에 다시 선언됨. */
+  /** 이 화면이 보는 종목 전체(네 영역 종목 + 서랍이 더한 종목). 바뀌면 데몬에 다시 선언됨. */
   readonly watched: readonly StreamSymbol[]
+  /** 네 영역이 보는 종목. */
+  readonly primary: readonly StreamSymbol[]
+  /** 서랍 같은 부가 화면이 더 보려는 종목(출처별). */
+  readonly extras: Readonly<Record<string, readonly StreamSymbol[]>>
   applyMessages(messages: readonly StreamServerMessage[]): void
   setConnection(connection: StreamConnectionState): void
+  /** 네 영역의 종목을 선언함. 서랍이 더한 종목은 그대로 둠. */
   setWatched(symbols: readonly StreamSymbol[]): void
+  /** 부가 화면이 더 볼 종목을 출처 이름으로 선언함. 빈 목록이면 거둠. */
+  setExtraWatched(source: string, symbols: readonly StreamSymbol[]): void
   reset(): void
+}
+
+/** 데몬이 받는 화면당 구독 상한. 네 영역 종목이 먼저, 서랍 종목은 남는 자리만 */
+export const WATCH_LIMIT = 20
+
+function composeWatched(
+  primary: readonly StreamSymbol[],
+  extras: Readonly<Record<string, readonly StreamSymbol[]>>,
+): StreamSymbol[] {
+  const seen = new Set<string>()
+  const merged: StreamSymbol[] = []
+  for (const symbol of [...primary, ...Object.values(extras).flat()]) {
+    const key = symbolKey(symbol)
+    if (seen.has(key) || merged.length >= WATCH_LIMIT) continue
+    seen.add(key)
+    merged.push(symbol)
+  }
+  return merged
 }
 
 const EMPTY = {
@@ -51,6 +76,8 @@ const EMPTY = {
   liveCandles: {},
   liveMinutes: {},
   watched: [],
+  primary: [],
+  extras: {},
 }
 
 /** 종목 하나에 쌓아 두는 분의 상한. 하루 정규장(390분)을 넘기면 오래된 분부터 버림 */
@@ -69,6 +96,30 @@ function withMinute(
 
 function pick<T>(latest: LatestBySymbol<T>, keep: Set<string>): LatestBySymbol<T> {
   return Object.fromEntries(Object.entries(latest).filter(([key]) => keep.has(key)))
+}
+
+// 보는 종목이 같으면 watched 참조를 유지해 데몬에 다시 선언하지 않음
+function rewatch(
+  state: StreamStoreState,
+  primary: readonly StreamSymbol[],
+  extras: Readonly<Record<string, readonly StreamSymbol[]>>,
+): Partial<StreamStoreState> {
+  const watched = composeWatched(primary, extras)
+  const isSame =
+    watched.length === state.watched.length &&
+    watched.every(
+      (s, i) => symbolKey(s) === symbolKey(state.watched[i] ?? s) && state.watched[i] !== undefined,
+    )
+  const keep = new Set(watched.map(symbolKey))
+  return {
+    primary,
+    extras,
+    watched: isSame ? state.watched : watched,
+    quotes: pick(state.quotes, keep),
+    orderBooks: pick(state.orderBooks, keep),
+    liveCandles: pick(state.liveCandles, keep),
+    liveMinutes: pick(state.liveMinutes, keep),
+  }
 }
 
 /**
@@ -111,16 +162,13 @@ export const useStreamStore = create<StreamStoreState>((set) => ({
   setConnection: (connection) => set({ connection }),
   // 더는 보지 않는 종목의 마지막 값은 버림.
   // 나중에 그 종목으로 돌아오면 새 체결이 올 때까지 "—" 로 두어 옛 가격이 실시간 값처럼 보이지 않게 함
-  setWatched: (symbols) =>
+  setWatched: (symbols) => set((state) => rewatch(state, [...symbols], state.extras)),
+  setExtraWatched: (source, symbols) =>
     set((state) => {
-      const keep = new Set(symbols.map(symbolKey))
-      return {
-        watched: [...symbols],
-        quotes: pick(state.quotes, keep),
-        orderBooks: pick(state.orderBooks, keep),
-        liveCandles: pick(state.liveCandles, keep),
-        liveMinutes: pick(state.liveMinutes, keep),
-      }
+      const extras = { ...state.extras }
+      if (symbols.length === 0) delete extras[source]
+      else extras[source] = [...symbols]
+      return rewatch(state, state.primary, extras)
     }),
   reset: () => set(EMPTY),
 }))

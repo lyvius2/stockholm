@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-watchlist-group.schema.json",
+  "title": "ApiWatchlistGroup",
+  "description": "관심종목 그룹. POST /watchlist/groups 응답이기도 함.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["groupId", "name", "sortOrder", "updatedAt"],
+  "properties": {
+    "groupId": { "type": "string" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 20 },
+    "sortOrder": { "type": "integer" },
+    "updatedAt": { "$ref": "../common/_values.schema.json#/$defs/instant" }
+  }
+}

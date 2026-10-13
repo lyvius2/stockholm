@@ -47,6 +47,10 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | `POST /conditional-orders`, `POST /conditional-orders/{id}/amend` | `api-conditional-order-request` | `api-conditional-order-placement` |
 | `POST /conditional-orders/{id}/cancel` | — | `api-conditional-cancel` |
 | `GET /stocks?query&limit` · `GET /stocks/{market}/{code}` | — | `api-stock-summary`(배열 · 단건, 없으면 404) |
+| `GET /watchlist` | — | `api-watchlist` |
+| `POST /watchlist/groups` · `PUT /watchlist/groups/{groupId}` · `DELETE /watchlist/groups/{groupId}` | `api-watchlist-group-request` · 같음 · — | `api-watchlist-group` · — · — |
+| `POST /watchlist/items` · `DELETE /watchlist/groups/{groupId}/items/{market}/{code}` | `api-watchlist-item-request` · — | `api-watchlist-item` · — |
+| `PUT /watchlist/groups/{groupId}/order` | `api-watchlist-order-request` | — |
 | `GET /assets` | — | `api-asset-snapshot` |
 | `GET /assets/consent` · `DELETE /assets/consent` | — | `api-asset-consent` · — |
 | `POST /assets/consent` | — | `api-asset-consent-start` |
@@ -73,4 +77,5 @@ JSON Schema(draft 2020-12)가 원본이고, 타입은 `generate.sh`가 quicktype
 | 2026-10-07 | `api-order-listing` 추가(미체결·오늘 체결 탭) |
 | 2026-10-07 | `api-order-listing`: `canChange` → `canAmend`(지정가만)·`canCancel`, `closedAt` 추가(오늘 분류 기준) |
 | 2026-10-13 | `api-chart-view` 추가(자세한 차트 토글·모드별 기간 탭, 사용자 설정) |
+| 2026-10-13 | 관심종목 스키마 6개 추가(`api-watchlist`·그룹·종목·요청 셋) |
 | 2026-10-05 | `schemas/api/` 15개 추가(차트·급등락·지수·평가·시작 종목·주문·조건주문), `api-error` 에 주문 경로 상세 필드. 로컬 REST 경로 표 |

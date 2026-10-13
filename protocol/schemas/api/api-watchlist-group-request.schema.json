@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-watchlist-group-request.schema.json",
+  "title": "ApiWatchlistGroupRequest",
+  "description": "POST /watchlist/groups · PUT /watchlist/groups/{groupId} 본문.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name"],
+  "properties": { "name": { "type": "string", "minLength": 1, "maxLength": 20 } }
+}

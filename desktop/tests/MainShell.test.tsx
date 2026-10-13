@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import type { ApiUser } from '@renderer/generated/api-user'
+import { useDrawersStore } from '@renderer/data/store/drawers'
 import { useSessionStore } from '@renderer/data/store/session'
 import { useStreamStore } from '@renderer/data/stream/store'
 import { MainShell } from '@renderer/layout/MainShell'
@@ -25,6 +26,41 @@ describe('MainShell 세션 수명주기', () => {
   beforeEach(() => {
     useSessionStore.getState().signOut()
     useStreamStore.getState().reset()
+    useDrawersStore.getState().reset()
+  })
+
+  it('⌘L·⌘J 로 서랍을 열고 좌우는 배타이며 Esc 로 닫음, 로그아웃하면 서랍도 닫힘', async () => {
+    installBridge(({ path }) =>
+      path === '/session/users'
+        ? ok([walter])
+        : path === '/watchlist'
+          ? ok({ groups: [], items: [] })
+          : status(404),
+    )
+    useSessionStore.getState().signIn(walter)
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <Host />
+      </QueryClientProvider>,
+    )
+    fireEvent.keyDown(window, { key: 'l', metaKey: true })
+    expect(await screen.findByRole('complementary', { name: '관심종목' })).toBeDefined()
+    expect(screen.getByRole('button', { name: '☰ 관심종목' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
+
+    fireEvent.keyDown(window, { key: 'j', metaKey: true })
+    expect(screen.queryByRole('complementary', { name: '관심종목' })).toBeNull()
+    expect(screen.getByRole('complementary', { name: '실시간 급등락' })).toBeDefined()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByRole('complementary')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: '⚡ 실시간 급등락' }))
+    expect(screen.getByRole('complementary', { name: '실시간 급등락' })).toBeDefined()
+    act(() => useSessionStore.getState().signOut())
+    expect(useDrawersStore.getState().open).toEqual([])
   })
 
   it('로그인 동안 스트림을 열고, main 이 세션 종료를 알리면 비우고 로그인 모달로 감', async () => {

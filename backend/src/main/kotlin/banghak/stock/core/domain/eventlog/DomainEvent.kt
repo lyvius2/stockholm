@@ -195,6 +195,23 @@ data class DebateResumed(val sessionId: String, val personaDefinitionsChanged: B
 data class WatchlistChanged(val groupId: String, val symbol: Symbol, val added: Boolean) :
     DomainEvent
 
+/**
+ * 그룹 생성·이름 변경·삭제.
+ * [removed] 가 true 면 삭제.
+ */
+data class WatchlistGroupChanged(
+    val groupId: String,
+    val name: String,
+    val sortOrder: Int,
+    val removed: Boolean,
+) : DomainEvent
+
+/**
+ * 그룹 안 종목 순서.
+ * [symbols] 가 새 순서 전체임.
+ */
+data class WatchlistReordered(val groupId: String, val symbols: List<Symbol>) : DomainEvent
+
 data class PersonaDefinitionChanged(val personaId: String, val version: Int) : DomainEvent
 
 data class UserSettingChanged(val key: String, val value: String) : DomainEvent

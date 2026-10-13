@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-watchlist-item.schema.json",
+  "title": "ApiWatchlistItem",
+  "description": "그룹에 담긴 종목 하나. name 은 종목 마스터의 이름이며 없으면 null. POST /watchlist/items 응답이기도 함.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["groupId", "symbol", "name", "sortOrder", "addedAt"],
+  "properties": {
+    "groupId": { "type": "string" },
+    "symbol": { "$ref": "../common/_values.schema.json#/$defs/symbol" },
+    "name": { "oneOf": [{ "type": "string" }, { "type": "null" }] },
+    "sortOrder": { "type": "integer" },
+    "addedAt": { "$ref": "../common/_values.schema.json#/$defs/instant" }
+  }
+}

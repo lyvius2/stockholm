@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stockholm.banghak/protocol/api/api-watchlist.schema.json",
+  "title": "ApiWatchlist",
+  "description": "GET /watchlist 응답. 그룹과 종목 모두 sortOrder 순. 세션 사용자의 것만 옴.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["groups", "items"],
+  "properties": {
+    "groups": { "type": "array", "items": { "$ref": "api-watchlist-group.schema.json" } },
+    "items": { "type": "array", "items": { "$ref": "api-watchlist-item.schema.json" } }
+  }
+}

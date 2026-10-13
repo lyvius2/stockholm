@@ -52,6 +52,8 @@ class EventTypesGoldenTest {
                 "VerdictReached",
                 "DebateResumed",
                 "WatchlistChanged",
+                "WatchlistGroupChanged",
+                "WatchlistReordered",
                 "PersonaDefinitionChanged",
                 "UserSettingChanged",
                 "LayoutRatioChanged",

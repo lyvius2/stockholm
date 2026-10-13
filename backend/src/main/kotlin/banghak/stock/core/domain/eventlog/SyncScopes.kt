@@ -40,6 +40,8 @@ object SyncScopes {
             is VerdictReached,
             is DebateResumed,
             is WatchlistChanged,
+            is WatchlistGroupChanged,
+            is WatchlistReordered,
             is PersonaDefinitionChanged,
             is UserSettingChanged,
             is LayoutRatioChanged,

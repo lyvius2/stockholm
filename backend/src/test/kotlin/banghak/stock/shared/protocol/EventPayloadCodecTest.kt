@@ -153,6 +153,8 @@ class EventPayloadCodecTest {
             VerdictReached("s1", "BUY"),
             DebateResumed("s1", false),
             WatchlistChanged("g1", samsung, true),
+            WatchlistGroupChanged("g1", "반도체", 0, false),
+            WatchlistReordered("g1", listOf(samsung, nvidia)),
             PersonaDefinitionChanged("p1", 3),
             UserSettingChanged("theme", "dark"),
             LayoutRatioChanged("main", Percent.ofPercent("60")),
